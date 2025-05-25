@@ -47,6 +47,7 @@ You can point multiple apps or clients to a single Reservoir instance. This mean
 Reservoir lets you have conversations with multiple AI models and providers, all while keeping your data private and local. Every interaction is stored on your device, building a personal knowledge base that never leaves your network. A single thread of conversation can span multiple models without losing context, allowing you to seamlessly switch between different AI providers while maintaining the flow of your discussion.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Conversation Threads via Synapses](#conversation-threads-via-synapses)
 - [Documentation](#documentation)
@@ -54,6 +55,7 @@ Reservoir lets you have conversations with multiple AI models and providers, all
 - [License](#license)
 
 ## Overview
+
 Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual LLM service.
 
 ```mermaid
@@ -84,7 +86,6 @@ sequenceDiagram
 
 This sequence diagram provides a high-level overview of how Reservoir processes requests and responses.
 
-
 ## Conversation Threads via Synapses
 
 Reservoir uses synapse relationships to create "threads" of semantically related messages within the conversation graph. As messages are added, synapses link them sequentially, forming a continuous flow. When the similarity between messages drops below a threshold, the thread is split, marking a topic change. This results in distinct conversation threads, making it easy to visualize and retrieve related exchanges.
@@ -96,6 +97,7 @@ You can see an example of this structure in the following graph visualization:
 ## Documentation
 
 Reservoir's documentation is organized into the following sections:
+
 - [Architecture](./docs/architecture.md): System and component overview.
 - [API](./docs/api.md): API endpoints, usage, and examples.
 - [Data Model](./docs/data_model.md): How data is stored in Neo4j, including the schema.
@@ -117,6 +119,7 @@ cargo run -- start
 ```
 
 This command:
+
 1. Initializes the vector index in Neo4j for semantic search
 2. Starts the server on the configured port (default: 3017)
 
@@ -131,6 +134,7 @@ Reservoir supports exporting all message nodes to a JSON file and importing them
 ```bash
 cargo run -- export > messages.json
 ```
+
 This command prints all message nodes in the database as pretty-printed JSON to stdout. Redirect the output to a file to save it.
 
 #### Import message nodes from a JSON file
@@ -148,11 +152,13 @@ cargo run -- view <COUNT> [--partition <PARTITION>] [--instance <INSTANCE>]
 Displays the last `<COUNT>` messages in the specified partition and instance. If not provided, `partition` defaults to "default" and `instance` defaults to the partition.
 
 Example:
+
 ```bash
 cargo run -- view 5 --partition sales --instance eu-west
 ```
 
 Sample output:
+
 ```
 2025-05-09T14:23:01+00:00 [abc123] user: Hello there!
 2025-05-09T14:23:02+00:00 [abc123] assistant: Hi! How can I help?
@@ -160,13 +166,16 @@ Sample output:
 2025-05-09T14:24:12+00:00 [def456] assistant: Here is the summary for last week's sales...
 2025-05-09T14:25:00+00:00 [ghi789] user: Thanks!
 ```
+
 This command reads the specified JSON file (in the same format as the export) and imports all message nodes into the database.
 
 ### Example Usage
 
 - **Instead of:**  
+
   `https://api.openai.com/v1/chat/completions`
 - **Use:**  
+
   `http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions`
 
 > Here, `$USER` is your system username, and `reservoir` is the instance name.
@@ -189,6 +198,7 @@ curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completio
 ```
 
 #### Python Example (using `openai` library)
+
 ```python
 import os
 from openai import OpenAI
@@ -218,4 +228,3 @@ print(completion.choices[0].message.content)
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-

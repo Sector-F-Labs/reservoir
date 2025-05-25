@@ -4,11 +4,13 @@ use tracing::info;
 use crate::{
     args::ReplaySubCommand,
     clients::embedding::{get_embeddings_for_txt, EmbeddingClient},
-    services::ChatRequestService,
+    repos::message::neo4j_message::get_messages,
+    services::chat_request::ChatRequestService,
+    utils::connector::connect,
 };
 
 pub async fn execute<'a>(service: &'a ChatRequestService<'a>, model: &str) -> Result<(), Error> {
-    let messages = service.get_messages().await?;
+    let messages = get_messages(connect).await?;
     info!("Found {} messages to process", messages.len());
 
     // Spawn tasks for each message
@@ -56,6 +58,7 @@ pub async fn run<'a>(
     service: &'a ChatRequestService<'a>,
     replay_sub_command: &ReplaySubCommand,
 ) -> Result<(), Error> {
+    info!("specified model: {:?}", replay_sub_command.model);
     let model = "bge-large-en-v15";
     execute(service, model).await
 }

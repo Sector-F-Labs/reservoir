@@ -10,10 +10,12 @@ use hyper::body::Bytes;
 use hyper::body::Incoming;
 use hyper::{Method, Request, Response, StatusCode};
 use repos::embedding::AnyEmbeddingRepository;
+use repos::message::neo4j_message::init_vector_index;
 use repos::message::AnyMessageRepository;
-use services::ChatRequestService;
+use services::chat_request::ChatRequestService;
 use std::convert::Infallible;
 use tracing::{error, info};
+use utils::connector::connect;
 
 mod args;
 mod clients;
@@ -206,10 +208,12 @@ async fn main() -> Result<(), Error> {
         .with_target(false)
         .with_env_filter(std::env::var("RUST_LOG").unwrap_or_else(|_| "reservoir=info".to_string()))
         .init();
+
     let args = Args::parse();
     let message_repo = AnyMessageRepository::new_neo4j();
     let embedding_repo = AnyEmbeddingRepository::new_neo4j();
     let service = ChatRequestService::new(&message_repo, &embedding_repo);
+    init_vector_index(connect).await?;
 
     match args.subcmd {
         Some(SubCommands::Start(ref start_cmd)) => {
@@ -222,7 +226,7 @@ async fn main() -> Result<(), Error> {
             commands::export::run(&message_repo).await?;
         }
         Some(SubCommands::Import(import_cmd)) => {
-            commands::import::run(&message_repo, &import_cmd.file).await?;
+            commands::import::run(&import_cmd.file).await?;
         }
         Some(SubCommands::View(ref view_cmd)) => {
             commands::view::run(&message_repo, view_cmd).await?;
@@ -231,7 +235,7 @@ async fn main() -> Result<(), Error> {
             commands::search::run(&service, search_cmd).await?;
         }
         Some(SubCommands::Ingest(ref ingest_cmd)) => {
-            commands::ingest::run(&message_repo, ingest_cmd).await?;
+            commands::ingest::run(ingest_cmd).await?;
         }
         Some(SubCommands::Replay(ref r_cmd)) => {
             commands::replay::run(&service, r_cmd).await?;

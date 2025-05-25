@@ -2,13 +2,14 @@ use crate::args::IngestSubCommand;
 use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingClient};
 use crate::clients::openai::types::Message;
 use crate::models::message_node::MessageNode;
-use crate::repos::message::{AnyMessageRepository, MessageRepository};
+use crate::repos::message::neo4j_message::save_message_node;
+use crate::utils::connector::connect;
 use anyhow::Error;
 use std::io::{self, Read};
 use tracing::info;
 use uuid::Uuid;
 
-pub async fn run(repo: &AnyMessageRepository, cmd: &IngestSubCommand) -> Result<(), Error> {
+pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
     // Read stdin
     let mut buffer = String::new();
     io::stdin().read_to_string(&mut buffer)?;
@@ -41,7 +42,7 @@ pub async fn run(repo: &AnyMessageRepository, cmd: &IngestSubCommand) -> Result<
     info!("Embedding test: {:?}", embedding_test);
 
     let node = MessageNode::from_message(&message, &trace_id, &partition, &instance, embedding);
-    repo.save_message_node(&node).await?;
+    save_message_node(connect, &node).await?;
     println!("Saved message with trace_id: {}", trace_id);
     Ok(())
 }

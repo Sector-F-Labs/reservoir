@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use anyhow::Error;
 use neo4rs::{query, ConfigBuilder, Graph};
 use tracing::{error, info};
@@ -108,39 +110,6 @@ impl Neo4jEmbeddingRepository {
             .build()?;
         let graph = Graph::connect(config).await?;
         Ok(graph)
-    }
-
-    async fn get_embedding_node(&self, id: &str) -> Result<EmbeddingNode, Error> {
-        let graph = self.connect().await?;
-        let q = query(
-            r#"
-            MATCH (e:Embedding) 
-            WHERE id(e) = toInteger($id)
-            RETURN id(e) AS id, e.model AS model, e.embedding AS embedding, 
-                   e.partition AS partition, e.instance AS instance
-            "#,
-        )
-        .param("id", id);
-
-        let mut result = graph.execute(q).await?;
-
-        if let Some(row) = result.next().await? {
-            let id = row.get::<i64>("id")?;
-            let model = row.get::<String>("model")?;
-            let embedding = row.get::<Vec<f32>>("embedding")?;
-            let partition = row.get::<String>("partition").ok();
-            let instance = row.get::<String>("instance").ok();
-
-            Ok(EmbeddingNode {
-                id: Some(id),
-                model,
-                embedding,
-                partition,
-                instance,
-            })
-        } else {
-            Err(Error::msg(format!("No embedding found with id {}", id)))
-        }
     }
 }
 
@@ -263,4 +232,61 @@ impl EmbeddingRepository for Neo4jEmbeddingRepository {
 
         Ok(similar_embeddings)
     }
+}
+
+pub async fn attach_embedding_to_message<C, FutC>(
+    get_connector: C,
+    message: &MessageNode,
+    embedding: Vec<f32>,
+    embedding_client: &EmbeddingClient,
+    model: &str,
+) -> Result<(), Error>
+where
+    FutC: Future<Output = Result<Graph, Error>>,
+    C: Fn() -> FutC,
+{
+    let message_id = message.id.unwrap_or_default();
+    let partition = message.partition.clone();
+    let instance = message.instance.clone();
+    let trace_id = message.trace_id.clone();
+    let role = message.role.clone();
+    let timestamp = message.timestamp.clone();
+
+    info!("Attaching embedding to message with ID: {}", message_id);
+    info!("Model: {}", model);
+    info!("Partition: {:?}", partition);
+    info!("Instance: {:?}", instance);
+    info!("Trace ID: {}", trace_id);
+    info!("Role: {}", role);
+
+    let graph = get_connector().await?;
+    let query_string = format!(
+        r#"
+            MATCH (m:MessageNode)
+            WHERE m.trace_id = $trace_id
+            AND m.role = $role
+            CREATE (e:{} {{
+                embedding: $embedding,
+                model: $model,
+                partition: $partition,
+                instance: $instance,
+                timestamp: $timestamp
+            }})
+            CREATE (m)-[:HAS_EMBEDDING]->(e)
+            "#,
+        embedding_client.get_node_name()
+    );
+    let q = query(query_string.as_str())
+        .param("embedding", embedding)
+        .param("timestamp", timestamp)
+        .param("partition", partition)
+        .param("model", model)
+        .param("trace_id", trace_id)
+        .param("role", role)
+        .param("instance", instance);
+
+    let mut r = graph.execute(q).await?;
+    r.next().await?;
+
+    Ok(())
 }
