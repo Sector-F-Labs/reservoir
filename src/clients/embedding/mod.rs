@@ -48,6 +48,13 @@ impl EmbeddingClient {
             EmbeddingClient::FastEmbed { .. } => format!("embedding1024"),
         }
     }
+
+    pub fn get_model_name(&self) -> String {
+        match self {
+            EmbeddingClient::OpenAI { model, .. } => model.clone(),
+            EmbeddingClient::FastEmbed { model, .. } => model.clone(),
+        }
+    }
 }
 
 pub fn get_cache_path() -> PathBuf {

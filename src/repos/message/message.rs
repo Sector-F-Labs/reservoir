@@ -21,11 +21,6 @@ pub trait MessageRepository {
         &self,
         nodes: &[MessageNode],
     ) -> Result<Vec<MessageNode>, Error>; // Changed return type
-    async fn find_nodes_connected_to_node(
-        &self,
-        node: &MessageNode,
-    ) -> Result<Vec<MessageNode>, Error>; // Changed return type
-    async fn connect_synapses(&self) -> Result<(), Error>;
 }
 
 pub enum AnyMessageRepository {
@@ -69,49 +64,5 @@ impl MessageRepository for AnyMessageRepository {
         match self {
             AnyMessageRepository::Neo4j(repo) => repo.find_connections_between_nodes(nodes).await,
         }
-    }
-
-    async fn find_nodes_connected_to_node(
-        &self,
-        node: &MessageNode,
-    ) -> Result<Vec<MessageNode>, Error> {
-        match self {
-            AnyMessageRepository::Neo4j(repo) => repo.find_nodes_connected_to_node(node).await,
-        }
-    }
-
-    async fn connect_synapses(&self) -> Result<(), Error> {
-        match self {
-            AnyMessageRepository::Neo4j(repo) => repo.connect_synapses().await,
-        }
-    }
-}
-
-#[cfg(test)] // Ignoring tests as requested
-mod tests {
-    use crate::{
-        models::message_node::MessageNode, repos::message::neo4j_message::save_message_node,
-        utils::connector::connect,
-    };
-    use tracing::error;
-
-    #[tokio::test]
-    async fn test_save_message_node() {
-        let message_node = MessageNode {
-            id: None,
-            embedding: vec![],
-            trace_id: "12345".to_string(),
-            partition: "default".to_string(),
-            instance: "default".to_string(),
-            role: "user".to_string(),
-            content: Some("Hello, world!".to_string()),
-            url: None,
-            timestamp: chrono::Utc::now().timestamp_millis(),
-        };
-        let result = save_message_node(connect, &message_node).await;
-        if result.is_err() {
-            error!("Error saving message node: {:?}", result);
-        }
-        assert!(result.is_ok());
     }
 }

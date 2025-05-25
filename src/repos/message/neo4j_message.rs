@@ -126,60 +126,6 @@ impl MessageRepository for Neo4jMessageRepository {
 
         Ok(connected_nodes) // Return the vector of MessageNode
     }
-
-    /// Finds nodes connected to a given node within a distance of 10 hops.
-    /// Returns a vector of `MessageNode` instances representing the connected nodes.
-    /// The distance is defined by the number of hops in the graph.
-    async fn find_nodes_connected_to_node(
-        &self,
-        node: &MessageNode,
-    ) -> Result<Vec<MessageNode>, Error> {
-        let graph = self.connect().await?;
-        let q = r#"
-            MATCH p=(m:MessageNode {trace_id: $trace_id})-[:SYNAPSE*1..10]-(n:MessageNode)
-            RETURN nodes(p) AS allNodes
-        "#;
-        let mut result = graph
-            .execute(query(q).param("trace_id", node.trace_id.clone()))
-            .await?;
-        let mut connected_nodes = Vec::new();
-        while let Ok(Some(row)) = result.next().await {
-            let nodes: Vec<MessageNode> = row.get("allNodes")?;
-            connected_nodes.extend(nodes);
-        }
-        Ok(connected_nodes)
-    }
-
-    async fn connect_synapses(&self) -> Result<(), Error> {
-        let graph = self.connect().await?;
-        let q = r#"
-            MATCH (m:MessageNode)
-            WHERE m.embedding IS NOT NULL AND size(m.embedding) = 1536
-            WITH m
-            ORDER BY m.timestamp ASC
-            WITH collect(m) AS messages
-            UNWIND range(0, size(messages) - 2) AS i
-            WITH messages[i] AS m1, messages[i+1] AS m2
-            WHERE m1.embedding IS NOT NULL AND m2.embedding IS NOT NULL AND size(m1.embedding) = 1536 AND size(m2.embedding) = 1536
-            MERGE (m1)-[:SYNAPSE {score: vector.similarity.cosine(m1.embedding, m2.embedding)}]-(m2);
-        "#;
-        let mut result = graph.execute(query(q)).await?;
-        while let Ok(Some(row)) = result.next().await {
-            let node: MessageNode = row.get("m")?;
-            info!("Connected nodes: {:?}", node);
-        }
-        let q = r#"
-            MATCH (m1:MessageNode)-[r:SYNAPSE]->(m2:MessageNode)
-            WHERE r.score < 0.85
-            DELETE r
-        "#;
-        let mut result = graph.execute(query(q)).await?;
-        while let Ok(Some(row)) = result.next().await {
-            let node: MessageNode = row.get("m")?;
-            error!("Deleted synapse: {:?}", node);
-        }
-        Ok(())
-    }
 }
 
 pub async fn get_messages<C, FutC>(get_connector: C) -> Result<Vec<MessageNode>, Error>
@@ -233,6 +179,7 @@ where
 pub async fn save_message_node<C, FutC>(
     get_connector: C,
     message_node: &MessageNode,
+    embedding_client: &EmbeddingClient,
 ) -> Result<(), Error>
 where
     C: Fn() -> FutC,
@@ -244,9 +191,9 @@ where
     }
 
     let graph = get_connector().await?;
-    let create_q = query(
+    let query_string = format!(
         r#"
-            CREATE (m:MessageNode {
+            CREATE (m:MessageNode {{
                 trace_id: $trace_id,
                 content: $content,
                 role: $role,
@@ -255,25 +202,28 @@ where
                 instance: $instance,
                 embedding: $embedding,
                 url: $url
-            })
-            CREATE (e:Embedding {
-                model: 'text-embedding-ada-002',
+            }})
+            CREATE (e:{} {{
+                model: '{}',
                 embedding: $embedding,
                 partition: $partition,
                 instance: $instance
-            })
+            }})
             CREATE (m)-[:HAS_EMBEDDING]->(e)
             RETURN id(m) AS nodeId, id(e) AS embeddingId
             "#,
-    )
-    .param("trace_id", message_node.trace_id.clone())
-    .param("content", message_node.content.clone())
-    .param("timestamp", message_node.timestamp.clone())
-    .param("role", message_node.role.clone())
-    .param("partition", message_node.partition.clone())
-    .param("instance", message_node.instance.clone())
-    .param("embedding", message_node.embedding.clone())
-    .param("url", message_node.url.clone());
+        embedding_client.get_node_name(),
+        embedding_client.get_model_name()
+    );
+    let create_q = query(query_string.as_str())
+        .param("trace_id", message_node.trace_id.clone())
+        .param("content", message_node.content.clone())
+        .param("timestamp", message_node.timestamp.clone())
+        .param("role", message_node.role.clone())
+        .param("partition", message_node.partition.clone())
+        .param("instance", message_node.instance.clone())
+        .param("embedding", message_node.embedding.clone())
+        .param("url", message_node.url.clone());
 
     // Execute the CREATE query
     let mut create_result = graph.execute(create_q).await?;
@@ -355,6 +305,68 @@ where
                 Err(e)?;
             }
         }
+    }
+    Ok(())
+}
+
+/// Finds nodes connected to a given node within a distance of 10 hops.
+/// Returns a vector of `MessageNode` instances representing the connected nodes.
+/// The distance is defined by the number of hops in the graph.
+pub async fn find_nodes_connected_to_node<C, FutC>(
+    get_connector: C,
+    node: &MessageNode,
+) -> Result<Vec<MessageNode>, Error>
+where
+    C: Fn() -> FutC,
+    FutC: AsyncGraphFuture,
+{
+    let graph = get_connector().await?;
+    let q = r#"
+            MATCH p=(m:MessageNode {trace_id: $trace_id})-[:SYNAPSE*1..10]-(n:MessageNode)
+            RETURN nodes(p) AS allNodes
+        "#;
+    let mut result = graph
+        .execute(query(q).param("trace_id", node.trace_id.clone()))
+        .await?;
+    let mut connected_nodes = Vec::new();
+    while let Ok(Some(row)) = result.next().await {
+        let nodes: Vec<MessageNode> = row.get("allNodes")?;
+        connected_nodes.extend(nodes);
+    }
+    Ok(connected_nodes)
+}
+
+pub async fn connect_synapses<C, FutC>(get_connector: C) -> Result<(), Error>
+where
+    C: Fn() -> FutC,
+    FutC: AsyncGraphFuture,
+{
+    let graph = get_connector().await?;
+    let q = r#"
+            MATCH (m:MessageNode)
+            WHERE m.embedding IS NOT NULL AND size(m.embedding) = 1536
+            WITH m
+            ORDER BY m.timestamp ASC
+            WITH collect(m) AS messages
+            UNWIND range(0, size(messages) - 2) AS i
+            WITH messages[i] AS m1, messages[i+1] AS m2
+            WHERE m1.embedding IS NOT NULL AND m2.embedding IS NOT NULL AND size(m1.embedding) = 1536 AND size(m2.embedding) = 1536
+            MERGE (m1)-[:SYNAPSE {score: vector.similarity.cosine(m1.embedding, m2.embedding)}]-(m2);
+        "#;
+    let mut result = graph.execute(query(q)).await?;
+    while let Ok(Some(row)) = result.next().await {
+        let node: MessageNode = row.get("m")?;
+        info!("Connected nodes: {:?}", node);
+    }
+    let q = r#"
+            MATCH (m1:MessageNode)-[r:SYNAPSE]->(m2:MessageNode)
+            WHERE r.score < 0.85
+            DELETE r
+        "#;
+    let mut result = graph.execute(query(q)).await?;
+    while let Ok(Some(row)) = result.next().await {
+        let node: MessageNode = row.get("m")?;
+        error!("Deleted synapse: {:?}", node);
     }
     Ok(())
 }
