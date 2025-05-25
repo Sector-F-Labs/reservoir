@@ -36,13 +36,13 @@ pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
     };
     let client = EmbeddingClient::default();
     let test_local = EmbeddingClient::with_fastembed("");
-    let embedding = get_embeddings_for_txt(&content, client).await?;
+    let embedding = get_embeddings_for_txt(&content, client.clone()).await?;
     let embedding_test = get_embeddings_for_txt(&content, test_local).await?;
 
     info!("Embedding test: {:?}", embedding_test);
 
     let node = MessageNode::from_message(&message, &trace_id, &partition, &instance, embedding);
-    save_message_node(connect, &node).await?;
+    save_message_node(connect, &node, &client).await?;
     println!("Saved message with trace_id: {}", trace_id);
     Ok(())
 }

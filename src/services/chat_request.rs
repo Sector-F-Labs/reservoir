@@ -2,7 +2,9 @@ use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingClient};
 use crate::repos::embedding::embedding::attach_embedding_to_message;
 use crate::repos::embedding::{AnyEmbeddingRepository, EmbeddingRepository};
 
-use crate::repos::message::neo4j_message::{get_messages_for_embedding_nodes, save_message_node};
+use crate::repos::message::neo4j_message::{
+    find_nodes_connected_to_node, get_messages_for_embedding_nodes, save_message_node,
+};
 use crate::repos::message::AnyMessageRepository;
 use crate::repos::message::MessageRepository;
 use crate::utils::connector::connect;
@@ -40,7 +42,7 @@ impl<'a> ChatRequestService<'a> {
                 get_embeddings_for_txt(message.content.as_str(), embedding_client.to_owned())
                     .await?;
             let node = MessageNode::from_message(message, trace_id, partition, instance, embedding);
-            save_message_node(connect, &node).await?;
+            save_message_node(connect, &node, embedding_client).await?;
         }
         Ok(())
     }
@@ -98,7 +100,7 @@ impl<'a> ChatRequestService<'a> {
         &self,
         first: &MessageNode,
     ) -> Result<Vec<MessageNode>, Error> {
-        self.message_repo.find_nodes_connected_to_node(first).await
+        find_nodes_connected_to_node(connect, first).await
     }
 
     pub(crate) async fn get_messages_for_partition(

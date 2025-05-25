@@ -8,7 +8,9 @@ use crate::clients::openai::types::{
 };
 use crate::models::message_node::MessageNode;
 use crate::repos::embedding::AnyEmbeddingRepository;
-use crate::repos::message::neo4j_message::save_message_node;
+use crate::repos::message::neo4j_message::{
+    connect_synapses, find_nodes_connected_to_node, save_message_node,
+};
 use crate::repos::message::AnyMessageRepository;
 use crate::repos::message::MessageRepository;
 use crate::services::chat_request::ChatRequestService;
@@ -126,7 +128,7 @@ pub async fn handle_with_partition(
     let first = similar.first().clone();
     let similar = match first {
         Some(first) => {
-            let nodes = message_repo.find_nodes_connected_to_node(first).await?;
+            let nodes = find_nodes_connected_to_node(connect, first).await?;
             let nodes = deduplicate_message_nodes(nodes);
 
             if nodes.len() > 2 {
@@ -169,7 +171,8 @@ pub async fn handle_with_partition(
         .await
         .expect("Failed to get completion message");
     let message_node = chat_response.choices.first().unwrap().message.clone();
-    let embedding = get_embeddings_for_txt(message_node.content.as_str(), embedding_client).await?;
+    let embedding =
+        get_embeddings_for_txt(message_node.content.as_str(), embedding_client.clone()).await?;
     let message_node = MessageNode::from_message(
         &message_node,
         trace_id.as_str(),
@@ -177,12 +180,11 @@ pub async fn handle_with_partition(
         instance,
         embedding,
     );
-    save_message_node(connect, &message_node)
+    save_message_node(connect, &message_node, &embedding_client)
         .await
         .expect("Failed to save message node");
 
-    message_repo
-        .connect_synapses()
+    connect_synapses(connect)
         .await
         .expect("Failed to connect synapses");
 
