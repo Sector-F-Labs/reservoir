@@ -8,14 +8,14 @@ use crate::clients::openai::types::{
 };
 use crate::models::message_node::MessageNode;
 use crate::repos::embedding::AnyEmbeddingRepository;
+use crate::repos::message::neo4j_message::save_message_node;
 use crate::repos::message::AnyMessageRepository;
-use crate::services::ChatRequestService;
+use crate::repos::message::MessageRepository;
+use crate::services::chat_request::ChatRequestService;
+use crate::utils::connector::connect;
 use crate::utils::{
     count_single_message_tokens, deduplicate_message_nodes, get_last_message_in_chat_request,
     truncate_messages_if_needed,
-};
-use crate::{
-    clients::openai::embeddings::get_embeddings_for_text, repos::message::MessageRepository,
 };
 use bytes::Bytes;
 use uuid::Uuid;
@@ -177,8 +177,7 @@ pub async fn handle_with_partition(
         instance,
         embedding,
     );
-    message_repo
-        .save_message_node(&message_node)
+    save_message_node(connect, &message_node)
         .await
         .expect("Failed to save message node");
 

@@ -37,15 +37,15 @@ impl EmbeddingClient {
 
     pub fn get_node_name(&self) -> String {
         match self {
-            EmbeddingClient::OpenAI { model, .. } => format!("Embedding1536"),
-            EmbeddingClient::FastEmbed { model, .. } => format!("Embedding1024"),
+            EmbeddingClient::OpenAI { .. } => format!("Embedding1536"),
+            EmbeddingClient::FastEmbed { .. } => format!("Embedding1024"),
         }
     }
 
     pub fn get_index_name(&self) -> String {
         match self {
-            EmbeddingClient::OpenAI { model, .. } => format!("embedding1536"),
-            EmbeddingClient::FastEmbed { model, .. } => format!("embedding1024"),
+            EmbeddingClient::OpenAI { .. } => format!("embedding1536"),
+            EmbeddingClient::FastEmbed { .. } => format!("embedding1024"),
         }
     }
 }
@@ -61,6 +61,8 @@ pub async fn get_embeddings_for_txt(
 ) -> Result<Vec<f32>, Error> {
     match client {
         EmbeddingClient::OpenAI { model, length } => {
+            info!("Using OpenAI for embedding: {}", model);
+            info!("Embedding length: {}", length);
             let result = openai_get_embeddings_for_text(text).await;
             match result {
                 Ok(embeddings) => {
@@ -75,6 +77,8 @@ pub async fn get_embeddings_for_txt(
         }
         EmbeddingClient::FastEmbed { model, length } => {
             info!("Using FastEmbed for embedding");
+            info!("Embedding model: {}", model);
+            info!("Embedding length: {}", length);
             let init_options = InitOptions::new(EmbeddingModel::BGELargeENV15)
                 .with_show_download_progress(true)
                 .with_cache_dir(get_cache_path());

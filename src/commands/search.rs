@@ -1,7 +1,6 @@
 use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingClient};
-use crate::clients::openai::embeddings::get_embeddings_for_text;
 use crate::clients::openai::types::Message;
-use crate::services::ChatRequestService;
+use crate::services::chat_request::ChatRequestService;
 use crate::utils::deduplicate_message_nodes;
 use anyhow::Error;
 use clap::Parser;

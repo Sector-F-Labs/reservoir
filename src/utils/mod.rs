@@ -4,7 +4,12 @@ use std::collections::HashSet;
 use tiktoken_rs::o200k_base;
 use tracing::{error, info};
 
-use crate::{clients::openai::types::{ChatRequest, Message}, models::message_node::MessageNode};
+use crate::{
+    clients::openai::types::{ChatRequest, Message},
+    models::message_node::MessageNode,
+};
+
+pub mod connector;
 
 fn message_to_string(msg: &Message) -> String {
     match msg.role.as_str() {
