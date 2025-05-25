@@ -83,8 +83,8 @@ pub fn enrich_chat_request(
 
     let insert_index = if chat_request
         .messages
-        .get(0)
-        .map_or(false, |m| m.role == "system")
+        .first()
+        .is_some_and(|m| m.role == "system")
     {
         1
     } else {

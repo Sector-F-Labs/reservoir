@@ -2,6 +2,7 @@ use anyhow::Error;
 use args::{Args, SubCommands};
 use clap::Parser;
 use commands::search::execute as search_execute;
+use commands::search::SearchOptions;
 use commands::view::execute;
 use handler::completions::handle_with_partition;
 use http_body_util::BodyExt;
@@ -106,7 +107,7 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
             // Extract count from the path (last segment)
             let count = path
                 .split('/')
-                .last()
+                .next_back()
                 .and_then(|s| s.parse::<u32>().ok())
                 .unwrap_or(5) as usize;
 
@@ -129,11 +130,13 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
             }
 
             let service = ChatRequestService::new();
-
-            let result = search_execute(
-                &service, partition, instance, count, term, semantic, false, false,
-            )
-            .await;
+            let search_options = SearchOptions {
+                count,
+                semantic,
+                link: false,        // Not used in this context
+                deduplicate: false, // Not used in this context
+            };
+            let result = search_execute(&service, partition, instance, term, search_options).await;
             match result {
                 Ok(output) => {
                     let json = serde_json::to_string(&output).unwrap();
@@ -157,10 +160,10 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
             // the last part of the path should be the number, lets get it
             let count = path
                 .split('/')
-                .last()
+                .next_back()
                 .and_then(|s| s.parse::<u32>().ok())
                 .unwrap_or(5);
-            // convert to usize
+
             let count = count as usize;
 
             let result = execute(partition, instance, count).await;

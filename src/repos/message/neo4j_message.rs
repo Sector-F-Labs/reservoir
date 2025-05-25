@@ -152,7 +152,7 @@ where
     let create_q = query(query_string.as_str())
         .param("trace_id", message_node.trace_id.clone())
         .param("content", message_node.content.clone())
-        .param("timestamp", message_node.timestamp.clone())
+        .param("timestamp", message_node.timestamp)
         .param("role", message_node.role.clone())
         .param("partition", message_node.partition.clone())
         .param("instance", message_node.instance.clone())
