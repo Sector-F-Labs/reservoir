@@ -119,7 +119,6 @@ where
     C: Fn() -> FutC,
     FutC: AsyncGraphFuture,
 {
-    // Skip saving system messages
     if message_node.role.eq_ignore_ascii_case("system") {
         return Ok(());
     }
@@ -277,14 +276,24 @@ where
 {
     let graph = get_connector().await?;
     let q = r#"
-            MATCH (m:MessageNode)
-            WHERE m.embedding IS NOT NULL AND size(m.embedding) = 1536
-            WITH m
+            MATCH (m:MessageNode)-[:HAS_EMBEDDING]->(e:Embedding1024)
+            WHERE e.embedding IS NOT NULL
+
+            WITH m, e.embedding AS messageEmbedding
             ORDER BY m.timestamp ASC
-            WITH collect(m) AS messages
-            UNWIND range(0, size(messages) - 2) AS i WITH messages[i] AS m1, messages[i+1] AS m2
-            WHERE m1.embedding IS NOT NULL AND m2.embedding IS NOT NULL AND size(m1.embedding) = 1536 AND size(m2.embedding) = 1536
-            MERGE (m1)-[:SYNAPSE {score: vector.similarity.cosine(m1.embedding, m2.embedding)}]-(m2);
+
+            WITH collect({message: m, embedding: messageEmbedding}) AS ordered_message_data
+
+            UNWIND range(0, size(ordered_message_data) - 2) AS i
+            WITH ordered_message_data[i] AS data1, ordered_message_data[i+1] AS data2
+
+            WITH data1.message AS m1, data1.embedding AS emb1,
+                 data2.message AS m2, data2.embedding AS emb2
+
+            MERGE (m1)-[s:SYNAPSE]->(m2)
+            ON CREATE SET s.score = vector.similarity.cosine(emb1, emb2),
+                          s.model = 'embedding1536' 
+            ON MATCH SET s.score = vector.similarity.cosine(emb1, emb2);
         "#;
     let mut result = graph.execute(query(q)).await?;
     while let Ok(Some(row)) = result.next().await {
@@ -315,6 +324,8 @@ where
     if nodes.is_empty() {
         return Ok(Vec::new());
     }
+
+    info!("Finding connections between {} nodes", nodes.len());
 
     let trace_ids: Vec<String> = nodes.iter().map(|n| n.trace_id.clone()).collect();
 
