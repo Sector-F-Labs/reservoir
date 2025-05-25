@@ -1,32 +1,23 @@
 use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingClient};
-use crate::repos::embedding::embedding::attach_embedding_to_message;
-use crate::repos::embedding::{AnyEmbeddingRepository, EmbeddingRepository};
+use crate::repos::embedding::neo4j_embedding::{
+    attach_embedding_to_message, find_similar_embeddings,
+};
 
 use crate::repos::message::neo4j_message::{
-    find_nodes_connected_to_node, get_messages_for_embedding_nodes, save_message_node,
+    find_connections_between_nodes, find_nodes_connected_to_node, get_messages_for_embedding_nodes,
+    get_messages_for_partition, save_message_node,
 };
-use crate::repos::message::AnyMessageRepository;
-use crate::repos::message::MessageRepository;
 use crate::utils::connector::connect;
 use anyhow::Error;
 use tracing::info;
 
 use crate::{clients::openai::types::ChatRequest, models::message_node::MessageNode};
 
-pub struct ChatRequestService<'a> {
-    message_repo: &'a AnyMessageRepository,
-    embeddings_repo: &'a AnyEmbeddingRepository,
-}
+pub struct ChatRequestService {}
 
-impl<'a> ChatRequestService<'a> {
-    pub fn new(
-        message_repo: &'a AnyMessageRepository,
-        embeddings_repo: &'a AnyEmbeddingRepository,
-    ) -> Self {
-        ChatRequestService {
-            message_repo,
-            embeddings_repo,
-        }
+impl ChatRequestService {
+    pub fn new() -> Self {
+        ChatRequestService {}
     }
 
     pub async fn save_chat_request(
@@ -56,16 +47,15 @@ impl<'a> ChatRequestService<'a> {
         instance: &str,
         top_k: usize,
     ) -> Result<Vec<MessageNode>, Error> {
-        let embedding_result = self
-            .embeddings_repo
-            .find_similar_embeddings(
-                embedding.clone(),
-                embedding_client,
-                partition,
-                instance,
-                top_k,
-            )
-            .await;
+        let embedding_result = find_similar_embeddings(
+            connect,
+            embedding.clone(),
+            embedding_client,
+            partition,
+            instance,
+            top_k,
+        )
+        .await;
 
         let embedding_result = match embedding_result {
             Ok(embeddings) => {
@@ -91,9 +81,7 @@ impl<'a> ChatRequestService<'a> {
         &self,
         similar: &[MessageNode],
     ) -> Result<Vec<MessageNode>, Error> {
-        self.message_repo
-            .find_connections_between_nodes(similar)
-            .await
+        find_connections_between_nodes(connect, similar).await
     }
 
     pub(crate) async fn find_nodes_connected_to_node(
@@ -107,9 +95,7 @@ impl<'a> ChatRequestService<'a> {
         &self,
         partition: &str,
     ) -> Result<Vec<MessageNode>, Error> {
-        self.message_repo
-            .get_messages_for_partition(Some(partition))
-            .await
+        get_messages_for_partition(connect, Some(partition)).await
     }
 
     pub(crate) async fn attach_embedding_to_message(

@@ -1,133 +1,67 @@
 use std::future::Future;
 
 use anyhow::Error;
-use neo4rs::{query, ConfigBuilder, Graph};
+use neo4rs::{query, Graph};
 use tracing::{error, info};
 
 use crate::{
-    clients::embedding::EmbeddingClient,
-    models::message_node::MessageNode,
-    repos::config::{get_neo4j_password, get_neo4j_uri, get_neo4j_user},
+    clients::embedding::EmbeddingClient, models::message_node::MessageNode,
     utils::connector::AsyncGraphFuture,
 };
 
-use super::MessageRepository;
+pub async fn get_messages_for_partition<C, FutC>(
+    get_connector: C,
+    partition: Option<&str>,
+) -> Result<Vec<MessageNode>, Error>
+where
+    FutC: Future<Output = Result<Graph, Error>>,
+    C: Fn() -> FutC,
+{
+    let graph = get_connector().await?;
+    let q = if let Some(p) = partition {
+        query("MATCH (m:MessageNode {partition: $partition}) RETURN id(m) AS id, m")
+            .param("partition", p)
+    } else {
+        query("MATCH (m:MessageNode) RETURN id(m) AS id, m")
+    };
 
-pub struct Neo4jMessageRepository {
-    pub uri: String,
-    pub user: String,
-    pub pass: String,
+    let mut result = graph.execute(q).await?;
+    let mut messages = Vec::new();
+
+    while let Some(row) = result.next().await? {
+        // First, extract the MessageNode
+        let mut node: MessageNode = row.get("m")?;
+        // Then, override its id field with the database id
+        node.id = Some(row.get::<i64>("id")?);
+        messages.push(node);
+    }
+
+    Ok(messages)
 }
 
-impl Neo4jMessageRepository {
-    pub fn default() -> Self {
-        let instance = Neo4jMessageRepository {
-            uri: get_neo4j_uri(),
-            user: get_neo4j_user(),
-            pass: get_neo4j_password(),
-        };
-        instance
-    }
-
-    async fn connect(&self) -> Result<Graph, Error> {
-        let config = ConfigBuilder::new()
-            .uri(self.uri.clone())
-            .user(self.user.clone())
-            .password(self.pass.clone())
-            .build()?;
-        let graph = Graph::connect(config).await?;
-        Ok(graph)
-    }
-}
-
-impl MessageRepository for Neo4jMessageRepository {
-    async fn get_messages_for_partition(
-        &self,
-        partition: Option<&str>,
-    ) -> Result<Vec<MessageNode>, Error> {
-        let graph = self.connect().await?;
-        let q = if let Some(p) = partition {
-            query("MATCH (m:MessageNode {partition: $partition}) RETURN id(m) AS id, m")
-                .param("partition", p)
-        } else {
-            query("MATCH (m:MessageNode) RETURN id(m) AS id, m")
-        };
-
-        let mut result = graph.execute(q).await?;
-        let mut messages = Vec::new();
-
-        while let Some(row) = result.next().await? {
-            // First, extract the MessageNode
-            let mut node: MessageNode = row.get("m")?;
-            // Then, override its id field with the database id
-            node.id = Some(row.get::<i64>("id")?);
-            messages.push(node);
-        }
-
-        Ok(messages)
-    }
-
-    async fn get_last_messages_for_partition_and_instance(
-        &self,
-        partition: String,
-        instance: String,
-        count: usize,
-    ) -> Result<Vec<MessageNode>, Error> {
-        let graph = self.connect().await?;
-        let q = format!(
+pub async fn get_last_messages_for_partition_and_instance<C, FutC>(
+    get_connector: C,
+    partition: String,
+    instance: String,
+    count: usize,
+) -> Result<Vec<MessageNode>, Error>
+where
+    FutC: Future<Output = Result<Graph, Error>>,
+    C: Fn() -> FutC,
+{
+    let graph = get_connector().await?;
+    let q = format!(
             "MATCH (m:MessageNode {{partition: '{}', instance: '{}'}}) RETURN m ORDER BY m.timestamp DESC LIMIT {}",
             partition, instance, count
         );
-        let mut result = graph.execute(query(q.as_str())).await?;
-        let mut messages = Vec::new();
-        while let Some(row) = result.next().await? {
-            let node: MessageNode = row.get("m")?;
-            messages.push(node);
-        }
-        Ok(messages)
+    let mut result = graph.execute(query(q.as_str())).await?;
+    let mut messages = Vec::new();
+    while let Some(row) = result.next().await? {
+        let node: MessageNode = row.get("m")?;
+        messages.push(node);
     }
-
-    async fn find_connections_between_nodes(
-        &self,
-        nodes: &[MessageNode],
-    ) -> Result<Vec<MessageNode>, Error> {
-        if nodes.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let trace_ids: Vec<String> = nodes.iter().map(|n| n.trace_id.clone()).collect();
-
-        let graph = self.connect().await?;
-        // Query to find pairs of connected nodes within the input list,
-        // then unwind the pairs and collect the distinct nodes involved.
-        let query_text = r#"
-            UNWIND $trace_ids AS traceId1
-            UNWIND $trace_ids AS traceId2
-            WITH traceId1, traceId2 // Introduce WITH clause
-            WHERE traceId1 < traceId2 // Apply WHERE after WITH
-            MATCH (n1:MessageNode {trace_id: traceId1})-[r:RESPONDED_WITH]-(n2:MessageNode {trace_id: traceId2})
-            // Unwind the pair of nodes found
-            WITH n1, n2 // Carry forward the matched nodes
-            UNWIND [n1, n2] AS connected_node
-            // Return distinct nodes involved in any connection
-            RETURN DISTINCT connected_node
-        "#;
-
-        let mut result = graph
-            .execute(query(query_text).param("trace_ids", trace_ids))
-            .await?;
-
-        let mut connected_nodes = Vec::new();
-        while let Ok(Some(row)) = result.next().await {
-            // Each row now contains one distinct connected node
-            let node: MessageNode = row.get("connected_node")?;
-            connected_nodes.push(node);
-        }
-
-        Ok(connected_nodes) // Return the vector of MessageNode
-    }
+    Ok(messages)
 }
-
 pub async fn get_messages<C, FutC>(get_connector: C) -> Result<Vec<MessageNode>, Error>
 where
     FutC: Future<Output = Result<Graph, Error>>,
@@ -348,8 +282,7 @@ where
             WITH m
             ORDER BY m.timestamp ASC
             WITH collect(m) AS messages
-            UNWIND range(0, size(messages) - 2) AS i
-            WITH messages[i] AS m1, messages[i+1] AS m2
+            UNWIND range(0, size(messages) - 2) AS i WITH messages[i] AS m1, messages[i+1] AS m2
             WHERE m1.embedding IS NOT NULL AND m2.embedding IS NOT NULL AND size(m1.embedding) = 1536 AND size(m2.embedding) = 1536
             MERGE (m1)-[:SYNAPSE {score: vector.similarity.cosine(m1.embedding, m2.embedding)}]-(m2);
         "#;
@@ -369,4 +302,48 @@ where
         error!("Deleted synapse: {:?}", node);
     }
     Ok(())
+}
+
+pub async fn find_connections_between_nodes<C, FutC>(
+    get_connector: C,
+    nodes: &[MessageNode],
+) -> Result<Vec<MessageNode>, Error>
+where
+    C: Fn() -> FutC,
+    FutC: AsyncGraphFuture,
+{
+    if nodes.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let trace_ids: Vec<String> = nodes.iter().map(|n| n.trace_id.clone()).collect();
+
+    let graph = get_connector().await?;
+    // Query to find pairs of connected nodes within the input list,
+    // then unwind the pairs and collect the distinct nodes involved.
+    let query_text = r#"
+            UNWIND $trace_ids AS traceId1
+            UNWIND $trace_ids AS traceId2
+            WITH traceId1, traceId2 // Introduce WITH clause
+            WHERE traceId1 < traceId2 // Apply WHERE after WITH
+            MATCH (n1:MessageNode {trace_id: traceId1})-[r:RESPONDED_WITH]-(n2:MessageNode {trace_id: traceId2})
+            // Unwind the pair of nodes found
+            WITH n1, n2 // Carry forward the matched nodes
+            UNWIND [n1, n2] AS connected_node
+            // Return distinct nodes involved in any connection
+            RETURN DISTINCT connected_node
+        "#;
+
+    let mut result = graph
+        .execute(query(query_text).param("trace_ids", trace_ids))
+        .await?;
+
+    let mut connected_nodes = Vec::new();
+    while let Ok(Some(row)) = result.next().await {
+        // Each row now contains one distinct connected node
+        let node: MessageNode = row.get("connected_node")?;
+        connected_nodes.push(node);
+    }
+
+    Ok(connected_nodes) // Return the vector of MessageNode
 }

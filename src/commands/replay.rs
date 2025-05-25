@@ -9,7 +9,7 @@ use crate::{
     utils::connector::connect,
 };
 
-pub async fn execute<'a>(service: &'a ChatRequestService<'a>, model: &str) -> Result<(), Error> {
+pub async fn execute<'a>(service: &ChatRequestService, model: &str) -> Result<(), Error> {
     let messages = get_messages(connect).await?;
     info!("Found {} messages to process", messages.len());
 
@@ -55,7 +55,7 @@ pub async fn execute<'a>(service: &'a ChatRequestService<'a>, model: &str) -> Re
 }
 
 pub async fn run<'a>(
-    service: &'a ChatRequestService<'a>,
+    service: &ChatRequestService,
     replay_sub_command: &ReplaySubCommand,
 ) -> Result<(), Error> {
     info!("specified model: {:?}", replay_sub_command.model);

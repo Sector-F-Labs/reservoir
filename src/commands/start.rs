@@ -1,5 +1,4 @@
 use crate::repos::config::get_reservoir_port;
-use crate::repos::message::AnyMessageRepository;
 use anyhow::Error;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
@@ -28,7 +27,7 @@ pub async fn start_server(port: u16) -> Result<(), Error> {
     }
 }
 
-pub async fn run(_repo: &AnyMessageRepository, ollama: bool) -> Result<(), Error> {
+pub async fn run(ollama: bool) -> Result<(), Error> {
     let port = if ollama { 11434 } else { get_reservoir_port() };
     start_server(port).await
 }

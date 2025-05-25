@@ -1,3 +1,1 @@
-pub mod embedding;
-
-pub use embedding::{AnyEmbeddingRepository, EmbeddingRepository};
+pub mod neo4j_embedding;
