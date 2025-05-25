@@ -25,7 +25,7 @@ where
     let instance = message.instance.clone();
     let trace_id = message.trace_id.clone();
     let role = message.role.clone();
-    let timestamp = message.timestamp.clone();
+    let timestamp = message.timestamp;
 
     info!("Attaching embedding to message with ID: {}", message_id);
     info!("Model: {}", model);

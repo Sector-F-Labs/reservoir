@@ -1,9 +1,9 @@
+use dirs_next::config_dir;
+use once_cell::sync::OnceCell;
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
 use std::path::PathBuf;
-use once_cell::sync::OnceCell;
-use serde::{Deserialize, Serialize};
-use dirs_next::config_dir;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ReservoirConfig {
@@ -74,30 +74,36 @@ fn load_config_file() -> ReservoirConfig {
 }
 
 fn get_config() -> &'static ReservoirConfig {
-    CONFIG.get_or_init(|| load_config_file())
+    CONFIG.get_or_init(load_config_file)
 }
 
 pub fn get_neo4j_uri() -> String {
-    get_config().neo4j_uri.clone()
+    get_config()
+        .neo4j_uri
+        .clone()
         .or_else(|| env::var("NEO4J_URI").ok())
         .unwrap_or_else(|| "bolt://localhost:7687".to_string())
 }
 
 pub fn get_neo4j_user() -> String {
-    get_config().neo4j_user.clone()
+    get_config()
+        .neo4j_user
+        .clone()
         .or_else(|| env::var("NEO4J_USER").ok())
         .unwrap_or_else(|| "neo4j".to_string())
 }
 
 pub fn get_neo4j_password() -> String {
-    get_config().neo4j_password.clone()
+    get_config()
+        .neo4j_password
+        .clone()
         .or_else(|| env::var("NEO4J_PASSWORD").ok())
         .unwrap_or_else(|| "password".to_string())
 }
 
 pub fn get_reservoir_port() -> u16 {
-    get_config().reservoir_port
+    get_config()
+        .reservoir_port
         .or_else(|| env::var("RESERVOIR_PORT").ok().and_then(|v| v.parse().ok()))
         .unwrap_or(3017)
 }
-

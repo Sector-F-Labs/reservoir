@@ -37,15 +37,15 @@ impl EmbeddingClient {
 
     pub fn get_node_name(&self) -> String {
         match self {
-            EmbeddingClient::OpenAI { .. } => format!("Embedding1536"),
-            EmbeddingClient::FastEmbed { .. } => format!("Embedding1024"),
+            EmbeddingClient::OpenAI { .. } => "Embedding1536".to_string(),
+            EmbeddingClient::FastEmbed { .. } => "Embedding1024".to_string(),
         }
     }
 
     pub fn get_index_name(&self) -> String {
         match self {
-            EmbeddingClient::OpenAI { .. } => format!("embedding1536"),
-            EmbeddingClient::FastEmbed { .. } => format!("embedding1024"),
+            EmbeddingClient::OpenAI { .. } => "embedding1536".to_string(),
+            EmbeddingClient::FastEmbed { .. } => "embedding1024".to_string(),
         }
     }
 

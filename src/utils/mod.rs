@@ -20,29 +20,25 @@ fn message_to_string(msg: &Message) -> String {
     }
 }
 
-pub fn compress_system_context(messages: &Vec<Message>) -> Vec<Message> {
+pub fn compress_system_context(messages: &[Message]) -> Vec<Message> {
     let first_index = messages.iter().position(|m| m.role == "system");
     let last_index = messages.iter().rposition(|m| m.role == "system");
 
     if let (Some(first), Some(last)) = (first_index, last_index) {
         if first != 0 || first == last {
-            return messages.clone(); // return original if invalid or nothing to compress
+            return messages.to_vec();
         }
 
         let mut compressed = vec![messages[0].clone()];
 
-        for i in first + 1..=last {
-            let msg = &messages[i];
-            let line = format!("\n{}", message_to_string(msg));
-            compressed[0].content += &line;
+        for item in messages.iter().take(last + 1).skip(first + 1) {
+            compressed[0].content += &format!("\n{}", message_to_string(item));
         }
 
-        // Add the remaining messages (after the last system prompt)
         compressed.extend_from_slice(&messages[last + 1..]);
-
         compressed
     } else {
-        messages.clone()
+        messages.to_vec()
     }
 }
 

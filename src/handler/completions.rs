@@ -59,13 +59,13 @@ pub async fn is_last_message_too_big(last_message: &Message, model: &ModelInfo) 
 
         // Serialize and return the error response
         let response_bytes = serde_json::to_vec(&error_response).unwrap();
-        return Some(Bytes::from(response_bytes));
+        Some(Bytes::from(response_bytes))
     } else {
         info!(
             "Last message token count ({}) is within limit ({}).",
             last_message_tokens, input_token_limit
         );
-        return None;
+        None
     }
 }
 pub async fn handle_with_partition(
@@ -74,7 +74,7 @@ pub async fn handle_with_partition(
     whole_body: Bytes,
 ) -> Result<Bytes, Error> {
     let json_string = String::from_utf8_lossy(&whole_body).to_string();
-    let mut chat_request_model = ChatRequest::from_json(json_string.as_str()).expect("Valid JSON");
+    let chat_request_model = ChatRequest::from_json(json_string.as_str()).expect("Valid JSON");
     let model = ModelInfo::new(chat_request_model.model.clone());
 
     let trace_id = Uuid::new_v4().to_string();
@@ -119,7 +119,7 @@ pub async fn handle_with_partition(
 
     let similar_pairs = find_connections_between_nodes(connect, &similar).await?;
     similar.extend(similar_pairs);
-    let first = similar.first().clone();
+    let first = similar.first();
     let similar = match first {
         Some(first) => {
             let nodes = find_nodes_connected_to_node(connect, first).await?;
@@ -158,7 +158,7 @@ pub async fn handle_with_partition(
         .expect("Could not save the request");
 
     let mut enriched_chat_request =
-        enrich_chat_request(similar, last_messages, &mut chat_request_model);
+        enrich_chat_request(similar, last_messages, &chat_request_model);
     truncate_messages_if_needed(&mut enriched_chat_request.messages, model.input_tokens);
 
     let chat_response = get_completion_message(&model, &enriched_chat_request)

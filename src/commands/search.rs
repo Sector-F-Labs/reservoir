@@ -36,18 +36,13 @@ pub async fn run(service: &ChatRequestService, cmd: &SearchSubCommand) -> Result
         .unwrap_or_else(|| "default".to_string());
     let instance = cmd.instance.clone().unwrap_or_else(|| partition.clone());
     let count = 10; // Default count for CLI search
-    match execute(
-        service,
-        partition,
-        instance,
+    let options = SearchOptions {
         count,
-        cmd.term.clone(),
-        cmd.semantic,
-        cmd.link,
-        cmd.deduplicate,
-    )
-    .await
-    {
+        semantic: cmd.semantic,
+        link: cmd.link,
+        deduplicate: cmd.deduplicate,
+    };
+    match execute(service, partition, instance, cmd.term.clone(), options).await {
         Ok(messages) => {
             for (i, msg) in messages.iter().enumerate() {
                 println!("{}. {}: {}", i + 1, msg.role, msg.content);
@@ -61,17 +56,21 @@ pub async fn run(service: &ChatRequestService, cmd: &SearchSubCommand) -> Result
     }
 }
 
-pub async fn execute<'a>(
+pub struct SearchOptions {
+    pub count: usize,
+    pub semantic: bool,
+    pub link: bool,
+    pub deduplicate: bool,
+}
+
+pub async fn execute(
     service: &ChatRequestService,
     partition: String,
     instance: String,
-    count: usize,
     term: String,
-    semantic: bool,
-    link: bool,
-    deduplicate: bool,
+    options: SearchOptions,
 ) -> Result<Vec<Message>, Error> {
-    if semantic {
+    if options.semantic {
         let client = EmbeddingClient::with_fastembed("bge-large-env15");
         let embedding = get_embeddings_for_txt(&term, client.clone()).await?;
         let mut similar = service
@@ -81,13 +80,13 @@ pub async fn execute<'a>(
                 "search-trace-id",
                 &partition,
                 &instance,
-                count,
+                options.count,
             )
             .await?;
-        if deduplicate {
+        if options.deduplicate {
             similar = deduplicate_message_nodes(similar);
         }
-        if link {
+        if options.link {
             let similar_pairs = service.find_connections_between_nodes(&similar).await?;
             similar.extend(similar_pairs);
             let first = similar.first().cloned();
@@ -121,7 +120,7 @@ pub async fn execute<'a>(
                     .to_lowercase()
                     .contains(&term.to_lowercase())
             })
-            .take(count)
+            .take(options.count)
             .map(|m| m.to_message())
             .collect();
         Ok(filtered)
