@@ -7,12 +7,10 @@ use crate::clients::openai::types::{
     enrich_chat_request, ChatRequest, ChatResponse, Choice, Message,
 };
 use crate::models::message_node::MessageNode;
-use crate::repos::embedding::AnyEmbeddingRepository;
 use crate::repos::message::neo4j_message::{
-    connect_synapses, find_nodes_connected_to_node, save_message_node,
+    connect_synapses, find_connections_between_nodes, find_nodes_connected_to_node,
+    get_last_messages_for_partition_and_instance, save_message_node,
 };
-use crate::repos::message::AnyMessageRepository;
-use crate::repos::message::MessageRepository;
 use crate::services::chat_request::ChatRequestService;
 use crate::utils::connector::connect;
 use crate::utils::{
@@ -80,9 +78,7 @@ pub async fn handle_with_partition(
     let model = ModelInfo::new(chat_request_model.model.clone());
 
     let trace_id = Uuid::new_v4().to_string();
-    let message_repo = AnyMessageRepository::new_neo4j();
-    let embeddings_repo = AnyEmbeddingRepository::new_neo4j();
-    let service = ChatRequestService::new(&message_repo, &embeddings_repo);
+    let service = ChatRequestService::new();
 
     let last_message = chat_request_model
         .messages
@@ -121,9 +117,7 @@ pub async fn handle_with_partition(
     };
     similar = deduplicate_message_nodes(similar);
 
-    let similar_pairs = message_repo
-        .find_connections_between_nodes(&similar)
-        .await?;
+    let similar_pairs = find_connections_between_nodes(connect, &similar).await?;
     similar.extend(similar_pairs);
     let first = similar.first().clone();
     let similar = match first {
@@ -140,17 +134,17 @@ pub async fn handle_with_partition(
         None => similar,
     };
 
-    let last_messages = message_repo
-        .get_last_messages_for_partition_and_instance(
-            partition.to_string(),
-            instance.to_string(),
-            LAST_MESSAGES_LIMIT,
-        )
-        .await
-        .unwrap_or_else(|e| {
-            error!("Error finding last messages: {}", e);
-            Vec::new()
-        });
+    let last_messages = get_last_messages_for_partition_and_instance(
+        connect,
+        partition.to_string(),
+        instance.to_string(),
+        LAST_MESSAGES_LIMIT,
+    )
+    .await
+    .unwrap_or_else(|e| {
+        error!("Error finding last messages: {}", e);
+        Vec::new()
+    });
     let embedding_client = EmbeddingClient::with_fastembed("bge-large-en-v15");
     service
         .save_chat_request(

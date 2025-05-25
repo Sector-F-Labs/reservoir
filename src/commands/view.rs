@@ -1,18 +1,17 @@
 use crate::args::ViewSubCommand;
 use crate::clients::openai::types::Message;
-use crate::repos::message::{AnyMessageRepository, MessageRepository};
+use crate::repos::message::neo4j_message::get_last_messages_for_partition_and_instance;
+use crate::utils::connector::connect;
 use anyhow::Error;
 use tracing::error;
 
 pub async fn execute(
-    repo: &AnyMessageRepository,
     partition: String,
     instance: String,
     count: usize,
 ) -> Result<Vec<Message>, Error> {
-    let mut messages = repo
-        .get_last_messages_for_partition_and_instance(partition, instance, count)
-        .await?;
+    let mut messages =
+        get_last_messages_for_partition_and_instance(connect, partition, instance, count).await?;
     messages.sort_by(|a, b| {
         let a_time = a.timestamp;
         let b_time = b.timestamp;
@@ -23,7 +22,7 @@ pub async fn execute(
     Ok(messages)
 }
 
-pub async fn run(repo: &AnyMessageRepository, view_cmd: &ViewSubCommand) -> Result<(), Error> {
+pub async fn run(view_cmd: &ViewSubCommand) -> Result<(), Error> {
     let partition = view_cmd
         .partition
         .clone()
@@ -33,7 +32,7 @@ pub async fn run(repo: &AnyMessageRepository, view_cmd: &ViewSubCommand) -> Resu
         .clone()
         .unwrap_or_else(|| partition.clone());
 
-    match execute(repo, partition, instance, view_cmd.count).await {
+    match execute(partition, instance, view_cmd.count).await {
         Ok(output) => {
             // pretty print
             for message in output {

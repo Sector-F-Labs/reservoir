@@ -9,9 +9,7 @@ use http_body_util::Full;
 use hyper::body::Bytes;
 use hyper::body::Incoming;
 use hyper::{Method, Request, Response, StatusCode};
-use repos::embedding::AnyEmbeddingRepository;
 use repos::message::neo4j_message::init_vector_index;
-use repos::message::AnyMessageRepository;
 use services::chat_request::ChatRequestService;
 use std::convert::Infallible;
 use tracing::{error, info};
@@ -130,9 +128,7 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
                 return Ok(response);
             }
 
-            let repo = AnyMessageRepository::new_neo4j();
-            let embeddings_repo = AnyEmbeddingRepository::new_neo4j();
-            let service = ChatRequestService::new(&repo, &embeddings_repo);
+            let service = ChatRequestService::new();
 
             let result = search_execute(
                 &service, partition, instance, count, term, semantic, false, false,
@@ -167,9 +163,7 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
             // convert to usize
             let count = count as usize;
 
-            let repo = AnyMessageRepository::new_neo4j();
-
-            let result = execute(&repo, partition, instance, count).await;
+            let result = execute(partition, instance, count).await;
 
             match result {
                 Ok(output) => {
@@ -210,26 +204,24 @@ async fn main() -> Result<(), Error> {
         .init();
 
     let args = Args::parse();
-    let message_repo = AnyMessageRepository::new_neo4j();
-    let embedding_repo = AnyEmbeddingRepository::new_neo4j();
-    let service = ChatRequestService::new(&message_repo, &embedding_repo);
+    let service = ChatRequestService::new();
     init_vector_index(connect).await?;
 
     match args.subcmd {
         Some(SubCommands::Start(ref start_cmd)) => {
-            commands::start::run(&message_repo, start_cmd.ollama).await?;
+            commands::start::run(start_cmd.ollama).await?;
         }
         Some(SubCommands::Config(_config_subcmd)) => {
             commands::config::run().await?;
         }
         Some(SubCommands::Export) => {
-            commands::export::run(&message_repo).await?;
+            commands::export::run().await?;
         }
         Some(SubCommands::Import(import_cmd)) => {
             commands::import::run(&import_cmd.file).await?;
         }
         Some(SubCommands::View(ref view_cmd)) => {
-            commands::view::run(&message_repo, view_cmd).await?;
+            commands::view::run(view_cmd).await?;
         }
         Some(SubCommands::Search(ref search_cmd)) => {
             commands::search::run(&service, search_cmd).await?;

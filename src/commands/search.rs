@@ -29,10 +29,7 @@ pub struct SearchSubCommand {
     pub deduplicate: bool,
 }
 
-pub async fn run<'a>(
-    service: &'a ChatRequestService<'a>,
-    cmd: &SearchSubCommand,
-) -> Result<(), Error> {
+pub async fn run(service: &ChatRequestService, cmd: &SearchSubCommand) -> Result<(), Error> {
     let partition = cmd
         .partition
         .clone()
@@ -65,7 +62,7 @@ pub async fn run<'a>(
 }
 
 pub async fn execute<'a>(
-    service: &'a ChatRequestService<'a>,
+    service: &ChatRequestService,
     partition: String,
     instance: String,
     count: usize,
