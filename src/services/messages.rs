@@ -59,7 +59,6 @@ pub async fn get_related_messages_with_strategy(
         }
         found_messages = deduplicate_message_nodes(found_messages);
     }
-    found_messages = deduplicate_message_nodes(found_messages);
 
     Ok(found_messages.into_iter().take(top_k).collect())
 }
