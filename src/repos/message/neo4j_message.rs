@@ -313,6 +313,31 @@ where
     Ok(())
 }
 
+pub async fn find_synapse_connected_node<C, FutC>(
+    get_connector: C,
+    node: &MessageNode,
+) -> Result<Vec<MessageNode>, Error>
+where
+    C: Fn() -> FutC,
+    FutC: AsyncGraphFuture,
+{
+    let graph = get_connector().await?;
+    let q = r#"
+            MATCH (m:MessageNode {trace_id: $trace_id})-[:SYNAPSE*1..10]-(n:MessageNode)
+            RETURN DISTINCT n
+        "#;
+    let mut result = graph
+        .execute(query(q).param("trace_id", node.trace_id.clone()))
+        .await?;
+
+    let mut connected_nodes = Vec::new();
+    while let Ok(Some(row)) = result.next().await {
+        let node: MessageNode = row.get("n")?;
+        connected_nodes.push(node);
+    }
+    Ok(connected_nodes)
+}
+
 pub async fn find_connections_between_nodes<C, FutC>(
     get_connector: C,
     nodes: &[MessageNode],

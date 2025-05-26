@@ -19,7 +19,7 @@ pub async fn get_completion_message(
     let context = compress_system_context(&chat_request.messages);
     let chat_request = ChatRequest::new(model_info.name.clone(), context);
 
-    let body = match serde_json::to_string(&chat_request) {
+    let input_body = match serde_json::to_string(&chat_request) {
         Ok(b) => b,
         Err(e) => {
             error!("Failed to serialize chat request model: {}", e);
@@ -32,7 +32,7 @@ pub async fn get_completion_message(
 
     debug!(
         "Sending request to LLM API: {} -  {}\nbody:\n{}",
-        body,
+        input_body,
         model_info.name.clone(),
         model_info.base_url.clone(),
     );
@@ -42,7 +42,7 @@ pub async fn get_completion_message(
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
         .header(header::AUTHORIZATION, format!("Bearer {}", model_info.key))
-        .body(body)
+        .body(input_body)
         .send()
         .await;
 
