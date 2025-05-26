@@ -54,11 +54,12 @@ pub async fn get_related_messages_with_strategy(
         if found_messages.len() > top_k * 3 {
             break;
         }
-        if connected.len() > 1 {
+        if connected.len() > 2 {
             found_messages.append(connected.as_mut());
-            found_messages = deduplicate_message_nodes(found_messages);
         }
+        found_messages = deduplicate_message_nodes(found_messages);
     }
+    found_messages = deduplicate_message_nodes(found_messages);
 
     Ok(found_messages.into_iter().take(top_k).collect())
 }

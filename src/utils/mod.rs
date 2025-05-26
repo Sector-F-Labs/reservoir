@@ -46,9 +46,14 @@ pub fn deduplicate_message_nodes(message_nodes: Vec<MessageNode>) -> Vec<Message
     let mut unique_nodes = HashSet::new();
     let mut deduplicated = Vec::new();
 
+    let message_nodes = message_nodes.iter().filter(|node| node.content.is_some());
     for node in message_nodes {
-        if unique_nodes.insert(node.content.clone()) {
-            deduplicated.push(node);
+        if let Some(content) = node.content.clone() {
+            // get long lived trimmed content
+            let content = content.trim().to_string();
+            if unique_nodes.insert(content) {
+                deduplicated.push(node.clone());
+            }
         }
     }
     deduplicated
