@@ -1,12 +1,7 @@
 use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingClient};
-use crate::repos::embedding::neo4j_embedding::{
-    attach_embedding_to_message, find_similar_embeddings,
-};
+use crate::repos::embedding::neo4j_embedding::find_similar_embeddings;
 
-use crate::repos::message::neo4j_message::{
-    find_connections_between_nodes, find_nodes_connected_to_node, get_messages_for_embedding_nodes,
-    get_messages_for_partition, save_message_node,
-};
+use crate::repos::message::neo4j_message::{get_messages_for_embedding_nodes, save_message_node};
 use crate::utils::connector::connect;
 use anyhow::Error;
 use tracing::info;
@@ -38,7 +33,9 @@ impl ChatRequestService {
         Ok(())
     }
 
-    pub async fn find_similar_messages(
+    /// Gets a list of similar messages based on the embeddings they are linked
+    /// to. This is useful for finding related messages in a chat history.
+    pub async fn find_semantically_similar_messages(
         &self,
         embedding: Vec<f32>,
         embedding_client: &EmbeddingClient,
@@ -63,7 +60,6 @@ impl ChatRequestService {
                     info!("No similar embeddings found");
                     return Ok(vec![]);
                 }
-                info!("Found similar embeddings: {:?}", embeddings);
                 embeddings
             }
             Err(e) => {
@@ -75,36 +71,5 @@ impl ChatRequestService {
         let node_ids: Vec<i64> = embedding_result.iter().filter_map(|e| e.id).collect();
         let messages = get_messages_for_embedding_nodes(connect, node_ids, embedding_client).await;
         messages
-    }
-
-    pub(crate) async fn find_connections_between_nodes(
-        &self,
-        similar: &[MessageNode],
-    ) -> Result<Vec<MessageNode>, Error> {
-        find_connections_between_nodes(connect, similar).await
-    }
-
-    pub(crate) async fn find_nodes_connected_to_node(
-        &self,
-        first: &MessageNode,
-    ) -> Result<Vec<MessageNode>, Error> {
-        find_nodes_connected_to_node(connect, first).await
-    }
-
-    pub(crate) async fn get_messages_for_partition(
-        &self,
-        partition: &str,
-    ) -> Result<Vec<MessageNode>, Error> {
-        get_messages_for_partition(connect, Some(partition)).await
-    }
-
-    pub(crate) async fn attach_embedding_to_message(
-        &self,
-        message: &MessageNode,
-        embedding: Vec<f32>,
-        embedding_client: &EmbeddingClient,
-        model: &str,
-    ) -> Result<(), Error> {
-        attach_embedding_to_message(connect, message, embedding, embedding_client, model).await
     }
 }

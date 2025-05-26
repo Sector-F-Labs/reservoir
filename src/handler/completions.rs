@@ -8,21 +8,19 @@ use crate::clients::openai::types::{
 };
 use crate::models::message_node::MessageNode;
 use crate::repos::message::neo4j_message::{
-    connect_synapses, find_connections_between_nodes, find_nodes_connected_to_node,
-    get_last_messages_for_partition_and_instance, save_message_node,
+    connect_synapses, get_last_messages_for_partition_and_instance, save_message_node,
 };
 use crate::services::chat_request::ChatRequestService;
+use crate::services::messages::get_related_messages_with_strategy;
 use crate::utils::connector::connect;
 use crate::utils::{
-    count_single_message_tokens, deduplicate_message_nodes, get_last_message_in_chat_request,
-    truncate_messages_if_needed,
+    count_single_message_tokens, get_last_message_in_chat_request, truncate_messages_if_needed,
 };
 use bytes::Bytes;
 use uuid::Uuid;
 
 use tracing::{error, info};
 
-const SIMILAR_MESSAGES_LIMIT: usize = 7;
 const LAST_MESSAGES_LIMIT: usize = 15;
 
 pub async fn is_last_message_too_big(last_message: &Message, model: &ModelInfo) -> Option<Bytes> {
@@ -75,7 +73,7 @@ pub async fn handle_with_partition(
 ) -> Result<Bytes, Error> {
     let json_string = String::from_utf8_lossy(&whole_body).to_string();
     let chat_request_model = ChatRequest::from_json(json_string.as_str()).expect("Valid JSON");
-    let model = ModelInfo::new(chat_request_model.model.clone());
+    let model_info = ModelInfo::new(chat_request_model.model.clone());
 
     let trace_id = Uuid::new_v4().to_string();
     let service = ChatRequestService::new();
@@ -85,7 +83,7 @@ pub async fn handle_with_partition(
         .last()
         .ok_or_else(|| anyhow::anyhow!("There are no messages in the request"))?;
 
-    let too_big = is_last_message_too_big(last_message, &model).await;
+    let too_big = is_last_message_too_big(last_message, &model_info).await;
     if let Some(bytes) = too_big {
         return Ok(bytes);
     }
@@ -94,45 +92,12 @@ pub async fn handle_with_partition(
     get_last_message_in_chat_request(&chat_request_model)?;
 
     info!("Using search term: {}", search_term);
-    let client = EmbeddingClient::with_fastembed("bge-large-en-v15");
-    let embeddings = get_embeddings_for_txt(search_term, client.clone()).await?;
+    let embedding_client = EmbeddingClient::with_fastembed("bge-large-en-v15");
+    let embeddings = get_embeddings_for_txt(search_term, embedding_client.clone()).await?;
 
-    let mut similar = if !embeddings.is_empty() {
-        service
-            .find_similar_messages(
-                embeddings.clone(),
-                &client,
-                trace_id.as_str(),
-                partition,
-                instance,
-                SIMILAR_MESSAGES_LIMIT,
-            )
-            .await
-            .unwrap_or_else(|e| {
-                error!("Error finding similar messages: {}", e);
-                Vec::new()
-            })
-    } else {
-        Vec::new()
-    };
-    similar = deduplicate_message_nodes(similar);
-
-    let similar_pairs = find_connections_between_nodes(connect, &similar).await?;
-    similar.extend(similar_pairs);
-    let first = similar.first();
-    let similar = match first {
-        Some(first) => {
-            let nodes = find_nodes_connected_to_node(connect, first).await?;
-            let nodes = deduplicate_message_nodes(nodes);
-
-            if nodes.len() > 2 {
-                nodes
-            } else {
-                similar
-            }
-        }
-        None => similar,
-    };
+    let similar =
+        get_related_messages_with_strategy(embeddings, &embedding_client, partition, instance, 30)
+            .await?;
 
     let last_messages = get_last_messages_for_partition_and_instance(
         connect,
@@ -159,9 +124,9 @@ pub async fn handle_with_partition(
 
     let mut enriched_chat_request =
         enrich_chat_request(similar, last_messages, &chat_request_model);
-    truncate_messages_if_needed(&mut enriched_chat_request.messages, model.input_tokens);
+    truncate_messages_if_needed(&mut enriched_chat_request.messages, model_info.input_tokens);
 
-    let chat_response = get_completion_message(&model, &enriched_chat_request)
+    let chat_response = get_completion_message(&model_info, &enriched_chat_request)
         .await
         .expect("Failed to get completion message");
     let message_node = chat_response.choices.first().unwrap().message.clone();

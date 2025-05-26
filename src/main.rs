@@ -11,7 +11,6 @@ use hyper::body::Bytes;
 use hyper::body::Incoming;
 use hyper::{Method, Request, Response, StatusCode};
 use repos::message::neo4j_message::init_vector_index;
-use services::chat_request::ChatRequestService;
 use std::convert::Infallible;
 use tracing::{error, info};
 use utils::connector::connect;
@@ -129,14 +128,13 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
                 return Ok(response);
             }
 
-            let service = ChatRequestService::new();
             let search_options = SearchOptions {
                 count,
                 semantic,
                 link: false,        // Not used in this context
                 deduplicate: false, // Not used in this context
             };
-            let result = search_execute(&service, partition, instance, term, search_options).await;
+            let result = search_execute(partition, instance, term, search_options).await;
             match result {
                 Ok(output) => {
                     let json = serde_json::to_string(&output).unwrap();
@@ -207,7 +205,6 @@ async fn main() -> Result<(), Error> {
         .init();
 
     let args = Args::parse();
-    let service = ChatRequestService::new();
     init_vector_index(connect).await?;
 
     match args.subcmd {
@@ -227,13 +224,13 @@ async fn main() -> Result<(), Error> {
             commands::view::run(view_cmd).await?;
         }
         Some(SubCommands::Search(ref search_cmd)) => {
-            commands::search::run(&service, search_cmd).await?;
+            commands::search::run(search_cmd).await?;
         }
         Some(SubCommands::Ingest(ref ingest_cmd)) => {
             commands::ingest::run(ingest_cmd).await?;
         }
         Some(SubCommands::Replay(ref r_cmd)) => {
-            commands::replay::run(&service, r_cmd).await?;
+            commands::replay::run(r_cmd).await?;
         }
         None => {}
     };

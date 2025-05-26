@@ -4,16 +4,17 @@ use tracing::info;
 use crate::{
     args::ReplaySubCommand,
     clients::embedding::{get_embeddings_for_txt, EmbeddingClient},
-    repos::message::neo4j_message::get_messages,
-    services::chat_request::ChatRequestService,
+    repos::{
+        embedding::neo4j_embedding::attach_embedding_to_message,
+        message::neo4j_message::get_messages,
+    },
     utils::connector::connect,
 };
 
-pub async fn execute(service: &ChatRequestService, model: &str) -> Result<(), Error> {
+pub async fn execute(model: &str) -> Result<(), Error> {
     let messages = get_messages(connect).await?;
     info!("Found {} messages to process", messages.len());
 
-    // Spawn tasks for each message
     for message in messages {
         let ec: EmbeddingClient = EmbeddingClient::with_fastembed(model);
         println!("message id : {:?}", message.id);
@@ -22,8 +23,7 @@ pub async fn execute(service: &ChatRequestService, model: &str) -> Result<(), Er
             Some(content) => match get_embeddings_for_txt(content.as_str(), ec.clone()).await {
                 Ok(embeddings) => {
                     info!("attaching to message: {:?}", message.id);
-                    let r = service
-                        .attach_embedding_to_message(&message, embeddings, &ec, model)
+                    let r = attach_embedding_to_message(connect, &message, embeddings, &ec, model)
                         .await;
                     match r {
                         Ok(_) => {
@@ -54,11 +54,8 @@ pub async fn execute(service: &ChatRequestService, model: &str) -> Result<(), Er
     Ok(())
 }
 
-pub async fn run(
-    service: &ChatRequestService,
-    replay_sub_command: &ReplaySubCommand,
-) -> Result<(), Error> {
+pub async fn run(replay_sub_command: &ReplaySubCommand) -> Result<(), Error> {
     info!("specified model: {:?}", replay_sub_command.model);
     let model = "bge-large-en-v15";
-    execute(service, model).await
+    execute(model).await
 }
