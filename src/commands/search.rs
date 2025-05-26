@@ -1,5 +1,6 @@
 use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingInfo};
 use crate::clients::openai::types::Message;
+use crate::repos::config::{self};
 use crate::repos::message::neo4j_message::get_messages_for_partition;
 use crate::services;
 use crate::utils::connector::connect;
@@ -86,13 +87,14 @@ pub async fn execute(
         if options.deduplicate {
             similar_messages = deduplicate_message_nodes(similar_messages);
         }
+        let context_size = config::get_context_size();
         if options.link {
             similar_messages = services::messages::get_related_messages_with_strategy(
                 embedding,
                 &embedding_info,
                 partition.as_str(),
                 instance.as_str(),
-                10,
+                context_size,
             )
             .await?;
         }

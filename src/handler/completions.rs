@@ -7,6 +7,7 @@ use crate::clients::openai::types::{
     enrich_chat_request, ChatRequest, ChatResponse, Choice, Message,
 };
 use crate::models::message_node::MessageNode;
+use crate::repos::config;
 use crate::repos::message::neo4j_message::{
     connect_synapses, get_last_messages_for_partition_and_instance, save_message_node,
 };
@@ -95,9 +96,15 @@ pub async fn handle_with_partition(
     let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
     let embeddings = get_embeddings_for_txt(search_term, embedding_info.clone()).await?;
 
-    let similar =
-        get_related_messages_with_strategy(embeddings, &embedding_info, partition, instance, 10)
-            .await?;
+    let context_size = config::get_context_size();
+    let similar = get_related_messages_with_strategy(
+        embeddings,
+        &embedding_info,
+        partition,
+        instance,
+        context_size,
+    )
+    .await?;
 
     let last_messages = get_last_messages_for_partition_and_instance(
         connect,
