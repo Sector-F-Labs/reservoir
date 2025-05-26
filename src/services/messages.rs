@@ -1,8 +1,7 @@
 use anyhow::Error;
-use tracing::info;
 
 use crate::{
-    clients::embedding::EmbeddingClient,
+    clients::embedding::EmbeddingInfo,
     models::message_node::MessageNode,
     repos::{
         embedding::neo4j_embedding::find_similar_embeddings,
@@ -15,7 +14,7 @@ use crate::{
 /// given a specific embedding model
 pub async fn get_most_similar_messages(
     embedding: Vec<f32>,
-    embedding_client: &EmbeddingClient,
+    embedding_info: &EmbeddingInfo,
     partition: &str,
     instance: &str,
     top_k: usize,
@@ -23,7 +22,7 @@ pub async fn get_most_similar_messages(
     let related_embedding_nodes = find_similar_embeddings(
         connect,
         embedding,
-        embedding_client,
+        embedding_info,
         partition,
         instance,
         top_k,
@@ -36,19 +35,19 @@ pub async fn get_most_similar_messages(
         .collect();
 
     let related_messages =
-        get_messages_for_embedding_nodes(connect, embedding_node_ids, embedding_client).await;
+        get_messages_for_embedding_nodes(connect, embedding_node_ids, embedding_info).await;
     related_messages
 }
 
 pub async fn get_related_messages_with_strategy(
     embedding: Vec<f32>,
-    embedding_client: &EmbeddingClient,
+    embedding_info: &EmbeddingInfo,
     partition: &str,
     instance: &str,
     top_k: usize,
 ) -> Result<Vec<MessageNode>, Error> {
     let similar_messages =
-        get_most_similar_messages(embedding, embedding_client, partition, instance, top_k).await?;
+        get_most_similar_messages(embedding, embedding_info, partition, instance, top_k).await?;
     let mut found_messages = vec![];
     for message in similar_messages.clone() {
         let mut connected = find_nodes_connected_to_node(connect, &message).await?;
@@ -59,15 +58,6 @@ pub async fn get_related_messages_with_strategy(
             found_messages.append(connected.as_mut());
             found_messages = deduplicate_message_nodes(found_messages);
         }
-    }
-    if similar_messages.is_empty() {
-        info!("No related messages found for the given embedding.");
-        return Ok(vec![]);
-    } else {
-        info!(
-            "Found {} related messages for the given embedding.",
-            similar_messages.len()
-        );
     }
 
     Ok(found_messages.into_iter().take(top_k).collect())

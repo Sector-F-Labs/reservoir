@@ -5,7 +5,7 @@ use neo4rs::{query, Graph};
 use tracing::{error, info};
 
 use crate::{
-    clients::embedding::EmbeddingClient,
+    clients::embedding::EmbeddingInfo,
     models::{embedding_node::EmbeddingNode, message_node::MessageNode},
 };
 
@@ -13,7 +13,7 @@ pub async fn attach_embedding_to_message<C, FutC>(
     get_connector: C,
     message: &MessageNode,
     embedding: Vec<f32>,
-    embedding_client: &EmbeddingClient,
+    embedding_info: &EmbeddingInfo,
     model: &str,
 ) -> Result<(), Error>
 where
@@ -49,7 +49,7 @@ where
             }})
             CREATE (m)-[:HAS_EMBEDDING]->(e)
             "#,
-        embedding_client.get_node_name()
+        embedding_info.get_node_name()
     );
     let q = query(query_string.as_str())
         .param("embedding", embedding)
@@ -68,7 +68,7 @@ where
 pub async fn find_similar_embeddings<C, FutC>(
     get_connector: C,
     embedding: Vec<f32>,
-    embedding_client: &EmbeddingClient,
+    embedding_info: &EmbeddingInfo,
     partition: &str,
     instance: &str,
     top_k: usize,
@@ -98,7 +98,7 @@ where
                        score
                 ORDER BY score DESC
                 "#,
-        embedding_client.get_index_name()
+        embedding_info.get_index_name()
     );
     let q = query(query_string.as_str())
         .param("embedding", embedding)

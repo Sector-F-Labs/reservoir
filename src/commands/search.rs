@@ -1,11 +1,7 @@
-use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingClient};
+use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingInfo};
 use crate::clients::openai::types::Message;
-use crate::repos::message::neo4j_message::{
-    find_connections_between_nodes, find_nodes_connected_to_node, get_messages_for_partition,
-};
+use crate::repos::message::neo4j_message::get_messages_for_partition;
 use crate::services;
-use crate::services::chat_request::ChatRequestService;
-use crate::services::messages::get_related_messages_with_strategy;
 use crate::utils::connector::connect;
 use crate::utils::deduplicate_message_nodes;
 use anyhow::Error;
@@ -76,11 +72,11 @@ pub async fn execute(
     options: SearchOptions,
 ) -> Result<Vec<Message>, Error> {
     if options.semantic {
-        let embedding_client = EmbeddingClient::with_fastembed("bge-large-env15");
-        let embedding = get_embeddings_for_txt(&term, embedding_client.clone()).await?;
+        let embedding_info = EmbeddingInfo::with_fastembed("bge-large-env15");
+        let embedding = get_embeddings_for_txt(&term, embedding_info.clone()).await?;
         let mut similar_messages = services::messages::get_most_similar_messages(
             embedding.clone(),
-            &embedding_client,
+            &embedding_info,
             partition.as_str(),
             instance.as_str(),
             10,
@@ -93,7 +89,7 @@ pub async fn execute(
         if options.link {
             similar_messages = services::messages::get_related_messages_with_strategy(
                 embedding,
-                &embedding_client,
+                &embedding_info,
                 partition.as_str(),
                 instance.as_str(),
                 10,

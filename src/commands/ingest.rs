@@ -1,5 +1,5 @@
 use crate::args::IngestSubCommand;
-use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingClient};
+use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingInfo};
 use crate::clients::openai::types::Message;
 use crate::models::message_node::MessageNode;
 use crate::repos::message::neo4j_message::save_message_node;
@@ -34,15 +34,15 @@ pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
         role,
         content: content.clone(),
     };
-    let client = EmbeddingClient::default();
-    let test_local = EmbeddingClient::with_fastembed("");
-    let embedding = get_embeddings_for_txt(&content, client.clone()).await?;
+    let embedding_info = EmbeddingInfo::default();
+    let test_local = EmbeddingInfo::with_fastembed("");
+    let embedding = get_embeddings_for_txt(&content, embedding_info.clone()).await?;
     let embedding_test = get_embeddings_for_txt(&content, test_local).await?;
 
     info!("Embedding test: {:?}", embedding_test);
 
     let node = MessageNode::from_message(&message, &trace_id, &partition, &instance, embedding);
-    save_message_node(connect, &node, &client).await?;
+    save_message_node(connect, &node, &embedding_info).await?;
     println!("Saved message with trace_id: {}", trace_id);
     Ok(())
 }

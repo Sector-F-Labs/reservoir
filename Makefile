@@ -15,7 +15,7 @@ dev:
 install:
 	cargo install --path .
 
-install-service: install
+install-service:
 	@echo "Copying plist to LaunchAgents..."
 	mkdir -p ~/Library/LaunchAgents
 	cp scripts/com.sectorflabs.reservoir.plist ~/Library/LaunchAgents/com.sectorflabs.reservoir.plist

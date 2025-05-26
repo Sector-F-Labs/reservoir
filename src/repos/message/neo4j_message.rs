@@ -5,7 +5,7 @@ use neo4rs::{query, Graph};
 use tracing::{error, info};
 
 use crate::{
-    clients::embedding::EmbeddingClient, models::message_node::MessageNode,
+    clients::embedding::EmbeddingInfo, models::message_node::MessageNode,
     utils::connector::AsyncGraphFuture,
 };
 
@@ -84,7 +84,7 @@ where
 pub async fn get_messages_for_embedding_nodes<C, FutC>(
     get_connector: C,
     embedding_nodes: Vec<i64>,
-    embedding_client: &EmbeddingClient,
+    embedding_info: &EmbeddingInfo,
 ) -> Result<Vec<MessageNode>, Error>
 where
     FutC: Future<Output = Result<Graph, Error>>,
@@ -97,7 +97,7 @@ where
             WHERE id(e) IN $embedding_nodes
             RETURN m
             "#,
-        embedding_client.get_node_name()
+        embedding_info.get_node_name()
     );
     let q = query(query_string.as_str()).param("embedding_nodes", embedding_nodes);
 
@@ -113,7 +113,7 @@ where
 pub async fn save_message_node<C, FutC>(
     get_connector: C,
     message_node: &MessageNode,
-    embedding_client: &EmbeddingClient,
+    embedding_info: &EmbeddingInfo,
 ) -> Result<(), Error>
 where
     C: Fn() -> FutC,
@@ -145,8 +145,8 @@ where
             CREATE (m)-[:HAS_EMBEDDING]->(e)
             RETURN id(m) AS nodeId, id(e) AS embeddingId
             "#,
-        embedding_client.get_node_name(),
-        embedding_client.get_model_name()
+        embedding_info.get_node_name(),
+        embedding_info.get_model_name()
     );
     let create_q = query(query_string.as_str())
         .param("trace_id", message_node.trace_id.clone())
@@ -311,75 +311,4 @@ where
         error!("Deleted synapse: {:?}", node);
     }
     Ok(())
-}
-
-pub async fn find_synapse_connected_node<C, FutC>(
-    get_connector: C,
-    node: &MessageNode,
-) -> Result<Vec<MessageNode>, Error>
-where
-    C: Fn() -> FutC,
-    FutC: AsyncGraphFuture,
-{
-    let graph = get_connector().await?;
-    let q = r#"
-            MATCH (m:MessageNode {trace_id: $trace_id})-[:SYNAPSE*1..10]-(n:MessageNode)
-            RETURN DISTINCT n
-        "#;
-    let mut result = graph
-        .execute(query(q).param("trace_id", node.trace_id.clone()))
-        .await?;
-
-    let mut connected_nodes = Vec::new();
-    while let Ok(Some(row)) = result.next().await {
-        let node: MessageNode = row.get("n")?;
-        connected_nodes.push(node);
-    }
-    Ok(connected_nodes)
-}
-
-pub async fn find_connections_between_nodes<C, FutC>(
-    get_connector: C,
-    nodes: &[MessageNode],
-) -> Result<Vec<MessageNode>, Error>
-where
-    C: Fn() -> FutC,
-    FutC: AsyncGraphFuture,
-{
-    if nodes.is_empty() {
-        return Ok(Vec::new());
-    }
-
-    info!("Finding connections between {} nodes", nodes.len());
-
-    let trace_ids: Vec<String> = nodes.iter().map(|n| n.trace_id.clone()).collect();
-
-    let graph = get_connector().await?;
-    // Query to find pairs of connected nodes within the input list,
-    // then unwind the pairs and collect the distinct nodes involved.
-    let query_text = r#"
-            UNWIND $trace_ids AS traceId1
-            UNWIND $trace_ids AS traceId2
-            WITH traceId1, traceId2 // Introduce WITH clause
-            WHERE traceId1 < traceId2 // Apply WHERE after WITH
-            MATCH (n1:MessageNode {trace_id: traceId1})-[r:RESPONDED_WITH]-(n2:MessageNode {trace_id: traceId2})
-            // Unwind the pair of nodes found
-            WITH n1, n2 // Carry forward the matched nodes
-            UNWIND [n1, n2] AS connected_node
-            // Return distinct nodes involved in any connection
-            RETURN DISTINCT connected_node
-        "#;
-
-    let mut result = graph
-        .execute(query(query_text).param("trace_ids", trace_ids))
-        .await?;
-
-    let mut connected_nodes = Vec::new();
-    while let Ok(Some(row)) = result.next().await {
-        // Each row now contains one distinct connected node
-        let node: MessageNode = row.get("connected_node")?;
-        connected_nodes.push(node);
-    }
-
-    Ok(connected_nodes) // Return the vector of MessageNode
 }
