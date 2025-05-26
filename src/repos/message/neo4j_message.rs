@@ -245,7 +245,7 @@ where
 /// Finds nodes connected to a given node within a distance of 10 hops.
 /// Returns a vector of `MessageNode` instances representing the connected nodes.
 /// The distance is defined by the number of hops in the graph.
-pub async fn find_nodes_connected_to_node<C, FutC>(
+pub async fn get_nodes_connected_by_synapses<C, FutC>(
     get_connector: C,
     node: &MessageNode,
 ) -> Result<Vec<MessageNode>, Error>

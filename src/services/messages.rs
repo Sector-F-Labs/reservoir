@@ -5,7 +5,9 @@ use crate::{
     models::message_node::MessageNode,
     repos::{
         embedding::neo4j_embedding::find_similar_embeddings,
-        message::neo4j_message::{find_nodes_connected_to_node, get_messages_for_embedding_nodes},
+        message::neo4j_message::{
+            get_messages_for_embedding_nodes, get_nodes_connected_by_synapses,
+        },
     },
     utils::{connector::connect, deduplicate_message_nodes},
 };
@@ -50,7 +52,7 @@ pub async fn get_related_messages_with_strategy(
         get_most_similar_messages(embedding, embedding_info, partition, instance, top_k).await?;
     let mut found_messages = vec![];
     for message in similar_messages.clone() {
-        let mut connected = find_nodes_connected_to_node(connect, &message).await?;
+        let mut connected = get_nodes_connected_by_synapses(connect, &message).await?;
         if found_messages.len() > top_k * 3 {
             break;
         }
