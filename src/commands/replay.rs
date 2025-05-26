@@ -3,7 +3,7 @@ use tracing::info;
 
 use crate::{
     args::ReplaySubCommand,
-    clients::embedding::{get_embeddings_for_txt, EmbeddingClient},
+    clients::embedding::{get_embeddings_for_txt, EmbeddingInfo},
     repos::{
         embedding::neo4j_embedding::attach_embedding_to_message,
         message::neo4j_message::get_messages,
@@ -16,7 +16,7 @@ pub async fn execute(model: &str) -> Result<(), Error> {
     info!("Found {} messages to process", messages.len());
 
     for message in messages {
-        let ec: EmbeddingClient = EmbeddingClient::with_fastembed(model);
+        let ec: EmbeddingInfo = EmbeddingInfo::with_fastembed(model);
         println!("message id : {:?}", message.id);
 
         match message.content.clone() {

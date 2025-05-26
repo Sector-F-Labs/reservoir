@@ -1,6 +1,6 @@
 use anyhow::Error;
 
-use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingClient};
+use crate::clients::embedding::{get_embeddings_for_txt, EmbeddingInfo};
 use crate::clients::openai::chat_completions::get_completion_message;
 use crate::clients::openai::model_info::ModelInfo;
 use crate::clients::openai::types::{
@@ -92,11 +92,11 @@ pub async fn handle_with_partition(
     get_last_message_in_chat_request(&chat_request_model)?;
 
     info!("Using search term: {}", search_term);
-    let embedding_client = EmbeddingClient::with_fastembed("bge-large-en-v15");
-    let embeddings = get_embeddings_for_txt(search_term, embedding_client.clone()).await?;
+    let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
+    let embeddings = get_embeddings_for_txt(search_term, embedding_info.clone()).await?;
 
     let similar =
-        get_related_messages_with_strategy(embeddings, &embedding_client, partition, instance, 30)
+        get_related_messages_with_strategy(embeddings, &embedding_info, partition, instance, 10)
             .await?;
 
     let last_messages = get_last_messages_for_partition_and_instance(
@@ -110,11 +110,11 @@ pub async fn handle_with_partition(
         error!("Error finding last messages: {}", e);
         Vec::new()
     });
-    let embedding_client = EmbeddingClient::with_fastembed("bge-large-en-v15");
+    let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
     service
         .save_chat_request(
             &chat_request_model,
-            &embedding_client.clone(),
+            &embedding_info.clone(),
             trace_id.as_str(),
             partition,
             instance,
@@ -131,7 +131,7 @@ pub async fn handle_with_partition(
         .expect("Failed to get completion message");
     let message_node = chat_response.choices.first().unwrap().message.clone();
     let embedding =
-        get_embeddings_for_txt(message_node.content.as_str(), embedding_client.clone()).await?;
+        get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
     let message_node = MessageNode::from_message(
         &message_node,
         trace_id.as_str(),
@@ -139,7 +139,7 @@ pub async fn handle_with_partition(
         instance,
         embedding,
     );
-    save_message_node(connect, &message_node, &embedding_client)
+    save_message_node(connect, &message_node, &embedding_info)
         .await
         .expect("Failed to save message node");
 

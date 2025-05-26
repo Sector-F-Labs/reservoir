@@ -6,22 +6,22 @@ use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 use tracing::info;
 
 #[derive(Clone, Debug)]
-pub enum EmbeddingClient {
+pub enum EmbeddingInfo {
     OpenAI { model: String, length: i32 },
     FastEmbed { model: String, length: i32 },
 }
 
 #[allow(dead_code)]
-impl EmbeddingClient {
+impl EmbeddingInfo {
     pub fn new_openai(model: String) -> Self {
-        EmbeddingClient::OpenAI {
+        EmbeddingInfo::OpenAI {
             model,
             length: 1536,
         }
     }
 
     pub fn with_fastembed(model: &str) -> Self {
-        EmbeddingClient::FastEmbed {
+        EmbeddingInfo::FastEmbed {
             model: model.to_string(),
             length: 1024,
         }
@@ -29,7 +29,7 @@ impl EmbeddingClient {
 
     pub fn default() -> Self {
         let model = "text-embedding-ada-002".to_string();
-        EmbeddingClient::OpenAI {
+        EmbeddingInfo::OpenAI {
             model,
             length: 1536,
         }
@@ -37,22 +37,22 @@ impl EmbeddingClient {
 
     pub fn get_node_name(&self) -> String {
         match self {
-            EmbeddingClient::OpenAI { .. } => "Embedding1536".to_string(),
-            EmbeddingClient::FastEmbed { .. } => "Embedding1024".to_string(),
+            EmbeddingInfo::OpenAI { .. } => "Embedding1536".to_string(),
+            EmbeddingInfo::FastEmbed { .. } => "Embedding1024".to_string(),
         }
     }
 
     pub fn get_index_name(&self) -> String {
         match self {
-            EmbeddingClient::OpenAI { .. } => "embedding1536".to_string(),
-            EmbeddingClient::FastEmbed { .. } => "embedding1024".to_string(),
+            EmbeddingInfo::OpenAI { .. } => "embedding1536".to_string(),
+            EmbeddingInfo::FastEmbed { .. } => "embedding1024".to_string(),
         }
     }
 
     pub fn get_model_name(&self) -> String {
         match self {
-            EmbeddingClient::OpenAI { model, .. } => model.clone(),
-            EmbeddingClient::FastEmbed { model, .. } => model.clone(),
+            EmbeddingInfo::OpenAI { model, .. } => model.clone(),
+            EmbeddingInfo::FastEmbed { model, .. } => model.clone(),
         }
     }
 }
@@ -64,10 +64,10 @@ pub fn get_cache_path() -> PathBuf {
 
 pub async fn get_embeddings_for_txt(
     text: &str,
-    client: EmbeddingClient,
+    embedding_info: EmbeddingInfo,
 ) -> Result<Vec<f32>, Error> {
-    match client {
-        EmbeddingClient::OpenAI { model, length } => {
+    match embedding_info {
+        EmbeddingInfo::OpenAI { model, length } => {
             info!("Using OpenAI for embedding: {}", model);
             info!("Embedding length: {}", length);
             let result = openai_get_embeddings_for_text(text).await;
@@ -82,7 +82,7 @@ pub async fn get_embeddings_for_txt(
                 Err(e) => Err(e),
             }
         }
-        EmbeddingClient::FastEmbed { model, length } => {
+        EmbeddingInfo::FastEmbed { model, length } => {
             info!("Using FastEmbed for embedding");
             info!("Embedding model: {}", model);
             info!("Embedding length: {}", length);
