@@ -17,6 +17,8 @@ pub struct ReservoirConfig {
     pub reservoir_port: Option<u16>,
     #[serde(default = "default_neo4j_database")]
     pub neo4j_database: Option<String>,
+    #[serde(default = "default_semantic_context_size")]
+    pub semantic_context_size: Option<usize>,
 }
 
 fn default_neo4j_uri() -> Option<String> {
@@ -34,6 +36,9 @@ fn default_reservoir_port() -> Option<u16> {
 fn default_neo4j_database() -> Option<String> {
     Some("reservoir".to_string())
 }
+fn default_semantic_context_size() -> Option<usize> {
+    Some(15)
+}
 
 impl Default for ReservoirConfig {
     fn default() -> Self {
@@ -43,6 +48,7 @@ impl Default for ReservoirConfig {
             neo4j_password: default_neo4j_password(),
             reservoir_port: default_reservoir_port(),
             neo4j_database: default_neo4j_database(),
+            semantic_context_size: default_semantic_context_size(),
         }
     }
 }
@@ -106,4 +112,8 @@ pub fn get_reservoir_port() -> u16 {
         .reservoir_port
         .or_else(|| env::var("RESERVOIR_PORT").ok().and_then(|v| v.parse().ok()))
         .unwrap_or(3017)
+}
+
+pub fn get_context_size() -> usize {
+    get_config().semantic_context_size.unwrap_or(15)
 }
