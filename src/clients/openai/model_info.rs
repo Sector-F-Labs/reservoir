@@ -45,6 +45,7 @@ impl ModelInfo {
             "llama3.2" => Self::new_llama3_2(),
             "mistral-large-2402" => Self::new_mistral_large_2402(),
             "gemini-2.0-flash" => Self::new_gemini_2_0_flash(),
+            "gemini-2.5-flash-preview-05-20" => Self::new_gemini_2_5_flash_preview_05_20(),
             _ => Self::default(name),
         }
     }
@@ -104,6 +105,16 @@ impl ModelInfo {
             input_tokens: 128_000,
             output_tokens: 2048,
             name: "gemini-2.0-flash".to_string(),
+            key: env::var("GEMINI_API_KEY").unwrap_or_default(),
+            base_url: gemini_base_url(),
+        }
+    }
+
+    fn new_gemini_2_5_flash_preview_05_20() -> ModelInfo {
+        ModelInfo {
+            input_tokens: 128_000,
+            output_tokens: 2048,
+            name: "gemini-2.5-flash-preview-05-20".to_string(),
             key: env::var("GEMINI_API_KEY").unwrap_or_default(),
             base_url: gemini_base_url(),
         }
