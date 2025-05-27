@@ -34,10 +34,9 @@ pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
         role,
         content: content.clone(),
     };
-    let embedding_info = EmbeddingInfo::default();
-    let test_local = EmbeddingInfo::with_fastembed("");
+    let embedding_info = EmbeddingInfo::with_fastembed("");
     let embedding = get_embeddings_for_txt(&content, embedding_info.clone()).await?;
-    let embedding_test = get_embeddings_for_txt(&content, test_local).await?;
+    let embedding_test = get_embeddings_for_txt(&content, embedding_info.clone()).await?;
 
     info!("Embedding test: {:?}", embedding_test);
 
