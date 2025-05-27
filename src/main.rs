@@ -205,7 +205,7 @@ async fn main() -> Result<(), Error> {
         .init();
 
     let args = Args::parse();
-    init_vector_index(connect).await?;
+    init_vector_index().await?;
 
     match args.subcmd {
         Some(SubCommands::Start(ref start_cmd)) => {

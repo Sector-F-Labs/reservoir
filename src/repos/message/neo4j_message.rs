@@ -5,8 +5,9 @@ use neo4rs::{query, Graph};
 use tracing::{error, info};
 
 use crate::{
-    clients::embedding::EmbeddingInfo, models::message_node::MessageNode,
-    utils::connector::AsyncGraphFuture,
+    clients::embedding::EmbeddingInfo,
+    models::message_node::MessageNode,
+    utils::connector::{connect, AsyncGraphFuture},
 };
 
 pub async fn get_messages_for_partition<C, FutC>(
@@ -182,13 +183,43 @@ where
     Ok(())
 }
 
-pub async fn init_vector_index<C, FutC>(get_connector: C) -> Result<(), Error>
+async fn create_index_for_node<C, FutC>(get_connector: C, size: usize) -> Result<(), Error>
 where
     C: Fn() -> FutC,
     FutC: AsyncGraphFuture,
 {
-    let index_name = "messageEmbeddings";
-    let emneddings_index_name = "embeddingEmbeddings";
+    let index_name = format!("embedding{}", size);
+    let node_name = format!("Embedding{}", size);
+    let query_str = format!(
+        r#"
+            CREATE VECTOR INDEX {} 
+            FOR (n:{})
+            ON (n.embedding)
+            OPTIONS {{
+              indexConfig: {{
+                `vector.dimensions`: {},
+                `vector.similarity_function`: 'cosine'
+              }}
+            }};
+        "#,
+        index_name, node_name, size
+    );
+    let graph = get_connector().await?;
+    let mut result = graph.execute(query(&query_str)).await?;
+    while let Ok(Some(row)) = result.next().await {
+        let message: String = row.get("message")?;
+        info!("Index creation message: {}", message);
+    }
+    info!("Created index: {}", index_name);
+    Ok(())
+}
+
+async fn create_index_with_size<C, FutC>(get_connector: C, size: usize) -> Result<(), Error>
+where
+    C: Fn() -> FutC,
+    FutC: AsyncGraphFuture,
+{
+    let index_name = format!("embedding{}", size);
     let graph = get_connector().await?;
     // Check if index already exists
     let check_query = query("SHOW INDEXES YIELD name RETURN name");
@@ -203,43 +234,17 @@ where
     }
 
     // Create the index if it doesn't exist
-    let create_query = format!(
-        "CALL db.index.vector.createNodeIndex(
-                '{}',
-                'MessageNode',
-                'embedding',
-                1536,
-                'cosine'
-            );
-            CALL db.index.vector.createNodeIndex(
-                '{}',
-                'Embedding',
-                'embedding',
-                1536,
-                'cosine'
-            )",
-        index_name, emneddings_index_name
-    );
-    let result = graph.execute(query(&create_query)).await;
-    match result {
-        Ok(mut rows) => {
-            while let Ok(Some(row)) = rows.next().await {
-                let name: String = row.get("name")?;
-                if name == index_name {
-                    info!("Index {} created successfully", index_name);
-                }
-            }
-        }
-        Err(e) => {
-            // Check if it's the "equivalent index already exists" error and suppress it
-            if format!("{:?}", e).contains("EquivalentSchemaRuleAlreadyExistsException") {
-                info!("Index '{}' already exists, skipping creation", index_name);
-            } else {
-                Err(e)?;
-            }
-        }
-    }
+    create_index_for_node(get_connector, size).await?;
     Ok(())
+}
+
+pub async fn init_vector_index() -> Result<(), Error> {
+    let (res1, res2) = tokio::join!(
+        create_index_with_size(connect, 1024),
+        create_index_with_size(connect, 1536),
+    );
+    res1?;
+    res2
 }
 
 /// Finds nodes connected to a given node within a distance of 10 hops.
