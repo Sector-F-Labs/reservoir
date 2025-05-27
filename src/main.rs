@@ -13,7 +13,6 @@ use hyper::{Method, Request, Response, StatusCode};
 use repos::message::neo4j_message::init_vector_index;
 use std::convert::Infallible;
 use tracing::{error, info};
-use utils::connector::connect;
 
 mod args;
 mod clients;
