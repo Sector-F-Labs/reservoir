@@ -1,6 +1,6 @@
 [package]
 name = "rsrvr"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 repository = "https://github.com/sector-f-labs/reservoir"
 authors = ["Divan Visagie <me@divanv.com>"]
@@ -12,13 +12,17 @@ name = "reservoir"
 path = "src/main.rs"
 
 [dependencies]
-tokio       = { version = "1.45.1", features = ["full"] }
-serde       = { version = "1.0", features = ["derive"] }
-serde_json  = "1.0"
-chrono      = "0.4.41"
-anyhow      = "1.0"   
+tokio = { version = "1.45.1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4.41"
+anyhow = "1.0"
 hyper = { version = "1", features = ["server", "http1", "client"] }
-hyper-util = { version = "0.1.13", features = ["tokio", "server", "client-legacy"] }
+hyper-util = { version = "0.1.13", features = [
+    "tokio",
+    "server",
+    "client-legacy",
+] }
 hyper-tls = "0.6"
 neo4rs = "0.8.0"
 http-body-util = "0.1"
