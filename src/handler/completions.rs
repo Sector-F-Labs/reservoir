@@ -133,9 +133,16 @@ pub async fn handle_with_partition(
         enrich_chat_request(similar, last_messages, &chat_request_model);
     truncate_messages_if_needed(&mut enriched_chat_request.messages, model_info.input_tokens);
 
-    let chat_response = get_completion_message(&model_info, &enriched_chat_request)
-        .await
-        .expect("Failed to get completion message");
+    let chat_response = match get_completion_message(&model_info, &enriched_chat_request).await {
+        Ok(response) => response,
+        Err(e) => {
+            error!("Failed to get completion message from {}: {}", model_info.base_url, e);
+            return Err(Error::msg(format!(
+                "LLM API request failed for model '{}' at '{}': {}. Please check if the service is running and accessible.",
+                model_info.name, model_info.base_url, e
+            )));
+        }
+    };
     let message_node = chat_response.choices.first().unwrap().message.clone();
     let embedding =
         get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;

@@ -121,8 +121,7 @@ impl ModelInfo {
     }
 
     fn default(name: String) -> ModelInfo {
-        let ollama_base_url_from_env =
-            env::var("OLLAMA_BASE_URL").unwrap_or("http://localhost:11434".to_string());
+        let ollama_base_url_from_env = ollama_base_url();
         let base_url = format!("{}/v1/chat/completions", ollama_base_url_from_env);
 
         ModelInfo {
