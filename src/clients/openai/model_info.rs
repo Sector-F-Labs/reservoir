@@ -55,8 +55,8 @@ impl ModelInfo {
             input_tokens: 128_000,
             output_tokens: 4_096,
             name: "gpt-4.1".to_string(),
-            key: "".to_string(),
-            base_url: ollama_base_url(),
+            key: env::var("OPENAI_API_KEY").unwrap_or_default(),
+            base_url: openai_base_url(),
         }
     }
 

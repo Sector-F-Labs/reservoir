@@ -22,7 +22,7 @@ pub async fn get_completion_message(
     // Validate OpenAI model names
     if model_info.base_url.contains("api.openai.com") {
         let valid_openai_models = [
-            "gpt-4",
+            "gpt-4.1",
             "gpt-4-turbo",
             "gpt-4o",
             "gpt-4o-mini",
