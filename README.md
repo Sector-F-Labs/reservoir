@@ -2,15 +2,21 @@
 
 > Reservoir is in active development. It's not ready for production use yet. Expect breaking changes.
 
+**Recent Updates:**
+- ✅ Added support for `web_search_options` in chat requests
+- ✅ Enhanced multi-provider support (OpenAI, Ollama, Mistral, Gemini)
+- ✅ Improved model configuration with automatic provider detection
+- ✅ Fixed deserialization issues for optional request fields
+
 # Reservoir
 
 ## What is Reservoir?
 
-Reservoir is your helpful memory for AI conversations. It sits between your app and the OpenAI Chat Completions API, making it easier to have rich, ongoing conversations with your favorite language models.
+Reservoir is your helpful memory for AI conversations. It sits between your app and any OpenAI-compatible Chat Completions API, making it easier to have rich, ongoing conversations with your favorite language models from multiple providers.
 
 ### Why does this matter?
 
-When you use the [OpenAI Chat Completions API](https://platform.openai.com/docs/guides/chat), you need to send the full conversation history with every request. For example:
+When you use any [OpenAI-compatible Chat Completions API](https://platform.openai.com/docs/guides/chat), you need to send the full conversation history with every request. For example:
 
 ```json
 [
@@ -24,7 +30,14 @@ If you only send the last question, the model won't know what "the answer" refer
 
 **This can get tricky as conversations grow!**
 
-Reservoir acts as a smart proxy: it automatically stores your chat history and inserts the right context into each request. You just talk to the API as usual and Reservoir handles the memory, context, and even finds other relevant messages from your past conversations to help the model give better answers.
+Reservoir acts as a smart proxy: it automatically stores your chat history and inserts the right context into each request. You just talk to any OpenAI-compatible API as usual and Reservoir handles the memory, context, and even finds other relevant messages from your past conversations to help the model give better answers.
+
+**Supported Providers:**
+- OpenAI (GPT-4, GPT-4o, GPT-3.5-turbo, etc.)
+- Ollama (llama3.2, gemma3, and any local models)
+- Mistral AI (mistral-large-2402, etc.)
+- Google Gemini (gemini-2.0-flash, etc.)
+- Any OpenAI-compatible API endpoint
 
 - No more manual history management
 - Automatic context enrichment
@@ -45,6 +58,12 @@ You can point multiple apps or clients to a single Reservoir instance. This mean
 ![Screenshot](docs/logo_256.png)
 
 Reservoir lets you have conversations with multiple AI models and providers, all while keeping your data private and local. Every interaction is stored on your device, building a personal knowledge base that never leaves your network. A single thread of conversation can span multiple models without losing context, allowing you to seamlessly switch between different AI providers while maintaining the flow of your discussion.
+
+**Advanced Features:**
+- **Web Search Integration**: Pass `web_search_options` to enable AI models with web search capabilities
+- **Multi-Provider Routing**: Automatically routes requests to the correct provider based on model name
+- **Token Management**: Smart truncation to stay within model limits while preserving context
+- **Flexible Configuration**: Environment variables for custom provider endpoints
 
 ## Table of Contents
 
@@ -125,6 +144,36 @@ This command:
 
 The server will be available at `http://localhost:3017` (or your configured port).
 
+#### Ollama Mode
+
+For seamless integration with Ollama-compatible clients, you can start Reservoir in Ollama mode:
+
+```bash
+cargo run -- start --ollama
+```
+
+This mode configures Reservoir to act as a drop-in replacement for Ollama, making it easy to add memory and context to existing Ollama-based applications.
+
+#### Testing Your Setup
+
+You can test your Reservoir installation using the included hurl tests:
+
+```bash
+# Test all endpoints
+./hurl/test.sh
+
+# Test specific endpoints
+hurl --variable USER="$USER" --variable OPENAI_API_KEY="$OPENAI_API_KEY" hurl/chat_completion.hurl
+hurl --variable USER="$USER" hurl/reservoir-view.hurl
+hurl --variable USER="$USER" hurl/reservoir-search.hurl
+```
+
+Or test directly with Ollama (if you have it running):
+
+```bash
+hurl hurl/ollama_mode.hurl
+```
+
 ### Import/Export Data
 
 Reservoir supports exporting all message nodes to a JSON file and importing them back into the database. This is useful for backup, migration, or sharing your AI conversation history.
@@ -180,8 +229,9 @@ This command reads the specified JSON file (in the same format as the export) an
 
 > Here, `$USER` is your system username, and `reservoir` is the instance name.
 
-#### Curl Example
+#### Curl Examples
 
+**OpenAI Model:**
 ```bash
 curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
     -H "Content-Type: application/json" \
@@ -197,8 +247,44 @@ curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completio
     }'
 ```
 
-#### Python Example (using `openai` library)
+**Ollama Model (no API key needed):**
+```bash
+curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Explain quantum computing in simple terms."
+            }
+        ]
+    }'
+```
 
+**With Web Search Options:**
+```bash
+curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4o-search-preview",
+        "messages": [
+            {
+                "role": "user",
+                "content": "What are the latest developments in AI?"
+            }
+        ],
+        "web_search_options": {
+            "enabled": true,
+            "max_results": 5
+        }
+    }'
+```
+
+#### Python Examples (using `openai` library)
+
+**Basic Usage with OpenAI:**
 ```python
 import os
 from openai import OpenAI
@@ -224,6 +310,124 @@ completion = client.chat.completions.create(
 )
 print(completion.choices[0].message.content)
 ```
+
+**Using Ollama (no API key required):**
+```python
+import os
+from openai import OpenAI
+
+INSTANCE = "my-application"
+PARTITION = os.getenv("USER")
+RESERVOIR_PORT = os.getenv('RESERVOIR_PORT', '3017')
+RESERVOIR_BASE_URL = f"http://localhost:{RESERVOIR_PORT}/v1/partition/{PARTITION}/instance/{INSTANCE}"
+
+client = OpenAI(
+    base_url=RESERVOIR_BASE_URL,
+    api_key="not-needed-for-ollama"  # Ollama doesn't require API keys
+)
+
+completion = client.chat.completions.create(
+    model="llama3.2",  # or "gemma3", or any Ollama model
+    messages=[
+        {
+            "role": "user",
+            "content": "Explain the concept of recursion with a simple example."
+        }
+    ]
+)
+print(completion.choices[0].message.content)
+```
+
+**With Web Search Options:**
+```python
+completion = client.chat.completions.create(
+    model="gpt-4o-search-preview",
+    messages=[
+        {
+            "role": "user",
+            "content": "What are the latest trends in machine learning?"
+        }
+    ],
+    extra_body={
+        "web_search_options": {
+            "enabled": True,
+            "max_results": 5
+        }
+    }
+)
+```
+
+### Environment Variables
+
+Reservoir supports customizing provider endpoints via environment variables:
+
+```bash
+# OpenAI (default: https://api.openai.com/v1/chat/completions)
+export RSV_OPENAI_BASE_URL="https://api.openai.com/v1/chat/completions"
+
+# Ollama (default: http://localhost:11434/v1/chat/completions)
+export RSV_OLLAMA_BASE_URL="http://localhost:11434/v1/chat/completions"
+
+# Mistral (default: https://api.mistral.ai/v1/chat/completions)
+export RSV_MISTRAL_BASE_URL="https://api.mistral.ai/v1/chat/completions"
+
+# API Keys
+export OPENAI_API_KEY="your-openai-key"
+export MISTRAL_API_KEY="your-mistral-key"
+export GEMINI_API_KEY="your-gemini-key"
+```
+
+### Supported Models
+
+Reservoir automatically routes requests to the appropriate provider based on the model name:
+
+| Model | Provider | API Key Required |
+|-------|----------|------------------|
+| `gpt-4`, `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo` | OpenAI | Yes (`OPENAI_API_KEY`) |
+| `gpt-4o-search-preview` | OpenAI | Yes (`OPENAI_API_KEY`) |
+| `llama3.2`, `gemma3`, or any custom name | Ollama | No |
+| `mistral-large-2402` | Mistral | Yes (`MISTRAL_API_KEY`) |
+| `gemini-2.0-flash`, `gemini-2.5-flash-preview-05-20` | Google | Yes (`GEMINI_API_KEY`) |
+
+**Note:** Any model name not explicitly configured will default to using Ollama.
+
+## Troubleshooting
+
+### Common Issues
+
+#### Server Not Starting
+- **Check Neo4j**: Ensure Neo4j is running and accessible
+- **Port Conflicts**: Default port 3017 might be in use. Check with `lsof -i :3017`
+- **Environment**: Source your `.envrc` if using direnv: `direnv allow`
+
+#### "Internal Server Error" Responses
+- **API Keys**: Verify your API keys are set correctly:
+  ```bash
+  echo $OPENAI_API_KEY
+  echo $MISTRAL_API_KEY
+  echo $GEMINI_API_KEY
+  ```
+- **Model Names**: Ensure you're using supported model names (see table above)
+- **Ollama**: If using Ollama models, verify Ollama is running: `ollama list`
+
+#### Deserialization Errors
+- **JSON Format**: Ensure your JSON request is properly formatted
+- **Optional Fields**: Fields like `web_search_options` are optional and can be omitted
+- **Content-Type**: Always use `Content-Type: application/json`
+
+#### Connection Issues
+- **Provider URLs**: Check if custom provider URLs are accessible
+- **Network**: Verify internet connectivity for cloud providers
+- **Firewalls**: Ensure no firewall is blocking outbound requests
+
+### Getting Help
+
+If you encounter issues:
+
+1. Check the server logs for detailed error messages
+2. Verify your environment variables are set correctly
+3. Test with a simple curl request first
+4. Try the included hurl tests to isolate the problem
 
 ## License
 
