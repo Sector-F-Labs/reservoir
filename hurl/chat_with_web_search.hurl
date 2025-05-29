@@ -6,9 +6,13 @@ Content-Type: application/json
   "messages": [
     {
       "role": "user",
-      "content": "Write a one-sentence bedtime story about a brave little toaster."
+      "content": "What are the latest developments in AI?"
     }
-  ]
+  ],
+  "web_search_options": {
+    "enabled": true,
+    "max_results": 5
+  }
 }
 
 HTTP/1.1 200

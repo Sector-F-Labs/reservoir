@@ -38,7 +38,7 @@ pub struct Choice {
 pub struct ChatRequest {
     pub model: String,
     pub messages: Vec<Message>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub web_search_options: Option<serde_json::Value>,
 }
 
@@ -176,5 +176,37 @@ mod tests {
         assert_eq!(chat_request.messages.len(), 2);
         assert_eq!(chat_request.messages[0].role, "user");
         assert_eq!(chat_request.messages[1].role, "assistant");
+        assert!(chat_request.web_search_options.is_none());
+    }
+
+    #[test]
+    fn test_chat_request_deserialization_without_web_search_options() {
+        let json = r#"{
+            "model": "gpt-4.1",
+            "messages": [
+                {"role": "user", "content": "Write a one-sentence bedtime story about a brave little toaster."}
+            ]
+        }"#;
+        let chat_request: ChatRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(chat_request.model, "gpt-4.1");
+        assert_eq!(chat_request.messages.len(), 1);
+        assert_eq!(chat_request.messages[0].role, "user");
+        assert_eq!(chat_request.messages[0].content, "Write a one-sentence bedtime story about a brave little toaster.");
+        assert!(chat_request.web_search_options.is_none());
+    }
+
+    #[test]
+    fn test_chat_request_deserialization_with_web_search_options() {
+        let json = r#"{
+            "model": "gpt-4.1",
+            "messages": [
+                {"role": "user", "content": "Search for information about AI"}
+            ],
+            "web_search_options": {"enabled": true, "max_results": 5}
+        }"#;
+        let chat_request: ChatRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(chat_request.model, "gpt-4.1");
+        assert_eq!(chat_request.messages.len(), 1);
+        assert!(chat_request.web_search_options.is_some());
     }
 }

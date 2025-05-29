@@ -55,8 +55,8 @@ impl ModelInfo {
             input_tokens: 128_000,
             output_tokens: 4_096,
             name: "gpt-4.1".to_string(),
-            key: env::var("OPENAI_API_KEY").unwrap_or_default(),
-            base_url: openai_base_url(),
+            key: "".to_string(),
+            base_url: ollama_base_url(),
         }
     }
 
@@ -131,15 +131,12 @@ impl ModelInfo {
     }
 
     fn default(name: String) -> ModelInfo {
-        let ollama_base_url_from_env = ollama_base_url();
-        let base_url = format!("{}/v1/chat/completions", ollama_base_url_from_env);
-
         ModelInfo {
             input_tokens: 128_000,
             output_tokens: 2048,
             name,
-            key: env::var("OLLAMA_API_KEY").unwrap_or_default(),
-            base_url,
+            key: "".to_string(),
+            base_url: ollama_base_url(),
         }
     }
 }
