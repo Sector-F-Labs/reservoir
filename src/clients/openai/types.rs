@@ -38,12 +38,18 @@ pub struct Choice {
 pub struct ChatRequest {
     pub model: String,
     pub messages: Vec<Message>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub web_search_options: Option<serde_json::Value>,
 }
 
 #[allow(dead_code)]
 impl ChatRequest {
     pub fn new(model: String, messages: Vec<Message>) -> Self {
-        ChatRequest { model, messages }
+        ChatRequest {
+            model,
+            messages,
+            web_search_options: None,
+        }
     }
 
     pub fn from_json(json: &str) -> Result<Self, serde_json::Error> {

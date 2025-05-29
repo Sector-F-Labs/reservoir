@@ -40,6 +40,7 @@ impl ModelInfo {
     pub fn new(name: String) -> Self {
         match name.as_str() {
             "gpt-4.1" => Self::new_gpt_4_1(),
+            "gpt-4o-search-preview" => Self::new_gpt_search_preview(),
             "gpt-4o" => Self::new_gpt_4o(),
             "gpt-4o-mini" => Self::new_gpt_4o_mini(),
             "llama3.2" => Self::new_llama3_2(),
@@ -49,12 +50,21 @@ impl ModelInfo {
             _ => Self::default(name),
         }
     }
-
     pub fn new_gpt_4_1() -> Self {
         ModelInfo {
             input_tokens: 128_000,
             output_tokens: 4_096,
             name: "gpt-4.1".to_string(),
+            key: env::var("OPENAI_API_KEY").unwrap_or_default(),
+            base_url: openai_base_url(),
+        }
+    }
+
+    pub fn new_gpt_search_preview() -> Self {
+        ModelInfo {
+            input_tokens: 128_000,
+            output_tokens: 4_096,
+            name: "gpt-4o-search-preview".to_string(),
             key: env::var("OPENAI_API_KEY").unwrap_or_default(),
             base_url: openai_base_url(),
         }

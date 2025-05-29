@@ -1,10 +1,10 @@
 use anyhow::Error;
-use http::header;
-use hyper::{Request, Method, Uri};
-use http_body_util::{BodyExt, Full};
 use bytes::Bytes;
-use tracing::{debug, error, info};
+use http::header;
+use http_body_util::{BodyExt, Full};
+use hyper::{Method, Request, Uri};
 use hyper_tls::HttpsConnector;
+use tracing::{debug, error, info};
 
 use crate::utils::compress_system_context;
 
@@ -18,21 +18,32 @@ pub async fn get_completion_message(
     chat_request: &ChatRequest,
 ) -> Result<ChatResponse, Error> {
     info!("Getting completion with model {}", model_info.name);
-    
+
     // Validate OpenAI model names
     if model_info.base_url.contains("api.openai.com") {
-        let valid_openai_models = ["gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"];
+        let valid_openai_models = [
+            "gpt-4",
+            "gpt-4-turbo",
+            "gpt-4o",
+            "gpt-4o-mini",
+            "gpt-3.5-turbo",
+            "gpt-4o-search-preview",
+        ];
         if !valid_openai_models.contains(&model_info.name.as_str()) {
-            error!("Invalid OpenAI model name: '{}'. Valid models are: {:?}", model_info.name, valid_openai_models);
+            error!(
+                "Invalid OpenAI model name: '{}'. Valid models are: {:?}",
+                model_info.name, valid_openai_models
+            );
             return Err(Error::msg(format!(
                 "Invalid OpenAI model name: '{}'. Valid models are: {:?}",
                 model_info.name, valid_openai_models
             )));
         }
     }
-    
+
     let https = HttpsConnector::new();
-    let client = hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new()).build(https);
+    let client = hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
+        .build(https);
 
     let context = compress_system_context(&chat_request.messages);
     let chat_request = ChatRequest::new(model_info.name.clone(), context);
@@ -55,12 +66,20 @@ pub async fn get_completion_message(
         model_info.base_url.clone(),
     );
 
-    println!("DEBUG: Attempting to connect to URL: {}", model_info.base_url);
-    println!("DEBUG: Model name: '{}', API key length: {}", 
-        model_info.name, 
-        if model_info.key.is_empty() { 0 } else { model_info.key.len() }
+    println!(
+        "DEBUG: Attempting to connect to URL: {}",
+        model_info.base_url
     );
-    
+    println!(
+        "DEBUG: Model name: '{}', API key length: {}",
+        model_info.name,
+        if model_info.key.is_empty() {
+            0
+        } else {
+            model_info.key.len()
+        }
+    );
+
     let uri: Uri = model_info.base_url.parse().map_err(|e| {
         error!("Failed to parse URL '{}': {}", model_info.base_url, e);
         Error::msg(format!("Invalid URL '{}': {}", model_info.base_url, e))
@@ -115,7 +134,10 @@ pub async fn get_completion_message(
         Ok(text) => text,
         Err(e) => {
             error!("Error converting response to string: {}", e);
-            return Err(Error::msg(format!("Failed to convert response to string: {}", e)));
+            return Err(Error::msg(format!(
+                "Failed to convert response to string: {}",
+                e
+            )));
         }
     };
 
