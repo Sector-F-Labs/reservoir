@@ -60,7 +60,7 @@ You can point multiple apps or clients to a single Reservoir instance. This mean
 Reservoir lets you have conversations with multiple AI models and providers, all while keeping your data private and local. Every interaction is stored on your device, building a personal knowledge base that never leaves your network. A single thread of conversation can span multiple models without losing context, allowing you to seamlessly switch between different AI providers while maintaining the flow of your discussion.
 
 ### Talks
-![Rust Relationships and Reservoir](https://youtu.be/oNc2ljo_BwU?si=M0ShfyP8YTWTAH8f)
+[![Rust Relationships and Reservoir](https://img.youtube.com/vi/oNc2ljo_BwU/0.jpg)](https://youtu.be/oNc2ljo_BwU?si=b9Th_Pt5e6qllI0W)
 
 **Advanced Features:**
 - **Web Search Integration**: Pass `web_search_options` to enable AI models with web search capabilities
