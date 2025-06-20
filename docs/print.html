@@ -1,0 +1,839 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Reservoir Documentation</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Your helpful memory for AI conversations - Documentation">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Reservoir Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/divanvisagie/reservoir" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>Reservoir is your helpful memory for AI conversations. It sits between your app and any OpenAI-compatible Chat Completions API, making it easier to have rich, ongoing conversations with your favorite language models from multiple providers.</p>
+<h2 id="what-is-reservoir"><a class="header" href="#what-is-reservoir">What is Reservoir?</a></h2>
+<p>When you use any <a href="https://platform.openai.com/docs/guides/chat">OpenAI-compatible Chat Completions API</a>, you need to send the full conversation history with every request. For example:</p>
+<pre><code class="language-json">[
+  {"role": "user", "content": "What is 1 + 1?"},
+  {"role": "assistant", "content": "2"},
+  {"role": "user", "content": "What is the answer times 3?"}
+]
+</code></pre>
+<p>If you only send the last question, the model won't know what "the answer" refers to. You have to keep track of all previous messages and include them every time.</p>
+<p><strong>This can get tricky as conversations grow!</strong></p>
+<p>Reservoir acts as a smart proxy: it automatically stores your chat history and inserts the right context into each request. You just talk to any OpenAI-compatible API as usual and Reservoir handles the memory, context, and even finds other relevant messages from your past conversations to help the model give better answers.</p>
+<h2 id="why-use-reservoir"><a class="header" href="#why-use-reservoir">Why Use Reservoir?</a></h2>
+<ul>
+<li><strong>Own your AI history</strong>: All your conversations are stored locally, never in the cloud.</li>
+<li><strong>Search and recall</strong>: Instantly find previous chats, ideas, or code snippets from your AI interactions.</li>
+<li><strong>Enrich context</strong>: Automatically inject relevant history into new prompts for more coherent, personalized responses.</li>
+<li><strong>Visualize conversations</strong>: See how your discussions branch and connect over time.</li>
+<li><strong>Stay private</strong>: Your data never leaves your device.</li>
+</ul>
+<h2 id="supported-providers"><a class="header" href="#supported-providers">Supported Providers</a></h2>
+<p><strong>Supported Providers:</strong></p>
+<ul>
+<li>OpenAI (GPT-4, GPT-4o, GPT-3.5-turbo, etc.)</li>
+<li>Ollama (llama3.2, gemma3, and any local models)</li>
+<li>Mistral AI (mistral-large-2402, etc.)</li>
+<li>Google Gemini (gemini-2.0-flash, etc.)</li>
+<li>Any OpenAI-compatible API endpoint</li>
+</ul>
+<h2 id="key-benefits"><a class="header" href="#key-benefits">Key Benefits</a></h2>
+<ul>
+<li><strong>No more manual history management</strong>: Reservoir automatically tracks conversation context</li>
+<li><strong>Automatic context enrichment</strong>: Relevant past conversations are injected into new requests</li>
+<li><strong>Your data stays private and local</strong>: Everything is stored on your device</li>
+<li><strong>Multi-app support</strong>: Use one Reservoir instance across multiple applications</li>
+<li><strong>Flexible organization</strong>: Partition conversations by app, project, or any context you choose</li>
+</ul>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<p>Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual LLM service. Every interaction is stored on your device, building a personal knowledge base that never leaves your network.</p>
+<p>A single thread of conversation can span multiple models without losing context, allowing you to seamlessly switch between different AI providers while maintaining the flow of your discussion.</p>
+<p><img src="../docs/conversation_graph_view.png" alt="Conversation Graph View" /></p>
+<h2 id="use-cases"><a class="header" href="#use-cases">Use Cases</a></h2>
+<ul>
+<li><strong>Chat Applications</strong>: Add memory to any chat interface</li>
+<li><strong>Development Tools</strong>: Keep context across coding sessions</li>
+<li><strong>Research</strong>: Build a personal knowledge base from AI interactions</li>
+<li><strong>Multi-Provider Workflows</strong>: Switch between different AI models seamlessly</li>
+<li><strong>Team Collaboration</strong>: Share conversation contexts across team members</li>
+</ul>
+<p>Ready to get started? Check out the <a href="./quick-start.html">Quick Start</a> guide!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<p>This guide will walk you through installing and setting up Reservoir on your system.</p>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before installing Reservoir, make sure you have the following dependencies installed:</p>
+<h3 id="required-dependencies"><a class="header" href="#required-dependencies">Required Dependencies</a></h3>
+<ol>
+<li>
+<p><strong>Rust and Cargo</strong> (latest stable version)</p>
+<pre><code class="language-bash">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+</code></pre>
+</li>
+<li>
+<p><strong>Neo4j Database</strong> (version 4.4 or later)</p>
+<p><strong>Option A: Using Docker (Recommended)</strong></p>
+<pre><code class="language-bash">docker run \
+    --name neo4j \
+    -p7474:7474 -p7687:7687 \
+    -d \
+    -v $HOME/neo4j/data:/data \
+    -v $HOME/neo4j/logs:/logs \
+    -v $HOME/neo4j/import:/var/lib/neo4j/import \
+    -v $HOME/neo4j/plugins:/plugins \
+    --env NEO4J_AUTH=neo4j/password \
+    neo4j:latest
+</code></pre>
+<p><strong>Option B: Native Installation</strong></p>
+<ul>
+<li>Download from <a href="https://neo4j.com/download/">Neo4j Download Center</a></li>
+<li>Follow the installation instructions for your operating system</li>
+</ul>
+</li>
+</ol>
+<h3 id="optional-dependencies"><a class="header" href="#optional-dependencies">Optional Dependencies</a></h3>
+<ol>
+<li>
+<p><strong>mdBook</strong> (for building documentation)</p>
+<pre><code class="language-bash">cargo install mdbook
+</code></pre>
+</li>
+<li>
+<p><strong>Hurl</strong> (for running API tests)</p>
+<pre><code class="language-bash"># macOS
+brew install hurl
+
+# Linux
+curl --location --remote-name https://github.com/Orange-OpenSource/hurl/releases/latest/download/hurl_amd64.deb
+sudo dpkg -i hurl_amd64.deb
+</code></pre>
+</li>
+</ol>
+<h2 id="installing-reservoir"><a class="header" href="#installing-reservoir">Installing Reservoir</a></h2>
+<h3 id="from-source-recommended"><a class="header" href="#from-source-recommended">From Source (Recommended)</a></h3>
+<ol>
+<li>
+<p><strong>Clone the repository</strong></p>
+<pre><code class="language-bash">git clone https://github.com/divanvisagie/reservoir.git
+cd reservoir
+</code></pre>
+</li>
+<li>
+<p><strong>Build the project</strong></p>
+<pre><code class="language-bash">cargo build --release
+</code></pre>
+</li>
+<li>
+<p><strong>Install the binary</strong> (optional)</p>
+<pre><code class="language-bash">cargo install --path .
+</code></pre>
+</li>
+</ol>
+<h3 id="using-cargo-install"><a class="header" href="#using-cargo-install">Using Cargo Install</a></h3>
+<p>Once Reservoir is published to crates.io, you'll be able to install it directly:</p>
+<pre><code class="language-bash">cargo install reservoir
+</code></pre>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<h3 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h3>
+<p>Create an <code>.env</code> file in your project directory or set these environment variables:</p>
+<pre><code class="language-bash"># Neo4j Configuration
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password
+
+# Server Configuration
+RESERVOIR_PORT=3017
+RESERVOIR_HOST=127.0.0.1
+
+# API Keys (set as needed)
+OPENAI_API_KEY=your-openai-key-here
+MISTRAL_API_KEY=your-mistral-key-here
+GEMINI_API_KEY=your-gemini-key-here
+
+# Custom Provider Endpoints (optional)
+RSV_OPENAI_BASE_URL=https://api.openai.com/v1/chat/completions
+RSV_OLLAMA_BASE_URL=http://localhost:11434/v1/chat/completions
+RSV_MISTRAL_BASE_URL=https://api.mistral.ai/v1/chat/completions
+</code></pre>
+<h3 id="using-direnv-recommended"><a class="header" href="#using-direnv-recommended">Using direnv (Recommended)</a></h3>
+<p>If you're using <a href="https://direnv.net/">direnv</a>, you can create a <code>.envrc</code> file:</p>
+<pre><code class="language-bash"># .envrc
+export NEO4J_URI=bolt://localhost:7687
+export NEO4J_USERNAME=neo4j
+export NEO4J_PASSWORD=password
+export RESERVOIR_PORT=3017
+export OPENAI_API_KEY=your-openai-key-here
+</code></pre>
+<p>Then activate it:</p>
+<pre><code class="language-bash">direnv allow
+</code></pre>
+<h2 id="verification"><a class="header" href="#verification">Verification</a></h2>
+<h3 id="1-check-neo4j-connection"><a class="header" href="#1-check-neo4j-connection">1. Check Neo4j Connection</a></h3>
+<p>Make sure Neo4j is running and accessible:</p>
+<pre><code class="language-bash"># If using Docker
+docker ps | grep neo4j
+
+# Test connection (replace with your credentials)
+curl -u neo4j:password http://localhost:7474/db/data/
+</code></pre>
+<h3 id="2-start-reservoir"><a class="header" href="#2-start-reservoir">2. Start Reservoir</a></h3>
+<pre><code class="language-bash"># From the repository directory
+cargo run -- start
+
+# Or if you installed the binary
+reservoir start
+</code></pre>
+<p>You should see output similar to:</p>
+<pre><code>2024-01-01T12:00:00Z [INFO] Initializing vector index in Neo4j...
+2024-01-01T12:00:01Z [INFO] Server starting on http://127.0.0.1:3017
+</code></pre>
+<h3 id="3-test-the-installation"><a class="header" href="#3-test-the-installation">3. Test the Installation</a></h3>
+<p>Run the included tests to verify everything is working:</p>
+<pre><code class="language-bash"># Test all endpoints
+./hurl/test.sh
+
+# Or test individual endpoints
+hurl --variable USER="$USER" --variable OPENAI_API_KEY="$OPENAI_API_KEY" hurl/chat_completion.hurl
+</code></pre>
+<h3 id="4-simple-api-test"><a class="header" href="#4-simple-api-test">4. Simple API Test</a></h3>
+<p>Test with a basic curl request:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello, Reservoir!"
+            }
+        ]
+    }'
+</code></pre>
+<h2 id="troubleshooting-installation"><a class="header" href="#troubleshooting-installation">Troubleshooting Installation</a></h2>
+<h3 id="common-issues"><a class="header" href="#common-issues">Common Issues</a></h3>
+<p><strong>Neo4j Connection Failed</strong></p>
+<ul>
+<li>Verify Neo4j is running: <code>docker ps</code> or check your local Neo4j service</li>
+<li>Check credentials in your environment variables</li>
+<li>Ensure ports 7474 and 7687 are not blocked</li>
+</ul>
+<p><strong>Cargo Build Fails</strong></p>
+<ul>
+<li>Update Rust: <code>rustup update</code></li>
+<li>Clear cargo cache: <code>cargo clean</code></li>
+<li>Check for system dependency issues</li>
+</ul>
+<p><strong>Port Already in Use</strong></p>
+<ul>
+<li>Change the port: <code>export RESERVOIR_PORT=3018</code></li>
+<li>Kill existing processes: <code>lsof -ti:3017 | xargs kill</code></li>
+</ul>
+<p><strong>API Key Issues</strong></p>
+<ul>
+<li>Verify your API keys are set correctly: <code>echo $OPENAI_API_KEY</code></li>
+<li>Check for extra whitespace or quotes in environment variables</li>
+</ul>
+<h3 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h3>
+<p>If you encounter issues:</p>
+<ol>
+<li>Check the <a href="../troubleshooting/common-issues.html">Troubleshooting</a> section</li>
+<li>Review the server logs for detailed error messages</li>
+<li>Verify all prerequisites are properly installed</li>
+<li>Test with the simplest possible configuration first</li>
+</ol>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Once Reservoir is installed and running:</p>
+<ol>
+<li>Follow the <a href="./quick-start.html">Getting Started</a> guide</li>
+<li>Try the <a href="./chat-gipitty.html">Chat Gipitty Integration</a></li>
+<li>Explore the <a href="./api/overview.html">API Reference</a></li>
+<li>Check out <a href="./python-integration.html">Usage Examples</a></li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
+<p>This guide will get you up and running with Reservoir in just a few minutes.</p>
+<h2 id="before-you-begin"><a class="header" href="#before-you-begin">Before You Begin</a></h2>
+<p>Make sure you have:</p>
+<ul>
+<li>Reservoir installed (see <a href="./installation.html">Installation</a>)</li>
+<li>Neo4j running locally</li>
+<li>At least one API key configured (OpenAI, Mistral, or Gemini)</li>
+</ul>
+<h2 id="step-1-start-the-server"><a class="header" href="#step-1-start-the-server">Step 1: Start the Server</a></h2>
+<p>Open a terminal and start Reservoir:</p>
+<pre><code class="language-bash">cargo run -- start
+</code></pre>
+<p>You should see:</p>
+<pre><code>[INFO] Initializing vector index in Neo4j for semantic search
+[INFO] Server starting on http://127.0.0.1:3017
+</code></pre>
+<p>Keep this terminal open - Reservoir is now running and ready to handle requests.</p>
+<h2 id="step-2-your-first-chat-request"><a class="header" href="#step-2-your-first-chat-request">Step 2: Your First Chat Request</a></h2>
+<p>Open a new terminal and send your first chat request:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/quickstart/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello! What is Reservoir?"
+            }
+        ]
+    }'
+</code></pre>
+<p>The response will look like a standard OpenAI API response, but Reservoir has:</p>
+<ul>
+<li>Stored your message and the AI's response</li>
+<li>Tagged them with your username and "quickstart" instance</li>
+<li>Made them available for future context enrichment</li>
+</ul>
+<h2 id="step-3-see-the-memory-in-action"><a class="header" href="#step-3-see-the-memory-in-action">Step 3: See the Memory in Action</a></h2>
+<p>Send a follow-up question that references your previous conversation:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/quickstart/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Can you elaborate on what you just told me?"
+            }
+        ]
+    }'
+</code></pre>
+<p>Notice how the AI understands "what you just told me" - that's Reservoir automatically injecting the previous conversation context!</p>
+<h2 id="step-4-view-your-conversation-history"><a class="header" href="#step-4-view-your-conversation-history">Step 4: View Your Conversation History</a></h2>
+<p>Check what Reservoir has stored:</p>
+<pre><code class="language-bash">cargo run -- view 5 --partition "$USER" --instance quickstart
+</code></pre>
+<p>You'll see output like:</p>
+<pre><code>2024-01-01T12:00:00+00:00 [abc123] user: Hello! What is Reservoir?
+2024-01-01T12:00:01+00:00 [abc123] assistant: Reservoir is a memory system for AI conversations...
+2024-01-01T12:01:00+00:00 [def456] user: Can you elaborate on what you just told me?
+2024-01-01T12:01:01+00:00 [def456] assistant: Certainly! Let me expand on Reservoir's capabilities...
+</code></pre>
+<h2 id="step-5-try-different-models"><a class="header" href="#step-5-try-different-models">Step 5: Try Different Models</a></h2>
+<p>Reservoir supports multiple providers. Try Ollama (no API key needed):</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/quickstart/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "llama3.2",
+        "messages": [
+            {
+                "role": "user",
+                "content": "What did we discuss earlier about Reservoir?"
+            }
+        ]
+    }'
+</code></pre>
+<p>Even though you're using a different model (Ollama instead of OpenAI), Reservoir still provides the conversation context!</p>
+<h2 id="understanding-the-url-structure"><a class="header" href="#understanding-the-url-structure">Understanding the URL Structure</a></h2>
+<p>The Reservoir API endpoint follows this pattern:</p>
+<pre><code>http://localhost:3017/partition/{partition}/instance/{instance}/v1/chat/completions
+</code></pre>
+<ul>
+<li><strong>Partition</strong>: Organizes conversations (typically your username)</li>
+<li><strong>Instance</strong>: Sub-organizes within a partition (like "quickstart", "work", "personal")</li>
+<li>This keeps different contexts separate while allowing context sharing within each space</li>
+</ul>
+<h2 id="what-just-happened"><a class="header" href="#what-just-happened">What Just Happened?</a></h2>
+<ol>
+<li><strong>Storage</strong>: Every message (yours and the AI's) was stored in Neo4j</li>
+<li><strong>Context Enrichment</strong>: Reservoir automatically found relevant past messages and included them in requests</li>
+<li><strong>Multi-Provider</strong>: You used both OpenAI and Ollama with the same conversation history</li>
+<li><strong>Organization</strong>: Your conversations were organized by partition and instance</li>
+</ol>
+<h2 id="next-steps-1"><a class="header" href="#next-steps-1">Next Steps</a></h2>
+<p>Now that you've seen Reservoir in action, explore:</p>
+<ul>
+<li><a href="./chat-gipitty.html">Chat Gipitty Integration</a> - Add memory to your existing cgip setup</li>
+<li><a href="./python-integration.html">Python Integration</a> - Use with the OpenAI Python library</li>
+<li><a href="./api/overview.html">API Reference</a> - Detailed API documentation</li>
+<li><a href="./features/providers.html">Features</a> - Learn about advanced features</li>
+</ul>
+<h2 id="quick-reference"><a class="header" href="#quick-reference">Quick Reference</a></h2>
+<h3 id="common-commands"><a class="header" href="#common-commands">Common Commands</a></h3>
+<pre><code class="language-bash"># Start the server
+cargo run -- start
+
+# View recent messages
+cargo run -- view 10 --partition $USER --instance myapp
+
+# Export conversations
+cargo run -- export &gt; backup.json
+
+# Import conversations
+cargo run -- import backup.json
+
+# Search conversations
+cargo run -- search "your query" --partition $USER
+</code></pre>
+<h3 id="environment-variables-1"><a class="header" href="#environment-variables-1">Environment Variables</a></h3>
+<pre><code class="language-bash">export RESERVOIR_PORT=3017                    # Server port
+export NEO4J_URI=bolt://localhost:7687        # Neo4j connection
+export OPENAI_API_KEY=your-key-here          # OpenAI API key
+export MISTRAL_API_KEY=your-key-here         # Mistral API key
+</code></pre>
+<p>Ready to dive deeper? Check out the <a href="./python-integration.html">Usage Examples</a> or learn about <a href="./chat-gipitty.html">Chat Gipitty Integration</a>!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="your-first-chat"><a class="header" href="#your-first-chat">Your First Chat</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="chat-gipitty-integration"><a class="header" href="#chat-gipitty-integration">Chat Gipitty Integration</a></h1>
+<p>Reservoir was originally designed as a memory system for <a href="https://github.com/divanvisagie/chat-gipitty">Chat Gipitty</a>. This integration gives your cgip conversations persistent memory, context awareness, and the ability to search through your AI interaction history.</p>
+<h2 id="what-you-get"><a class="header" href="#what-you-get">What You Get</a></h2>
+<p>When you integrate Reservoir with Chat Gipitty, you get:</p>
+<ul>
+<li><strong>Persistent Memory</strong>: Your conversations are remembered across sessions</li>
+<li><strong>Semantic Search</strong>: Find relevant past discussions automatically</li>
+<li><strong>Context Enrichment</strong>: Each response is informed by your conversation history</li>
+<li><strong>Multi-Model Support</strong>: Switch between different AI providers while maintaining context</li>
+</ul>
+<h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
+<h3 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h3>
+<ul>
+<li><a href="https://github.com/divanvisagie/chat-gipitty">Chat Gipitty</a> installed and working</li>
+<li>Reservoir installed and running (see <a href="./installation.html">Installation</a>)</li>
+<li>Your shell configured (bash or zsh)</li>
+</ul>
+<h3 id="installation-1"><a class="header" href="#installation-1">Installation</a></h3>
+<p>Add this function to your <code>~/.bashrc</code> or <code>~/.zshrc</code> file:</p>
+<pre><code class="language-bash">function contextual_cgip_with_ingest() {
+    local user_query="$1"
+
+    # Validate input
+    if [ -z "$user_query" ]; then
+        echo "Usage: contextual_cgip_with_ingest 'Your question goes here'" &gt;&amp;2
+        return 1
+    fi
+
+    # Ingest the user's query into Reservoir
+    echo "$user_query" | reservoir ingest
+
+    # Generate dynamic system prompt with context
+    local system_prompt_content=$(
+        echo "the following is info from semantic search based on your query:"
+        reservoir search "$user_query" --semantic --link
+        echo "the following is recent history:"
+        reservoir view 10
+    )
+
+    # Call cgip with enriched context
+    local assistant_response=$(cgip "${user_query}" --system-prompt="${system_prompt_content}")
+    
+    # Store the assistant's response
+    echo "$assistant_response" | reservoir ingest --role assistant
+
+    # Display the response
+    echo "$assistant_response"
+}
+
+# Create a convenient alias
+alias gpty='contextual_cgip_with_ingest'
+</code></pre>
+<p>After adding this to your shell configuration, reload it:</p>
+<pre><code class="language-bash"># For bash
+source ~/.bashrc
+
+# For zsh
+source ~/.zshrc
+</code></pre>
+<h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
+<p>Use the function directly:</p>
+<pre><code class="language-bash">contextual_cgip_with_ingest "Explain quantum computing in simple terms"
+</code></pre>
+<p>Or use the convenient alias:</p>
+<pre><code class="language-bash">gpty "What is machine learning?"
+</code></pre>
+<h3 id="follow-up-questions"><a class="header" href="#follow-up-questions">Follow-up Questions</a></h3>
+<p>The magic happens with follow-up questions:</p>
+<pre><code class="language-bash">gpty "Explain neural networks"
+# ... AI responds with explanation ...
+
+gpty "How do they relate to what we discussed about machine learning earlier?"
+# ... AI responds with context from the previous conversation ...
+</code></pre>
+<h3 id="different-topics"><a class="header" href="#different-topics">Different Topics</a></h3>
+<p>Start a new topic, and Reservoir will find relevant context:</p>
+<pre><code class="language-bash">gpty "I'm learning Rust programming"
+# ... later in a different session ...
+
+gpty "Show me some advanced Rust patterns"
+# Reservoir will remember you're learning Rust and provide appropriate context
+</code></pre>
+<h2 id="how-it-works-1"><a class="header" href="#how-it-works-1">How It Works</a></h2>
+<p>Here's what happens when you use the integrated function:</p>
+<ol>
+<li><strong>Query Ingestion</strong>: Your question is stored in Reservoir</li>
+<li><strong>Context Gathering</strong>: Reservoir searches for:
+<ul>
+<li>Semantically similar past conversations</li>
+<li>Recent conversation history</li>
+</ul>
+</li>
+<li><strong>Context Injection</strong>: This context is provided to cgip as a system prompt</li>
+<li><strong>Enhanced Response</strong>: cgip responds with awareness of your history</li>
+<li><strong>Response Storage</strong>: The AI's response is stored for future context</li>
+</ol>
+<h2 id="advanced-configuration"><a class="header" href="#advanced-configuration">Advanced Configuration</a></h2>
+<h3 id="custom-search-parameters"><a class="header" href="#custom-search-parameters">Custom Search Parameters</a></h3>
+<p>You can modify the function to customize how context is gathered:</p>
+<pre><code class="language-bash">function contextual_cgip_with_ingest() {
+    local user_query="$1"
+    
+    if [ -z "$user_query" ]; then
+        echo "Usage: contextual_cgip_with_ingest 'Your question goes here'" &gt;&amp;2
+        return 1
+    fi
+
+    echo "$user_query" | reservoir ingest
+
+    # Customize these parameters
+    local system_prompt_content=$(
+        echo "=== Relevant Context ==="
+        reservoir search "$user_query" --semantic --link --limit 5
+        echo ""
+        echo "=== Recent History ==="
+        reservoir view 15 --partition "$USER" --instance "cgip"
+    )
+
+    local assistant_response=$(cgip "${user_query}" --system-prompt="${system_prompt_content}")
+    
+    echo "$assistant_response" | reservoir ingest --role assistant
+    echo "$assistant_response"
+}
+</code></pre>
+<h3 id="partitioned-conversations"><a class="header" href="#partitioned-conversations">Partitioned Conversations</a></h3>
+<p>Organize your conversations by topic or project:</p>
+<pre><code class="language-bash">function gpty_work() {
+    local user_query="$1"
+    if [ -z "$user_query" ]; then
+        echo "Usage: gpty_work 'Your work-related question'" &gt;&amp;2
+        return 1
+    fi
+
+    echo "$user_query" | reservoir ingest --partition "$USER" --instance "work"
+    
+    local system_prompt_content=$(
+        echo "Context from work conversations:"
+        reservoir search "$user_query" --semantic --partition "$USER" --instance "work"
+        echo "Recent work discussion:"
+        reservoir view 10 --partition "$USER" --instance "work"
+    )
+
+    local assistant_response=$(cgip "${user_query}" --system-prompt="${system_prompt_content}")
+    echo "$assistant_response" | reservoir ingest --role assistant --partition "$USER" --instance "work"
+    echo "$assistant_response"
+}
+
+function gpty_personal() {
+    # Similar function for personal conversations
+    # ... implement similarly with --instance "personal"
+}
+</code></pre>
+<h3 id="model-selection"><a class="header" href="#model-selection">Model Selection</a></h3>
+<p>Use different models while maintaining context:</p>
+<pre><code class="language-bash">function gpty_creative() {
+    local user_query="$1"
+    echo "$user_query" | reservoir ingest
+    
+    local system_prompt_content=$(
+        reservoir search "$user_query" --semantic --link
+        reservoir view 5
+    )
+
+    # Use a creative model via cgip configuration
+    local assistant_response=$(cgip "${user_query}" --system-prompt="${system_prompt_content}" --model gpt-4)
+    
+    echo "$assistant_response" | reservoir ingest --role assistant
+    echo "$assistant_response"
+}
+</code></pre>
+<h2 id="benefits-of-this-integration"><a class="header" href="#benefits-of-this-integration">Benefits of This Integration</a></h2>
+<h3 id="continuous-learning"><a class="header" href="#continuous-learning">Continuous Learning</a></h3>
+<ul>
+<li>Your AI assistant learns from every interaction</li>
+<li>Context builds up over time, making responses more personalized</li>
+<li>No need to re-explain your projects or preferences</li>
+</ul>
+<h3 id="cross-session-memory"><a class="header" href="#cross-session-memory">Cross-Session Memory</a></h3>
+<ul>
+<li>Resume conversations from days or weeks ago</li>
+<li>Reference past decisions and discussions</li>
+<li>Build on previous explanations and examples</li>
+</ul>
+<h3 id="semantic-understanding"><a class="header" href="#semantic-understanding">Semantic Understanding</a></h3>
+<ul>
+<li>Ask "What did we discuss about X?" and get relevant results</li>
+<li>Similar topics are automatically connected</li>
+<li>Context is found even if you use different wording</li>
+</ul>
+<h3 id="privacy"><a class="header" href="#privacy">Privacy</a></h3>
+<ul>
+<li>All your conversation history stays local</li>
+<li>No data sent to external services beyond the AI API calls</li>
+<li>You control your data completely</li>
+</ul>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="function-not-found"><a class="header" href="#function-not-found">Function Not Found</a></h3>
+<p>Make sure you've sourced your shell configuration:</p>
+<pre><code class="language-bash">source ~/.bashrc  # or ~/.zshrc
+</code></pre>
+<h3 id="no-context-being-added"><a class="header" href="#no-context-being-added">No Context Being Added</a></h3>
+<p>Check that Reservoir is running:</p>
+<pre><code class="language-bash"># Should show Reservoir process
+ps aux | grep reservoir
+
+# Start if not running
+cargo run -- start
+</code></pre>
+<h3 id="empty-search-results"><a class="header" href="#empty-search-results">Empty Search Results</a></h3>
+<p>Build up some conversation history first:</p>
+<pre><code class="language-bash">gpty "Tell me about artificial intelligence"
+gpty "What are neural networks?"
+gpty "How does machine learning work?"
+
+# Now try a search
+gpty "What did we discuss about AI?"
+</code></pre>
+<h3 id="permission-issues"><a class="header" href="#permission-issues">Permission Issues</a></h3>
+<p>Make sure the function has access to reservoir commands:</p>
+<pre><code class="language-bash"># Test individual commands
+echo "test" | reservoir ingest
+reservoir view 5
+reservoir search "test"
+</code></pre>
+<h2 id="next-steps-2"><a class="header" href="#next-steps-2">Next Steps</a></h2>
+<ul>
+<li>Explore <a href="./api/overview.html">API Reference</a> to understand Reservoir's capabilities</li>
+<li>Learn about <a href="./features/partitioning.html">Partitioning</a> to organize conversations</li>
+<li>Check out <a href="./python-integration.html">Python Integration</a> for programmatic access</li>
+<li>See <a href="./troubleshooting/common-issues.html">Troubleshooting</a> if you encounter issues</li>
+</ul>
+<p>The Chat Gipitty integration transforms your AI interactions from isolated conversations into a connected, searchable knowledge base that grows smarter with every interaction.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="python-with-openai-library"><a class="header" href="#python-with-openai-library">Python with OpenAI Library</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="curl-examples"><a class="header" href="#curl-examples">Curl Examples</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ollama-integration"><a class="header" href="#ollama-integration">Ollama Integration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="api-overview"><a class="header" href="#api-overview">API Overview</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="chat-completions-endpoint"><a class="header" href="#chat-completions-endpoint">Chat Completions Endpoint</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="search--retrieval"><a class="header" href="#search--retrieval">Search &amp; Retrieval</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="data-management"><a class="header" href="#data-management">Data Management</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command Line Interface</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="data-model"><a class="header" href="#data-model">Data Model</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="context-enrichment"><a class="header" href="#context-enrichment">Context Enrichment</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="conversation-threads-synapses"><a class="header" href="#conversation-threads-synapses">Conversation Threads (Synapses)</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="multi-provider-support"><a class="header" href="#multi-provider-support">Multi-Provider Support</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="token-management"><a class="header" href="#token-management">Token Management</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="partitioning--organization"><a class="header" href="#partitioning--organization">Partitioning &amp; Organization</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="web-search-integration"><a class="header" href="#web-search-integration">Web Search Integration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="importexport"><a class="header" href="#importexport">Import/Export</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="local-development"><a class="header" href="#local-development">Local Development</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="production-setup"><a class="header" href="#production-setup">Production Setup</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="environment-variables-2"><a class="header" href="#environment-variables-2">Environment Variables</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="common-issues-1"><a class="header" href="#common-issues-1">Common Issues</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="faq"><a class="header" href="#faq">FAQ</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="debugging"><a class="header" href="#debugging">Debugging</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="building-from-source"><a class="header" href="#building-from-source">Building from Source</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="testing"><a class="header" href="#testing">Testing</a></h1>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/custom.js"></script>
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,409 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Installation - Reservoir Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Your helpful memory for AI conversations - Documentation">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Reservoir Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/divanvisagie/reservoir" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/divanvisagie/reservoir/edit/main/book/src/installation.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<p>This guide will walk you through installing and setting up Reservoir on your system.</p>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before installing Reservoir, make sure you have the following dependencies installed:</p>
+<h3 id="required-dependencies"><a class="header" href="#required-dependencies">Required Dependencies</a></h3>
+<ol>
+<li>
+<p><strong>Rust and Cargo</strong> (latest stable version)</p>
+<pre><code class="language-bash">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+</code></pre>
+</li>
+<li>
+<p><strong>Neo4j Database</strong> (version 4.4 or later)</p>
+<p><strong>Option A: Using Docker (Recommended)</strong></p>
+<pre><code class="language-bash">docker run \
+    --name neo4j \
+    -p7474:7474 -p7687:7687 \
+    -d \
+    -v $HOME/neo4j/data:/data \
+    -v $HOME/neo4j/logs:/logs \
+    -v $HOME/neo4j/import:/var/lib/neo4j/import \
+    -v $HOME/neo4j/plugins:/plugins \
+    --env NEO4J_AUTH=neo4j/password \
+    neo4j:latest
+</code></pre>
+<p><strong>Option B: Native Installation</strong></p>
+<ul>
+<li>Download from <a href="https://neo4j.com/download/">Neo4j Download Center</a></li>
+<li>Follow the installation instructions for your operating system</li>
+</ul>
+</li>
+</ol>
+<h3 id="optional-dependencies"><a class="header" href="#optional-dependencies">Optional Dependencies</a></h3>
+<ol>
+<li>
+<p><strong>mdBook</strong> (for building documentation)</p>
+<pre><code class="language-bash">cargo install mdbook
+</code></pre>
+</li>
+<li>
+<p><strong>Hurl</strong> (for running API tests)</p>
+<pre><code class="language-bash"># macOS
+brew install hurl
+
+# Linux
+curl --location --remote-name https://github.com/Orange-OpenSource/hurl/releases/latest/download/hurl_amd64.deb
+sudo dpkg -i hurl_amd64.deb
+</code></pre>
+</li>
+</ol>
+<h2 id="installing-reservoir"><a class="header" href="#installing-reservoir">Installing Reservoir</a></h2>
+<h3 id="from-source-recommended"><a class="header" href="#from-source-recommended">From Source (Recommended)</a></h3>
+<ol>
+<li>
+<p><strong>Clone the repository</strong></p>
+<pre><code class="language-bash">git clone https://github.com/divanvisagie/reservoir.git
+cd reservoir
+</code></pre>
+</li>
+<li>
+<p><strong>Build the project</strong></p>
+<pre><code class="language-bash">cargo build --release
+</code></pre>
+</li>
+<li>
+<p><strong>Install the binary</strong> (optional)</p>
+<pre><code class="language-bash">cargo install --path .
+</code></pre>
+</li>
+</ol>
+<h3 id="using-cargo-install"><a class="header" href="#using-cargo-install">Using Cargo Install</a></h3>
+<p>Once Reservoir is published to crates.io, you'll be able to install it directly:</p>
+<pre><code class="language-bash">cargo install reservoir
+</code></pre>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<h3 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h3>
+<p>Create an <code>.env</code> file in your project directory or set these environment variables:</p>
+<pre><code class="language-bash"># Neo4j Configuration
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password
+
+# Server Configuration
+RESERVOIR_PORT=3017
+RESERVOIR_HOST=127.0.0.1
+
+# API Keys (set as needed)
+OPENAI_API_KEY=your-openai-key-here
+MISTRAL_API_KEY=your-mistral-key-here
+GEMINI_API_KEY=your-gemini-key-here
+
+# Custom Provider Endpoints (optional)
+RSV_OPENAI_BASE_URL=https://api.openai.com/v1/chat/completions
+RSV_OLLAMA_BASE_URL=http://localhost:11434/v1/chat/completions
+RSV_MISTRAL_BASE_URL=https://api.mistral.ai/v1/chat/completions
+</code></pre>
+<h3 id="using-direnv-recommended"><a class="header" href="#using-direnv-recommended">Using direnv (Recommended)</a></h3>
+<p>If you're using <a href="https://direnv.net/">direnv</a>, you can create a <code>.envrc</code> file:</p>
+<pre><code class="language-bash"># .envrc
+export NEO4J_URI=bolt://localhost:7687
+export NEO4J_USERNAME=neo4j
+export NEO4J_PASSWORD=password
+export RESERVOIR_PORT=3017
+export OPENAI_API_KEY=your-openai-key-here
+</code></pre>
+<p>Then activate it:</p>
+<pre><code class="language-bash">direnv allow
+</code></pre>
+<h2 id="verification"><a class="header" href="#verification">Verification</a></h2>
+<h3 id="1-check-neo4j-connection"><a class="header" href="#1-check-neo4j-connection">1. Check Neo4j Connection</a></h3>
+<p>Make sure Neo4j is running and accessible:</p>
+<pre><code class="language-bash"># If using Docker
+docker ps | grep neo4j
+
+# Test connection (replace with your credentials)
+curl -u neo4j:password http://localhost:7474/db/data/
+</code></pre>
+<h3 id="2-start-reservoir"><a class="header" href="#2-start-reservoir">2. Start Reservoir</a></h3>
+<pre><code class="language-bash"># From the repository directory
+cargo run -- start
+
+# Or if you installed the binary
+reservoir start
+</code></pre>
+<p>You should see output similar to:</p>
+<pre><code>2024-01-01T12:00:00Z [INFO] Initializing vector index in Neo4j...
+2024-01-01T12:00:01Z [INFO] Server starting on http://127.0.0.1:3017
+</code></pre>
+<h3 id="3-test-the-installation"><a class="header" href="#3-test-the-installation">3. Test the Installation</a></h3>
+<p>Run the included tests to verify everything is working:</p>
+<pre><code class="language-bash"># Test all endpoints
+./hurl/test.sh
+
+# Or test individual endpoints
+hurl --variable USER="$USER" --variable OPENAI_API_KEY="$OPENAI_API_KEY" hurl/chat_completion.hurl
+</code></pre>
+<h3 id="4-simple-api-test"><a class="header" href="#4-simple-api-test">4. Simple API Test</a></h3>
+<p>Test with a basic curl request:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello, Reservoir!"
+            }
+        ]
+    }'
+</code></pre>
+<h2 id="troubleshooting-installation"><a class="header" href="#troubleshooting-installation">Troubleshooting Installation</a></h2>
+<h3 id="common-issues"><a class="header" href="#common-issues">Common Issues</a></h3>
+<p><strong>Neo4j Connection Failed</strong></p>
+<ul>
+<li>Verify Neo4j is running: <code>docker ps</code> or check your local Neo4j service</li>
+<li>Check credentials in your environment variables</li>
+<li>Ensure ports 7474 and 7687 are not blocked</li>
+</ul>
+<p><strong>Cargo Build Fails</strong></p>
+<ul>
+<li>Update Rust: <code>rustup update</code></li>
+<li>Clear cargo cache: <code>cargo clean</code></li>
+<li>Check for system dependency issues</li>
+</ul>
+<p><strong>Port Already in Use</strong></p>
+<ul>
+<li>Change the port: <code>export RESERVOIR_PORT=3018</code></li>
+<li>Kill existing processes: <code>lsof -ti:3017 | xargs kill</code></li>
+</ul>
+<p><strong>API Key Issues</strong></p>
+<ul>
+<li>Verify your API keys are set correctly: <code>echo $OPENAI_API_KEY</code></li>
+<li>Check for extra whitespace or quotes in environment variables</li>
+</ul>
+<h3 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h3>
+<p>If you encounter issues:</p>
+<ol>
+<li>Check the <a href="../troubleshooting/common-issues.html">Troubleshooting</a> section</li>
+<li>Review the server logs for detailed error messages</li>
+<li>Verify all prerequisites are properly installed</li>
+<li>Test with the simplest possible configuration first</li>
+</ol>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Once Reservoir is installed and running:</p>
+<ol>
+<li>Follow the <a href="./quick-start.html">Getting Started</a> guide</li>
+<li>Try the <a href="./chat-gipitty.html">Chat Gipitty Integration</a></li>
+<li>Explore the <a href="./api/overview.html">API Reference</a></li>
+<li>Check out <a href="./python-integration.html">Usage Examples</a></li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="quick-start.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="quick-start.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/custom.js"></script>
+
+
+    </div>
+    </body>
+</html>

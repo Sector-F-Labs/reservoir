@@ -1,0 +1,450 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chat Gipitty Integration - Reservoir Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Your helpful memory for AI conversations - Documentation">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Reservoir Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/divanvisagie/reservoir" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/divanvisagie/reservoir/edit/main/book/src/chat-gipitty.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="chat-gipitty-integration"><a class="header" href="#chat-gipitty-integration">Chat Gipitty Integration</a></h1>
+<p>Reservoir was originally designed as a memory system for <a href="https://github.com/divanvisagie/chat-gipitty">Chat Gipitty</a>. This integration gives your cgip conversations persistent memory, context awareness, and the ability to search through your AI interaction history.</p>
+<h2 id="what-you-get"><a class="header" href="#what-you-get">What You Get</a></h2>
+<p>When you integrate Reservoir with Chat Gipitty, you get:</p>
+<ul>
+<li><strong>Persistent Memory</strong>: Your conversations are remembered across sessions</li>
+<li><strong>Semantic Search</strong>: Find relevant past discussions automatically</li>
+<li><strong>Context Enrichment</strong>: Each response is informed by your conversation history</li>
+<li><strong>Multi-Model Support</strong>: Switch between different AI providers while maintaining context</li>
+</ul>
+<h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
+<h3 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h3>
+<ul>
+<li><a href="https://github.com/divanvisagie/chat-gipitty">Chat Gipitty</a> installed and working</li>
+<li>Reservoir installed and running (see <a href="./installation.html">Installation</a>)</li>
+<li>Your shell configured (bash or zsh)</li>
+</ul>
+<h3 id="installation"><a class="header" href="#installation">Installation</a></h3>
+<p>Add this function to your <code>~/.bashrc</code> or <code>~/.zshrc</code> file:</p>
+<pre><code class="language-bash">function contextual_cgip_with_ingest() {
+    local user_query="$1"
+
+    # Validate input
+    if [ -z "$user_query" ]; then
+        echo "Usage: contextual_cgip_with_ingest 'Your question goes here'" &gt;&amp;2
+        return 1
+    fi
+
+    # Ingest the user's query into Reservoir
+    echo "$user_query" | reservoir ingest
+
+    # Generate dynamic system prompt with context
+    local system_prompt_content=$(
+        echo "the following is info from semantic search based on your query:"
+        reservoir search "$user_query" --semantic --link
+        echo "the following is recent history:"
+        reservoir view 10
+    )
+
+    # Call cgip with enriched context
+    local assistant_response=$(cgip "${user_query}" --system-prompt="${system_prompt_content}")
+    
+    # Store the assistant's response
+    echo "$assistant_response" | reservoir ingest --role assistant
+
+    # Display the response
+    echo "$assistant_response"
+}
+
+# Create a convenient alias
+alias gpty='contextual_cgip_with_ingest'
+</code></pre>
+<p>After adding this to your shell configuration, reload it:</p>
+<pre><code class="language-bash"># For bash
+source ~/.bashrc
+
+# For zsh
+source ~/.zshrc
+</code></pre>
+<h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
+<p>Use the function directly:</p>
+<pre><code class="language-bash">contextual_cgip_with_ingest "Explain quantum computing in simple terms"
+</code></pre>
+<p>Or use the convenient alias:</p>
+<pre><code class="language-bash">gpty "What is machine learning?"
+</code></pre>
+<h3 id="follow-up-questions"><a class="header" href="#follow-up-questions">Follow-up Questions</a></h3>
+<p>The magic happens with follow-up questions:</p>
+<pre><code class="language-bash">gpty "Explain neural networks"
+# ... AI responds with explanation ...
+
+gpty "How do they relate to what we discussed about machine learning earlier?"
+# ... AI responds with context from the previous conversation ...
+</code></pre>
+<h3 id="different-topics"><a class="header" href="#different-topics">Different Topics</a></h3>
+<p>Start a new topic, and Reservoir will find relevant context:</p>
+<pre><code class="language-bash">gpty "I'm learning Rust programming"
+# ... later in a different session ...
+
+gpty "Show me some advanced Rust patterns"
+# Reservoir will remember you're learning Rust and provide appropriate context
+</code></pre>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<p>Here's what happens when you use the integrated function:</p>
+<ol>
+<li><strong>Query Ingestion</strong>: Your question is stored in Reservoir</li>
+<li><strong>Context Gathering</strong>: Reservoir searches for:
+<ul>
+<li>Semantically similar past conversations</li>
+<li>Recent conversation history</li>
+</ul>
+</li>
+<li><strong>Context Injection</strong>: This context is provided to cgip as a system prompt</li>
+<li><strong>Enhanced Response</strong>: cgip responds with awareness of your history</li>
+<li><strong>Response Storage</strong>: The AI's response is stored for future context</li>
+</ol>
+<h2 id="advanced-configuration"><a class="header" href="#advanced-configuration">Advanced Configuration</a></h2>
+<h3 id="custom-search-parameters"><a class="header" href="#custom-search-parameters">Custom Search Parameters</a></h3>
+<p>You can modify the function to customize how context is gathered:</p>
+<pre><code class="language-bash">function contextual_cgip_with_ingest() {
+    local user_query="$1"
+    
+    if [ -z "$user_query" ]; then
+        echo "Usage: contextual_cgip_with_ingest 'Your question goes here'" &gt;&amp;2
+        return 1
+    fi
+
+    echo "$user_query" | reservoir ingest
+
+    # Customize these parameters
+    local system_prompt_content=$(
+        echo "=== Relevant Context ==="
+        reservoir search "$user_query" --semantic --link --limit 5
+        echo ""
+        echo "=== Recent History ==="
+        reservoir view 15 --partition "$USER" --instance "cgip"
+    )
+
+    local assistant_response=$(cgip "${user_query}" --system-prompt="${system_prompt_content}")
+    
+    echo "$assistant_response" | reservoir ingest --role assistant
+    echo "$assistant_response"
+}
+</code></pre>
+<h3 id="partitioned-conversations"><a class="header" href="#partitioned-conversations">Partitioned Conversations</a></h3>
+<p>Organize your conversations by topic or project:</p>
+<pre><code class="language-bash">function gpty_work() {
+    local user_query="$1"
+    if [ -z "$user_query" ]; then
+        echo "Usage: gpty_work 'Your work-related question'" &gt;&amp;2
+        return 1
+    fi
+
+    echo "$user_query" | reservoir ingest --partition "$USER" --instance "work"
+    
+    local system_prompt_content=$(
+        echo "Context from work conversations:"
+        reservoir search "$user_query" --semantic --partition "$USER" --instance "work"
+        echo "Recent work discussion:"
+        reservoir view 10 --partition "$USER" --instance "work"
+    )
+
+    local assistant_response=$(cgip "${user_query}" --system-prompt="${system_prompt_content}")
+    echo "$assistant_response" | reservoir ingest --role assistant --partition "$USER" --instance "work"
+    echo "$assistant_response"
+}
+
+function gpty_personal() {
+    # Similar function for personal conversations
+    # ... implement similarly with --instance "personal"
+}
+</code></pre>
+<h3 id="model-selection"><a class="header" href="#model-selection">Model Selection</a></h3>
+<p>Use different models while maintaining context:</p>
+<pre><code class="language-bash">function gpty_creative() {
+    local user_query="$1"
+    echo "$user_query" | reservoir ingest
+    
+    local system_prompt_content=$(
+        reservoir search "$user_query" --semantic --link
+        reservoir view 5
+    )
+
+    # Use a creative model via cgip configuration
+    local assistant_response=$(cgip "${user_query}" --system-prompt="${system_prompt_content}" --model gpt-4)
+    
+    echo "$assistant_response" | reservoir ingest --role assistant
+    echo "$assistant_response"
+}
+</code></pre>
+<h2 id="benefits-of-this-integration"><a class="header" href="#benefits-of-this-integration">Benefits of This Integration</a></h2>
+<h3 id="continuous-learning"><a class="header" href="#continuous-learning">Continuous Learning</a></h3>
+<ul>
+<li>Your AI assistant learns from every interaction</li>
+<li>Context builds up over time, making responses more personalized</li>
+<li>No need to re-explain your projects or preferences</li>
+</ul>
+<h3 id="cross-session-memory"><a class="header" href="#cross-session-memory">Cross-Session Memory</a></h3>
+<ul>
+<li>Resume conversations from days or weeks ago</li>
+<li>Reference past decisions and discussions</li>
+<li>Build on previous explanations and examples</li>
+</ul>
+<h3 id="semantic-understanding"><a class="header" href="#semantic-understanding">Semantic Understanding</a></h3>
+<ul>
+<li>Ask "What did we discuss about X?" and get relevant results</li>
+<li>Similar topics are automatically connected</li>
+<li>Context is found even if you use different wording</li>
+</ul>
+<h3 id="privacy"><a class="header" href="#privacy">Privacy</a></h3>
+<ul>
+<li>All your conversation history stays local</li>
+<li>No data sent to external services beyond the AI API calls</li>
+<li>You control your data completely</li>
+</ul>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="function-not-found"><a class="header" href="#function-not-found">Function Not Found</a></h3>
+<p>Make sure you've sourced your shell configuration:</p>
+<pre><code class="language-bash">source ~/.bashrc  # or ~/.zshrc
+</code></pre>
+<h3 id="no-context-being-added"><a class="header" href="#no-context-being-added">No Context Being Added</a></h3>
+<p>Check that Reservoir is running:</p>
+<pre><code class="language-bash"># Should show Reservoir process
+ps aux | grep reservoir
+
+# Start if not running
+cargo run -- start
+</code></pre>
+<h3 id="empty-search-results"><a class="header" href="#empty-search-results">Empty Search Results</a></h3>
+<p>Build up some conversation history first:</p>
+<pre><code class="language-bash">gpty "Tell me about artificial intelligence"
+gpty "What are neural networks?"
+gpty "How does machine learning work?"
+
+# Now try a search
+gpty "What did we discuss about AI?"
+</code></pre>
+<h3 id="permission-issues"><a class="header" href="#permission-issues">Permission Issues</a></h3>
+<p>Make sure the function has access to reservoir commands:</p>
+<pre><code class="language-bash"># Test individual commands
+echo "test" | reservoir ingest
+reservoir view 5
+reservoir search "test"
+</code></pre>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ul>
+<li>Explore <a href="./api/overview.html">API Reference</a> to understand Reservoir's capabilities</li>
+<li>Learn about <a href="./features/partitioning.html">Partitioning</a> to organize conversations</li>
+<li>Check out <a href="./python-integration.html">Python Integration</a> for programmatic access</li>
+<li>See <a href="./troubleshooting/common-issues.html">Troubleshooting</a> if you encounter issues</li>
+</ul>
+<p>The Chat Gipitty integration transforms your AI interactions from isolated conversations into a connected, searchable knowledge base that grows smarter with every interaction.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="first-chat.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="python-integration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="first-chat.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="python-integration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/custom.js"></script>
+
+
+    </div>
+    </body>
+</html>
