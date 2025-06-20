@@ -3,7 +3,7 @@ authors = ["Divan Visagie", "Reservoir Contributors"]
 language = "en"
 multilingual = false
 src = "src"
-title = "Reservoir Documentation"
+title = "Sector F Labs - Reservoir"
 description = "Your helpful memory for AI conversations - Documentation"
 
 [preprocessor.mermaid]

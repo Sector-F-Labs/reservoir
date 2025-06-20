@@ -301,19 +301,21 @@ pre {
         monospace;
 }
 
+/* Code inside pre blocks - no additional styling */
 pre code {
     font-family:
         "Roboto Mono", "Source Code Pro", Consolas, "Ubuntu Mono", Menlo,
         monospace;
     font-size: 14px;
     line-height: 1.4;
-    background: none;
-    padding: 0;
-    border-radius: 0;
+    background: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
 }
 
-/* Inline code */
-code {
+/* Inline code - only applies to code NOT inside pre */
+code:not(pre code) {
     font-family:
         "Roboto Mono", "Source Code Pro", Consolas, "Ubuntu Mono", Menlo,
         monospace;
