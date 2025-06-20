@@ -104,6 +104,21 @@
         }
     }
 
+    // Convert title to a proper link
+    function makeTitleClickable() {
+        const title = document.querySelector('.menu-title');
+        if (title) {
+            // Create a link element
+            const link = document.createElement('a');
+            link.href = '/';
+            link.textContent = title.textContent;
+            link.className = title.className;
+            
+            // Replace the title with the link
+            title.parentNode.replaceChild(link, title);
+        }
+    }
+
     // Initialize everything when DOM is ready
     function initialize() {
         // Disable theme switching
@@ -120,6 +135,9 @@
 
         // Override theme functions
         overrideThemeFunctions();
+
+        // Make title clickable
+        makeTitleClickable();
 
         console.log('Reservoir documentation: System theme mode active');
     }

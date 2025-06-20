@@ -104,30 +104,18 @@
         }
     }
 
-    // Make title clickable to go to root website
+    // Convert title to a proper link
     function makeTitleClickable() {
         const title = document.querySelector('.menu-title');
         if (title) {
-            // Make it look clickable
-            title.style.cursor = 'pointer';
-            title.style.textDecoration = 'none';
-            title.style.transition = 'opacity 0.2s ease';
+            // Create a link element
+            const link = document.createElement('a');
+            link.href = '/';
+            link.textContent = title.textContent;
+            link.className = title.className;
             
-            // Add click handler
-            title.addEventListener('click', function(e) {
-                e.preventDefault();
-                // Go to the root of the site (assuming docs are in a subdirectory)
-                window.location.href = '/';
-            });
-            
-            // Add hover effect
-            title.addEventListener('mouseenter', function() {
-                title.style.opacity = '0.8';
-            });
-            
-            title.addEventListener('mouseleave', function() {
-                title.style.opacity = '1';
-            });
+            // Replace the title with the link
+            title.parentNode.replaceChild(link, title);
         }
     }
 
