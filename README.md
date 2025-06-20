@@ -1,13 +1,3 @@
-# 🚧 Under Construction
-
-> Reservoir is in active development. It's not ready for production use yet. Expect breaking changes.
-
-**Recent Updates:**
-- ✅ Added support for `web_search_options` in chat requests
-- ✅ Enhanced multi-provider support (OpenAI, Ollama, Mistral, Gemini)
-- ✅ Improved model configuration with automatic provider detection
-- ✅ Fixed deserialization issues for optional request fields
-
 # Reservoir
 
 ## What is Reservoir?
@@ -359,6 +349,62 @@ completion = client.chat.completions.create(
     }
 )
 ```
+
+#### Chat Gipitty Integration
+
+Reservoir was originally designed as a memory system for [Chat Gipitty](https://github.com/divanvisagie/chat-gipitty). Here's how to add persistent memory to your cgip conversations:
+
+**Add this function to your `~/.bashrc` or `~/.zshrc`:**
+
+```bash
+function contextual_cgip_with_ingest() {
+    local user_query="$1"
+
+    # Validate input
+    if [ -z "$user_query" ]; then
+        echo "Usage: contextual_cgip_with_ingest 'Your question goes here'" >&2
+        return 1
+    fi
+
+    # Ingest the user's query into Reservoir
+    echo "$user_query" | reservoir ingest
+
+    # Generate dynamic system prompt with context
+    local system_prompt_content=$(
+        echo "the following is info from semantic search based on your query:"
+        reservoir search "$user_query" --semantic --link
+        echo "the following is recent history:"
+        reservoir view 10
+    )
+
+    # Call cgip with enriched context
+    local assistant_response=$(cgip "${user_query}" --system-prompt="${system_prompt_content}")
+    
+    # Store the assistant's response
+    echo "$assistant_response" | reservoir ingest --role assistant
+
+    # Display the response
+    echo "$assistant_response"
+}
+
+# Create a convenient alias
+alias gpty='contextual_cgip_with_ingest'
+```
+
+**Usage:**
+```bash
+# Use the function directly
+contextual_cgip_with_ingest "Explain quantum computing"
+
+# Or use the alias
+gpty "What did we discuss about quantum computing earlier?"
+```
+
+This integration gives Chat Gipitty a persistent memory by:
+- Storing all your conversations in Reservoir
+- Automatically finding relevant past discussions using semantic search
+- Including recent chat history for context
+- Enriching each response with relevant background information
 
 ### Environment Variables
 
