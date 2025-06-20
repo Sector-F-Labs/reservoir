@@ -17,6 +17,7 @@ edit-url-template = "https://github.com/divanvisagie/reservoir/edit/main/book/{p
 site-url = "/reservoir/"
 copy-fonts = true
 no-section-label = false
+additional-assets = ["theme/logo.png"]
 
 
 [output.html.fold]
