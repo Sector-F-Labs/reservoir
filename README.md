@@ -108,7 +108,29 @@ You can see an example of this structure in the following graph visualization:
 
 ## Documentation
 
-Reservoir's documentation is organized into the following sections:
+Reservoir documentation is available in two formats:
+
+### 📚 Interactive Documentation Book
+
+The complete documentation is available as an interactive mdBook:
+
+```bash
+# Build and serve the documentation locally
+cd book && ./docs.sh serve
+```
+
+The documentation book includes:
+- **Quick Start Guide**: Get up and running in minutes
+- **Chat Gipitty Integration**: Add memory to your cgip conversations
+- **API Reference**: Complete endpoint documentation
+- **Usage Examples**: Python, curl, and integration examples
+- **Architecture Deep Dive**: System design and data model
+- **Deployment Guides**: Local and production setup
+- **Troubleshooting**: Common issues and solutions
+
+### 📄 Individual Documentation Files
+
+For quick reference, individual documentation files are also available:
 
 - [Architecture](./docs/architecture.md): System and component overview.
 - [API](./docs/api.md): API endpoints, usage, and examples.

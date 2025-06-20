@@ -24,3 +24,6 @@ docs/notes
 .DS_Store
 data/
 .envrc*
+
+# mdBook generated output
+book/book/
