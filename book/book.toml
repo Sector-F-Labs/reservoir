@@ -15,7 +15,6 @@ additional-js = ["theme/custom.js"]
 git-repository-url = "https://github.com/divanvisagie/reservoir"
 edit-url-template = "https://github.com/divanvisagie/reservoir/edit/main/book/{path}"
 site-url = "/reservoir/"
-cname = "reservoir.docs"
 copy-fonts = true
 no-section-label = false
 
