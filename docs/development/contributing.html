@@ -162,7 +162,317 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
+                        <h1 id="contributing-to-reservoir"><a class="header" href="#contributing-to-reservoir">Contributing to Reservoir</a></h1>
+<p>Thank you for your interest in contributing to Reservoir! This guide will help you get started with development and contributing to the project.</p>
+<h2 id="development-setup"><a class="header" href="#development-setup">Development Setup</a></h2>
+<h3 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h3>
+<p>Before you begin, ensure you have the following installed:</p>
+<ul>
+<li>
+<p><strong>Rust</strong> (latest stable version)</p>
+<pre><code class="language-bash">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+</code></pre>
+</li>
+<li>
+<p><strong>Docker</strong> (for Neo4j database)</p>
+<ul>
+<li><a href="https://docs.docker.com/get-docker/">Install Docker</a></li>
+<li><a href="https://docs.docker.com/compose/install/">Install Docker Compose</a></li>
+</ul>
+</li>
+<li>
+<p><strong>Git</strong> for version control</p>
+</li>
+</ul>
+<h3 id="step-1-fork-and-clone"><a class="header" href="#step-1-fork-and-clone">Step 1: Fork and Clone</a></h3>
+<ol>
+<li>Fork the repository on GitHub</li>
+<li>Clone your fork locally:</li>
+</ol>
+<pre><code class="language-bash">git clone https://github.com/yourusername/reservoir.git
+cd reservoir
+</code></pre>
+<h3 id="step-2-start-the-database"><a class="header" href="#step-2-start-the-database">Step 2: Start the Database</a></h3>
+<p>Start Neo4j using Docker Compose:</p>
+<pre><code class="language-bash">docker-compose up -d
+</code></pre>
+<p>This starts Neo4j on <code>bolt://localhost:7687</code> with the default credentials.</p>
+<h3 id="step-3-environment-configuration"><a class="header" href="#step-3-environment-configuration">Step 3: Environment Configuration</a></h3>
+<p>Create a <code>.env</code> file in the project root or export environment variables:</p>
+<pre><code class="language-env"># Server Configuration
+RESERVOIR_PORT=3017
+RESERVOIR_HOST=127.0.0.1
+
+# Database Configuration
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password
+
+# API Keys (add as needed)
+OPENAI_API_KEY=sk-your-key-here
+MISTRAL_API_KEY=your-mistral-key
+GEMINI_API_KEY=your-gemini-key
+
+# Provider URLs (optional)
+RSV_OPENAI_BASE_URL=https://api.openai.com/v1/chat/completions
+RSV_OLLAMA_BASE_URL=http://localhost:11434/v1/chat/completions
+</code></pre>
+<h3 id="step-4-build-and-run"><a class="header" href="#step-4-build-and-run">Step 4: Build and Run</a></h3>
+<pre><code class="language-bash"># Build the project
+cargo build
+
+# Run in development mode with auto-reload
+make dev
+
+# Or run directly
+cargo run -- start
+</code></pre>
+<p>Reservoir will be available at <code>http://localhost:3017</code>.</p>
+<h2 id="development-workflow"><a class="header" href="#development-workflow">Development Workflow</a></h2>
+<h3 id="making-changes"><a class="header" href="#making-changes">Making Changes</a></h3>
+<ol>
+<li>
+<p><strong>Create a feature branch</strong>:</p>
+<pre><code class="language-bash">git checkout -b feature/your-feature-name
+</code></pre>
+</li>
+<li>
+<p><strong>Make your changes</strong> following the coding standards below</p>
+</li>
+<li>
+<p><strong>Test your changes</strong>:</p>
+<pre><code class="language-bash"># Run tests
+cargo test
+
+# Run API tests
+./hurl/test.sh
+
+# Test specific functionality
+make run
+</code></pre>
+</li>
+<li>
+<p><strong>Update documentation</strong> if needed:</p>
+<pre><code class="language-bash"># Build documentation
+make book
+
+# Serve locally to preview
+make serve-book
+</code></pre>
+</li>
+</ol>
+<h3 id="code-standards"><a class="header" href="#code-standards">Code Standards</a></h3>
+<h4 id="rust-code-style"><a class="header" href="#rust-code-style">Rust Code Style</a></h4>
+<ul>
+<li>
+<p>Use <code>rustfmt</code> for formatting:</p>
+<pre><code class="language-bash">cargo fmt
+</code></pre>
+</li>
+<li>
+<p>Use <code>clippy</code> for linting:</p>
+<pre><code class="language-bash">cargo clippy
+</code></pre>
+</li>
+<li>
+<p>Follow Rust naming conventions:</p>
+<ul>
+<li><code>snake_case</code> for functions and variables</li>
+<li><code>PascalCase</code> for types and structs</li>
+<li><code>SCREAMING_SNAKE_CASE</code> for constants</li>
+</ul>
+</li>
+</ul>
+<h4 id="documentation"><a class="header" href="#documentation">Documentation</a></h4>
+<ul>
+<li>Document all public APIs with rustdoc comments</li>
+<li>Include examples in documentation where helpful</li>
+<li>Update the book documentation for user-facing changes</li>
+</ul>
+<h4 id="testing"><a class="header" href="#testing">Testing</a></h4>
+<ul>
+<li>Write unit tests for new functionality</li>
+<li>Add integration tests for API endpoints</li>
+<li>Ensure existing tests pass before submitting</li>
+</ul>
+<h3 id="commit-guidelines"><a class="header" href="#commit-guidelines">Commit Guidelines</a></h3>
+<p>Use conventional commit messages:</p>
+<pre><code>type(scope): description
+
+[optional body]
+
+[optional footer]
+</code></pre>
+<p>Types:</p>
+<ul>
+<li><code>feat</code>: New feature</li>
+<li><code>fix</code>: Bug fix</li>
+<li><code>docs</code>: Documentation changes</li>
+<li><code>style</code>: Code style changes (formatting, etc.)</li>
+<li><code>refactor</code>: Code refactoring</li>
+<li><code>test</code>: Adding or updating tests</li>
+<li><code>chore</code>: Maintenance tasks</li>
+</ul>
+<p>Examples:</p>
+<pre><code>feat(api): add web search options support
+fix(db): resolve connection pooling issue
+docs(book): update installation guide
+</code></pre>
+<h2 id="testing-1"><a class="header" href="#testing-1">Testing</a></h2>
+<h3 id="unit-tests"><a class="header" href="#unit-tests">Unit Tests</a></h3>
+<p>Run unit tests:</p>
+<pre><code class="language-bash">cargo test
+</code></pre>
+<h3 id="integration-tests"><a class="header" href="#integration-tests">Integration Tests</a></h3>
+<p>Test the API endpoints:</p>
+<pre><code class="language-bash"># Test all endpoints
+./hurl/test.sh
+
+# Test specific endpoint
+hurl --variable USER="$USER" --variable OPENAI_API_KEY="$OPENAI_API_KEY" hurl/chat_completion.hurl
+</code></pre>
+<h3 id="manual-testing"><a class="header" href="#manual-testing">Manual Testing</a></h3>
+<ol>
+<li>
+<p>Start Reservoir:</p>
+<pre><code class="language-bash">make run
+</code></pre>
+</li>
+<li>
+<p>Test with curl:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{"model": "gpt-4", "messages": [{"role": "user", "content": "Hello!"}]}'
+</code></pre>
+</li>
+</ol>
+<h2 id="documentation-1"><a class="header" href="#documentation-1">Documentation</a></h2>
+<h3 id="building-the-book"><a class="header" href="#building-the-book">Building the Book</a></h3>
+<p>The documentation is built with mdBook:</p>
+<pre><code class="language-bash"># Build documentation
+make book
+
+# Serve with live reload
+make serve-book
+
+# Clean generated docs
+make clean-book
+</code></pre>
+<h3 id="writing-documentation"><a class="header" href="#writing-documentation">Writing Documentation</a></h3>
+<ul>
+<li>Use clear, concise language</li>
+<li>Include code examples</li>
+<li>Test all code examples</li>
+<li>Link related sections</li>
+<li>Consider the user's journey</li>
+</ul>
+<h2 id="submitting-changes"><a class="header" href="#submitting-changes">Submitting Changes</a></h2>
+<h3 id="pull-request-process"><a class="header" href="#pull-request-process">Pull Request Process</a></h3>
+<ol>
+<li>
+<p><strong>Ensure your code is ready</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Tests pass (<code>cargo test</code>)</li>
+<li><input disabled="" type="checkbox"/>
+Code is formatted (<code>cargo fmt</code>)</li>
+<li><input disabled="" type="checkbox"/>
+No clippy warnings (<code>cargo clippy</code>)</li>
+<li><input disabled="" type="checkbox"/>
+Documentation updated if needed</li>
+</ul>
+</li>
+<li>
+<p><strong>Create a pull request</strong>:</p>
+<ul>
+<li>Use a descriptive title</li>
+<li>Explain what changes you made and why</li>
+<li>Reference any related issues</li>
+<li>Include screenshots for UI changes</li>
+</ul>
+</li>
+<li>
+<p><strong>Respond to feedback</strong>:</p>
+<ul>
+<li>Address review comments promptly</li>
+<li>Ask questions if feedback is unclear</li>
+<li>Update your branch as needed</li>
+</ul>
+</li>
+</ol>
+<h3 id="pull-request-template"><a class="header" href="#pull-request-template">Pull Request Template</a></h3>
+<p>When creating a PR, include:</p>
+<pre><code class="language-markdown">## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+
+## Checklist
+- [ ] Code follows project style guidelines
+- [ ] Self-review completed
+- [ ] Documentation updated
+- [ ] No breaking changes (or documented)
+</code></pre>
+<h2 id="release-process"><a class="header" href="#release-process">Release Process</a></h2>
+<p>For maintainers:</p>
+<ol>
+<li><strong>Version Bump</strong>: Update version in <code>Cargo.toml</code></li>
+<li><strong>Changelog</strong>: Update <code>CHANGELOG.md</code> with changes</li>
+<li><strong>Tag Release</strong>: Create and push a git tag</li>
+<li><strong>Build Documentation</strong>: Ensure docs are up to date</li>
+<li><strong>Publish</strong>: Publish to crates.io if applicable</li>
+</ol>
+<h2 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h2>
+<ul>
+<li><strong>Issues</strong>: Check existing issues or create a new one</li>
+<li><strong>Discussions</strong>: Use GitHub Discussions for questions</li>
+<li><strong>Documentation</strong>: Refer to the full documentation at <a href="http://sectorflabs.com/reservoir/">sectorflabs.com/reservoir</a></li>
+</ul>
+<h2 id="code-of-conduct"><a class="header" href="#code-of-conduct">Code of Conduct</a></h2>
+<p>Please be respectful and constructive in all interactions. We're here to build something useful together!</p>
+<h2 id="architecture-overview"><a class="header" href="#architecture-overview">Architecture Overview</a></h2>
+<p>Before making significant changes, familiarize yourself with:</p>
+<ul>
+<li><a href="../architecture/overview.html">System Architecture</a></li>
+<li><a href="../architecture/data-model.html">Data Model</a></li>
+<li><a href="../api/overview.html">API Design</a></li>
+</ul>
+<h2 id="common-development-tasks"><a class="header" href="#common-development-tasks">Common Development Tasks</a></h2>
+<h3 id="adding-a-new-api-endpoint"><a class="header" href="#adding-a-new-api-endpoint">Adding a New API Endpoint</a></h3>
+<ol>
+<li>Define the endpoint in <code>src/api/</code></li>
+<li>Add routing logic</li>
+<li>Implement request/response handling</li>
+<li>Add tests</li>
+<li>Update documentation</li>
+</ol>
+<h3 id="adding-a-new-ai-provider"><a class="header" href="#adding-a-new-ai-provider">Adding a New AI Provider</a></h3>
+<ol>
+<li>Implement provider trait</li>
+<li>Add configuration options</li>
+<li>Update model routing logic</li>
+<li>Add tests with mock responses</li>
+<li>Document the new provider</li>
+</ol>
+<h3 id="database-schema-changes"><a class="header" href="#database-schema-changes">Database Schema Changes</a></h3>
+<ol>
+<li>Create migration script in <code>migrations/</code></li>
+<li>Update data model documentation</li>
+<li>Test migration on sample data</li>
+<li>Ensure backward compatibility</li>
+</ol>
+<p>Thank you for contributing to Reservoir! 🚀</p>
 
                     </main>
 

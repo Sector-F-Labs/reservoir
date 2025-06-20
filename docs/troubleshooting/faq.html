@@ -162,7 +162,240 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="faq"><a class="header" href="#faq">FAQ</a></h1>
+                        <h1 id="frequently-asked-questions"><a class="header" href="#frequently-asked-questions">Frequently Asked Questions</a></h1>
+<p>This section addresses common questions and issues you might encounter while using Reservoir.</p>
+<h2 id="general-questions"><a class="header" href="#general-questions">General Questions</a></h2>
+<h3 id="what-is-reservoir"><a class="header" href="#what-is-reservoir">What is Reservoir?</a></h3>
+<p>Reservoir is a memory system for AI conversations that acts as a smart proxy between your applications and OpenAI-compatible APIs. It automatically stores conversation history and enriches new requests with relevant context from past conversations.</p>
+<h3 id="does-reservoir-support-streaming-responses"><a class="header" href="#does-reservoir-support-streaming-responses">Does Reservoir support streaming responses?</a></h3>
+<p>No, streaming responses are not currently supported. All requests are handled in a non-streaming manner. The response is returned once the complete message is received from the AI provider.</p>
+<h3 id="can-i-use-reservoir-with-clients-other-than-the-openai-python-library"><a class="header" href="#can-i-use-reservoir-with-clients-other-than-the-openai-python-library">Can I use Reservoir with clients other than the OpenAI Python library?</a></h3>
+<p>Yes, Reservoir is designed to be fully OpenAI-compatible. It has been tested with:</p>
+<ul>
+<li><code>curl</code> command line tool</li>
+<li>OpenAI Python library</li>
+<li>Chat Gipitty</li>
+<li>Any application that can make HTTP requests to OpenAI-compatible endpoints</li>
+</ul>
+<p>However, compatibility with some specialized clients may vary. If you encounter issues with a specific client, please report it as an issue.</p>
+<h3 id="what-ai-providers-does-reservoir-support"><a class="header" href="#what-ai-providers-does-reservoir-support">What AI providers does Reservoir support?</a></h3>
+<p>Reservoir supports multiple AI providers:</p>
+<ul>
+<li><strong>OpenAI</strong>: GPT-4, GPT-4o, GPT-3.5-turbo, and specialized models</li>
+<li><strong>Ollama</strong>: Local models like Llama, Gemma, and any custom models</li>
+<li><strong>Mistral AI</strong>: Cloud-hosted Mistral models</li>
+<li><strong>Google Gemini</strong>: Google's AI models</li>
+<li><strong>Custom providers</strong>: Any OpenAI-compatible API endpoint</li>
+</ul>
+<h3 id="how-does-reservoir-organize-conversations"><a class="header" href="#how-does-reservoir-organize-conversations">How does Reservoir organize conversations?</a></h3>
+<p>Reservoir uses a two-level organization system:</p>
+<ul>
+<li><strong>Partition</strong>: Top-level grouping (typically your username)</li>
+<li><strong>Instance</strong>: Application-specific context within a partition</li>
+</ul>
+<p>This allows you to keep conversations from different applications separate while maintaining context within each application.</p>
+<h3 id="is-my-data-private"><a class="header" href="#is-my-data-private">Is my data private?</a></h3>
+<p>Yes, absolutely. All conversation data is stored locally in your Neo4j database and never leaves your infrastructure. Reservoir only forwards your requests to the AI providers you choose to use.</p>
+<h2 id="technical-questions"><a class="header" href="#technical-questions">Technical Questions</a></h2>
+<h3 id="what-database-does-reservoir-use"><a class="header" href="#what-database-does-reservoir-use">What database does Reservoir use?</a></h3>
+<p>Reservoir uses Neo4j as its graph database. Neo4j provides:</p>
+<ul>
+<li>Vector similarity search for semantic matching</li>
+<li>Graph relationships for conversation threading</li>
+<li>Efficient querying for context enrichment</li>
+<li>Scalable storage for large conversation histories</li>
+</ul>
+<h3 id="how-does-context-enrichment-work"><a class="header" href="#how-does-context-enrichment-work">How does context enrichment work?</a></h3>
+<p>When you send a message, Reservoir:</p>
+<ol>
+<li>Stores your message in the database</li>
+<li>Searches for semantically similar past messages</li>
+<li>Retrieves recent conversation history</li>
+<li>Injects relevant context into your request</li>
+<li>Sends the enriched request to the AI provider</li>
+<li>Stores the response for future context</li>
+</ol>
+<h3 id="what-are-the-token-limits"><a class="header" href="#what-are-the-token-limits">What are the token limits?</a></h3>
+<p>Reservoir respects the token limits of the underlying AI models:</p>
+<ul>
+<li><strong>GPT-4</strong>: 8,192 tokens (context window)</li>
+<li><strong>GPT-4-32k</strong>: 32,768 tokens</li>
+<li><strong>GPT-3.5-turbo</strong>: 4,096 tokens</li>
+<li><strong>Local models</strong>: Varies by model</li>
+</ul>
+<p>Reservoir automatically truncates context to fit within these limits while preserving system prompts and your latest message.</p>
+<h3 id="can-i-run-multiple-reservoir-instances"><a class="header" href="#can-i-run-multiple-reservoir-instances">Can I run multiple Reservoir instances?</a></h3>
+<p>Yes, you can run multiple instances by:</p>
+<ul>
+<li>Using different ports (<code>RESERVOIR_PORT</code>)</li>
+<li>Using different Neo4j databases</li>
+<li>Using different partition/instance combinations</li>
+</ul>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="neo4j-connection-issues"><a class="header" href="#neo4j-connection-issues">Neo4j Connection Issues</a></h3>
+<p><strong>Problem</strong>: Unable to connect to Neo4j.</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>
+<p>Ensure Neo4j is running:</p>
+<pre><code class="language-bash">docker ps | grep neo4j
+</code></pre>
+</li>
+<li>
+<p>Check your connection details in <code>.env</code>:</p>
+<pre><code class="language-env">NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password
+</code></pre>
+</li>
+<li>
+<p>Test the connection manually:</p>
+<pre><code class="language-bash">curl -u neo4j:password http://localhost:7474/db/data/
+</code></pre>
+</li>
+</ol>
+<h3 id="openai-api-key-issues"><a class="header" href="#openai-api-key-issues">OpenAI API Key Issues</a></h3>
+<p><strong>Problem</strong>: Requests fail due to missing or invalid API key.</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>
+<p>Verify your API key is set:</p>
+<pre><code class="language-bash">echo $OPENAI_API_KEY
+</code></pre>
+</li>
+<li>
+<p>Test the key directly with OpenAI:</p>
+<pre><code class="language-bash">curl https://api.openai.com/v1/models \
+    -H "Authorization: Bearer $OPENAI_API_KEY"
+</code></pre>
+</li>
+<li>
+<p>Ensure there are no extra spaces or quotes in your environment variable.</p>
+</li>
+</ol>
+<h3 id="token-limit-errors"><a class="header" href="#token-limit-errors">Token Limit Errors</a></h3>
+<p><strong>Problem</strong>: Requests fail due to exceeding the token limit.</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>Reduce the size of your input message</li>
+<li>Clear old conversation history for the partition/instance</li>
+<li>Use a model with a larger context window (e.g., GPT-4-32k)</li>
+<li>Check if context enrichment is adding too much historical data</li>
+</ol>
+<h3 id="port-already-in-use"><a class="header" href="#port-already-in-use">Port Already in Use</a></h3>
+<p><strong>Problem</strong>: Reservoir fails to start because port 3017 is already in use.</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>
+<p>Check what's using the port:</p>
+<pre><code class="language-bash">lsof -i :3017
+</code></pre>
+</li>
+<li>
+<p>Use a different port:</p>
+<pre><code class="language-bash">export RESERVOIR_PORT=3018
+</code></pre>
+</li>
+<li>
+<p>Kill the process using the port (if safe to do so):</p>
+<pre><code class="language-bash">kill -9 $(lsof -ti:3017)
+</code></pre>
+</li>
+</ol>
+<h3 id="permission-denied-macos-service"><a class="header" href="#permission-denied-macos-service">Permission Denied (macOS Service)</a></h3>
+<p><strong>Problem</strong>: Service fails to start due to permission issues.</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>
+<p>Check the binary path in the plist file:</p>
+<pre><code class="language-bash">cat ~/Library/LaunchAgents/com.sectorflabs.reservoir.plist
+</code></pre>
+</li>
+<li>
+<p>Ensure the binary exists and is executable:</p>
+<pre><code class="language-bash">ls -la ~/.cargo/bin/reservoir
+</code></pre>
+</li>
+<li>
+<p>Update the path in the plist if necessary</p>
+</li>
+</ol>
+<h3 id="slow-performance"><a class="header" href="#slow-performance">Slow Performance</a></h3>
+<p><strong>Problem</strong>: Reservoir responses are slow.</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>Check Neo4j memory allocation</li>
+<li>Ensure Neo4j data is on fast storage (SSD)</li>
+<li>Optimize vector index settings</li>
+<li>Reduce the number of context messages retrieved</li>
+<li>Check network connectivity to AI providers</li>
+</ol>
+<h2 id="installation-questions"><a class="header" href="#installation-questions">Installation Questions</a></h2>
+<h3 id="do-i-need-to-install-neo4j-separately"><a class="header" href="#do-i-need-to-install-neo4j-separately">Do I need to install Neo4j separately?</a></h3>
+<p>No, the recommended approach is to use Docker Compose, which automatically sets up Neo4j for you:</p>
+<pre><code class="language-bash">docker-compose up -d
+</code></pre>
+<h3 id="can-i-use-an-existing-neo4j-instance"><a class="header" href="#can-i-use-an-existing-neo4j-instance">Can I use an existing Neo4j instance?</a></h3>
+<p>Yes, you can connect to any Neo4j instance by setting the appropriate environment variables:</p>
+<pre><code class="language-env">NEO4J_URI=bolt://your-neo4j-host:7687
+NEO4J_USERNAME=your-username
+NEO4J_PASSWORD=your-password
+</code></pre>
+<h3 id="what-rust-version-do-i-need"><a class="header" href="#what-rust-version-do-i-need">What Rust version do I need?</a></h3>
+<p>Reservoir requires the latest stable version of Rust. You can install it with:</p>
+<pre><code class="language-bash">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+</code></pre>
+<h2 id="integration-questions"><a class="header" href="#integration-questions">Integration Questions</a></h2>
+<h3 id="how-do-i-integrate-with-chat-gipitty"><a class="header" href="#how-do-i-integrate-with-chat-gipitty">How do I integrate with Chat Gipitty?</a></h3>
+<p>See the dedicated <a href="../chat-gipitty.html">Chat Gipitty Integration</a> guide for detailed setup instructions.</p>
+<h3 id="can-i-use-reservoir-with-my-existing-python-scripts"><a class="header" href="#can-i-use-reservoir-with-my-existing-python-scripts">Can I use Reservoir with my existing Python scripts?</a></h3>
+<p>Yes, simply change the base URL in your OpenAI client:</p>
+<pre><code class="language-python">from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:3017/v1/partition/myuser/instance/myapp",
+    api_key=os.environ.get("OPENAI_API_KEY")
+)
+</code></pre>
+<h3 id="how-do-i-migrate-my-existing-conversation-data"><a class="header" href="#how-do-i-migrate-my-existing-conversation-data">How do I migrate my existing conversation data?</a></h3>
+<p>Reservoir provides import/export functionality:</p>
+<pre><code class="language-bash"># Export from another system (if supported)
+reservoir export &gt; conversations.json
+
+# Import into Reservoir
+reservoir import conversations.json
+</code></pre>
+<h2 id="advanced-usage"><a class="header" href="#advanced-usage">Advanced Usage</a></h2>
+<h3 id="can-i-customize-the-similarity-threshold-for-context-matching"><a class="header" href="#can-i-customize-the-similarity-threshold-for-context-matching">Can I customize the similarity threshold for context matching?</a></h3>
+<p>Currently, the similarity threshold (0.85) is hardcoded, but this may become configurable in future versions.</p>
+<h3 id="how-do-i-backup-my-conversation-data"><a class="header" href="#how-do-i-backup-my-conversation-data">How do I backup my conversation data?</a></h3>
+<p>Use the export command to create backups:</p>
+<pre><code class="language-bash">reservoir export &gt; backup-$(date +%Y%m%d).json
+</code></pre>
+<h3 id="can-i-run-reservoir-in-production"><a class="header" href="#can-i-run-reservoir-in-production">Can I run Reservoir in production?</a></h3>
+<p>Reservoir is currently designed for local development use. For production deployment, consider:</p>
+<ul>
+<li>Securing the Neo4j database</li>
+<li>Setting up proper authentication</li>
+<li>Configuring appropriate firewall rules</li>
+<li>Using HTTPS for external access</li>
+</ul>
+<h2 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h2>
+<p>If your question isn't answered here:</p>
+<ol>
+<li>Check the <a href="./common-issues.html">Common Issues</a> section</li>
+<li>Review the <a href="../api/overview.html">API Documentation</a></li>
+<li>Look at existing GitHub issues</li>
+<li>Create a new issue with details about your problem</li>
+</ol>
+<p>Remember to include:</p>
+<ul>
+<li>Your operating system</li>
+<li>Rust version (<code>rustc --version</code>)</li>
+<li>Neo4j version</li>
+<li>Relevant log output</li>
+<li>Steps to reproduce the issue</li>
+</ul>
 
                     </main>
 

@@ -163,6 +163,236 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="data-model"><a class="header" href="#data-model">Data Model</a></h1>
+<p>Reservoir uses Neo4j as its graph database to store conversations and their relationships. This section provides a detailed overview of the data model, including nodes, relationships, and how they work together to enable intelligent conversation management.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>The data model is designed around the concept of messages as nodes in a graph, with relationships that capture both the conversational flow and semantic similarities. This approach enables powerful querying capabilities for context enrichment and conversation analysis.</p>
+<h2 id="nodes"><a class="header" href="#nodes">Nodes</a></h2>
+<h3 id="messagenode"><a class="header" href="#messagenode">MessageNode</a></h3>
+<p>Represents a single message in a conversation, whether from a user or an AI assistant.</p>
+<div class="table-wrapper"><table><thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>trace_id</code></td><td>String</td><td>Unique identifier per request/response pair</td></tr>
+<tr><td><code>partition</code></td><td>String</td><td>Logical namespace from URL, typically the system username (<code>$USER</code>)</td></tr>
+<tr><td><code>instance</code></td><td>String</td><td>Specific context within partition, typically the application name</td></tr>
+<tr><td><code>role</code></td><td>String</td><td>Role of the message (<code>user</code> or <code>assistant</code>)</td></tr>
+<tr><td><code>content</code></td><td>String</td><td>The text content of the message</td></tr>
+<tr><td><code>timestamp</code></td><td>DateTime</td><td>When the message was created (ISO 8601 format)</td></tr>
+<tr><td><code>embedding</code></td><td>Vector</td><td>Vector representation of the message for similarity search</td></tr>
+<tr><td><code>url</code></td><td>String</td><td>Optional URL associated with the message</td></tr>
+</tbody></table>
+</div>
+<h4 id="example-messagenode"><a class="header" href="#example-messagenode">Example MessageNode</a></h4>
+<pre><code class="language-cypher">CREATE (m:MessageNode {
+    trace_id: "abc123-def456-ghi789",
+    partition: "alice",
+    instance: "code-assistant",
+    role: "user",
+    content: "How do I implement a binary search tree?",
+    timestamp: "2024-01-15T10:30:00Z",
+    embedding: [0.1, -0.2, 0.3, ...],
+    url: null
+})
+</code></pre>
+<h2 id="relationships"><a class="header" href="#relationships">Relationships</a></h2>
+<p>The data model uses two types of relationships to capture different aspects of conversation structure:</p>
+<h3 id="responded_with"><a class="header" href="#responded_with">RESPONDED_WITH</a></h3>
+<p>Links a user message to its corresponding assistant response, preserving the original conversation flow.</p>
+<p><strong>Properties:</strong></p>
+<ul>
+<li><strong>Direction</strong>: <code>(User Message)-[:RESPONDED_WITH]-&gt;(Assistant Message)</code></li>
+<li><strong>Cardinality</strong>: One-to-one (each user message has exactly one assistant response)</li>
+<li><strong>Mutability</strong>: Immutable once created</li>
+</ul>
+<p><strong>Purpose:</strong></p>
+<ul>
+<li>Maintains conversation integrity</li>
+<li>Enables reconstruction of original conversation threads</li>
+<li>Provides audit trail for request/response pairs</li>
+</ul>
+<h3 id="synapse"><a class="header" href="#synapse">SYNAPSE</a></h3>
+<p>Links semantically similar messages based on vector similarity, enabling cross-conversation context discovery.</p>
+<p><strong>Properties:</strong></p>
+<ul>
+<li><strong>Direction</strong>: Bidirectional (similarity is symmetric)</li>
+<li><strong>Score</strong>: Float value representing similarity strength (0.0 to 1.0)</li>
+<li><strong>Threshold</strong>: Minimum score of 0.85 required for synapse creation</li>
+<li><strong>Mutability</strong>: Dynamic (can be created, updated, or removed)</li>
+</ul>
+<p><strong>Creation Rules:</strong></p>
+<ol>
+<li><strong>Sequential Synapses</strong>: Initially created between consecutive messages in a conversation</li>
+<li><strong>Similarity Synapses</strong>: Created between messages with high semantic similarity (≥ 0.85)</li>
+<li><strong>Cross-Conversation</strong>: Can link messages from different conversations within the same partition/instance</li>
+<li><strong>Pruning</strong>: Synapses with scores below threshold are automatically removed</li>
+</ol>
+<h4 id="example-synapse"><a class="header" href="#example-synapse">Example Synapse</a></h4>
+<pre><code class="language-cypher">(m1:MessageNode)-[:SYNAPSE {score: 0.92}]-(m2:MessageNode)
+</code></pre>
+<h2 id="graph-structure-example"><a class="header" href="#graph-structure-example">Graph Structure Example</a></h2>
+<pre><code class="language-plaintext">┌─────────────────┐    RESPONDED_WITH   ┌─────────────────┐
+│  User Message   │────────────────────→│Assistant Message│
+│ "Explain BST"   │                     │ "A binary..."   │
+└─────────────────┘                     └─────────────────┘
+         │                                       │
+         │ SYNAPSE                               │ SYNAPSE
+         │ {score: 0.91}                         │ {score: 0.87}
+         ▼                                       ▼
+┌─────────────────┐    RESPONDED_WITH   ┌─────────────────┐
+│  User Message   │────────────────────→│Assistant Message│
+│ "How to code    │                     │ "Here's how..." │
+│  tree search?"  │                     │                 │
+└─────────────────┘                     └─────────────────┘
+</code></pre>
+<h2 id="vector-index"><a class="header" href="#vector-index">Vector Index</a></h2>
+<p>Reservoir maintains a vector index called <code>messageEmbeddings</code> in Neo4j for efficient similarity searches.</p>
+<h3 id="index-configuration"><a class="header" href="#index-configuration">Index Configuration</a></h3>
+<pre><code class="language-cypher">CREATE VECTOR INDEX messageEmbeddings 
+FOR (m:MessageNode) ON (m.embedding) 
+OPTIONS {indexConfig: {
+  `vector.dimensions`: 1536,
+  `vector.similarity_function`: 'cosine'
+}}
+</code></pre>
+<h3 id="similarity-search"><a class="header" href="#similarity-search">Similarity Search</a></h3>
+<p>The vector index enables fast cosine similarity searches:</p>
+<pre><code class="language-cypher">CALL db.index.vector.queryNodes('messageEmbeddings', 10, $queryEmbedding)
+YIELD node, score
+WHERE node.partition = $partition AND node.instance = $instance
+RETURN node, score
+ORDER BY score DESC
+</code></pre>
+<h2 id="partitioning-strategy"><a class="header" href="#partitioning-strategy">Partitioning Strategy</a></h2>
+<h3 id="partition"><a class="header" href="#partition">Partition</a></h3>
+<ul>
+<li><strong>Purpose</strong>: Top-level organization boundary</li>
+<li><strong>Typical Value</strong>: System username (<code>$USER</code>)</li>
+<li><strong>Scope</strong>: All messages for a specific user</li>
+<li><strong>Isolation</strong>: Messages from different partitions never interact</li>
+</ul>
+<h3 id="instance"><a class="header" href="#instance">Instance</a></h3>
+<ul>
+<li><strong>Purpose</strong>: Application-specific context within a partition</li>
+<li><strong>Typical Value</strong>: Application name (e.g., "code-assistant", "chat-app")</li>
+<li><strong>Scope</strong>: Specific use case or application context</li>
+<li><strong>Organization</strong>: Multiple instances can exist within a partition</li>
+</ul>
+<h3 id="example-organization"><a class="header" href="#example-organization">Example Organization</a></h3>
+<pre><code>Partition: "alice"
+├── Instance: "code-assistant"
+│   ├── Programming questions
+│   └── Code review discussions
+├── Instance: "research-helper"
+│   ├── Literature reviews
+│   └── Data analysis questions
+└── Instance: "personal-chat"
+    ├── General conversations
+    └── Daily planning
+</code></pre>
+<h2 id="relationship-types-fixed-vs-dynamic"><a class="header" href="#relationship-types-fixed-vs-dynamic">Relationship Types: Fixed vs. Dynamic</a></h2>
+<h3 id="fixed-relationships"><a class="header" href="#fixed-relationships">Fixed Relationships</a></h3>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>Immutable once created</li>
+<li>Preserve data integrity</li>
+<li>Represent factual conversation structure</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<ul>
+<li><code>MessageNode</code> properties (once created, content doesn't change)</li>
+<li><code>RESPONDED_WITH</code> relationships (permanent conversation pairs)</li>
+</ul>
+<h3 id="dynamic-relationships"><a class="header" href="#dynamic-relationships">Dynamic Relationships</a></h3>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>Mutable and adaptive</li>
+<li>Support learning and optimization</li>
+<li>Reflect current understanding of semantic relationships</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<ul>
+<li><code>SYNAPSE</code> relationships (can be created, updated, or removed)</li>
+<li>Similarity scores (can be recalculated as algorithms improve)</li>
+</ul>
+<h2 id="query-patterns"><a class="header" href="#query-patterns">Query Patterns</a></h2>
+<h3 id="context-enrichment-query"><a class="header" href="#context-enrichment-query">Context Enrichment Query</a></h3>
+<pre><code class="language-cypher">// Find recent and similar messages for context
+MATCH (m:MessageNode)
+WHERE m.partition = $partition 
+  AND m.instance = $instance
+  AND m.timestamp &gt; $recentThreshold
+WITH m
+ORDER BY m.timestamp DESC
+LIMIT 10
+
+UNION
+
+CALL db.index.vector.queryNodes('messageEmbeddings', 5, $queryEmbedding)
+YIELD node, score
+WHERE node.partition = $partition 
+  AND node.instance = $instance
+  AND score &gt; 0.85
+RETURN node, score
+ORDER BY score DESC
+</code></pre>
+<h3 id="conversation-thread-reconstruction"><a class="header" href="#conversation-thread-reconstruction">Conversation Thread Reconstruction</a></h3>
+<pre><code class="language-cypher">// Reconstruct a conversation thread
+MATCH (user:MessageNode {role: 'user'})-[:RESPONDED_WITH]-&gt;(assistant:MessageNode)
+WHERE user.trace_id = $traceId
+RETURN user, assistant
+ORDER BY user.timestamp
+</code></pre>
+<h3 id="synapse-network-analysis"><a class="header" href="#synapse-network-analysis">Synapse Network Analysis</a></h3>
+<pre><code class="language-cypher">// Find highly connected messages (conversation hubs)
+MATCH (m:MessageNode)-[s:SYNAPSE]-(related:MessageNode)
+WHERE m.partition = $partition AND m.instance = $instance
+WITH m, count(s) as connectionCount, avg(s.score) as avgScore
+WHERE connectionCount &gt; 3
+RETURN m, connectionCount, avgScore
+ORDER BY connectionCount DESC, avgScore DESC
+</code></pre>
+<h2 id="data-lifecycle"><a class="header" href="#data-lifecycle">Data Lifecycle</a></h2>
+<h3 id="message-storage"><a class="header" href="#message-storage">Message Storage</a></h3>
+<ol>
+<li><strong>Ingestion</strong>: New messages are stored with embeddings</li>
+<li><strong>Indexing</strong>: Vector embeddings are indexed for similarity search</li>
+<li><strong>Relationship Creation</strong>: <code>RESPONDED_WITH</code> links are established</li>
+<li><strong>Synapse Building</strong>: Similar messages are connected via <code>SYNAPSE</code> relationships</li>
+</ol>
+<h3 id="synapse-evolution"><a class="header" href="#synapse-evolution">Synapse Evolution</a></h3>
+<ol>
+<li><strong>Initial Creation</strong>: Sequential synapses between consecutive messages</li>
+<li><strong>Similarity Detection</strong>: Cross-conversation synapses based on semantic similarity</li>
+<li><strong>Threshold Enforcement</strong>: Weak synapses (score &lt; 0.85) are removed</li>
+<li><strong>Continuous Optimization</strong>: Relationships are updated as new messages arrive</li>
+</ol>
+<h3 id="cleanup-and-maintenance"><a class="header" href="#cleanup-and-maintenance">Cleanup and Maintenance</a></h3>
+<ul>
+<li><strong>Orphaned Relationships</strong>: Periodic cleanup of broken relationships</li>
+<li><strong>Index Optimization</strong>: Regular vector index maintenance</li>
+<li><strong>Storage Optimization</strong>: Archival of old messages based on retention policies</li>
+</ul>
+<h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance Considerations</a></h2>
+<h3 id="indexing-strategy"><a class="header" href="#indexing-strategy">Indexing Strategy</a></h3>
+<ul>
+<li><strong>Vector Index</strong>: Primary index for similarity searches</li>
+<li><strong>Partition/Instance Index</strong>: Composite index for scoped queries</li>
+<li><strong>Timestamp Index</strong>: Range queries for recent messages</li>
+<li><strong>Role Index</strong>: Fast filtering by message role</li>
+</ul>
+<h3 id="query-optimization"><a class="header" href="#query-optimization">Query Optimization</a></h3>
+<ul>
+<li><strong>Parameterized Queries</strong>: Use query parameters to enable plan caching</li>
+<li><strong>Result Limiting</strong>: Always limit result sets for performance</li>
+<li><strong>Selective Filtering</strong>: Apply partition/instance filters early</li>
+<li><strong>Vector Search Tuning</strong>: Optimize similarity thresholds and result counts</li>
+</ul>
+<h3 id="scaling-considerations"><a class="header" href="#scaling-considerations">Scaling Considerations</a></h3>
+<ul>
+<li><strong>Horizontal Partitioning</strong>: Distribute data across multiple Neo4j instances</li>
+<li><strong>Read Replicas</strong>: Use read replicas for query-heavy workloads</li>
+<li><strong>Connection Pooling</strong>: Efficient database connection management</li>
+<li><strong>Batch Operations</strong>: Use batch writes for bulk data operations</li>
+</ul>
+<p>This data model provides a robust foundation for conversation storage and retrieval while maintaining flexibility for future enhancements and optimizations.</p>
 
                     </main>
 

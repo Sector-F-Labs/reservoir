@@ -163,6 +163,65 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="api-overview"><a class="header" href="#api-overview">API Overview</a></h1>
+<p>Reservoir provides an OpenAI-compatible API endpoint that acts as a smart proxy between your application and AI language models. This section covers the core API structure and basic usage patterns.</p>
+<h2 id="url-structure"><a class="header" href="#url-structure">URL Structure</a></h2>
+<p>The Reservoir API follows this pattern:</p>
+<pre><code>/v1/partition/{partition}/instance/{instance}/chat/completions
+</code></pre>
+<h3 id="parameters"><a class="header" href="#parameters">Parameters</a></h3>
+<ul>
+<li><strong><code>{partition}</code></strong>: A broad category for organizing conversations (e.g., project name, application name, username)</li>
+<li><strong><code>{instance}</code></strong>: A specific context within the partition (e.g., user ID, session ID, specific feature)</li>
+</ul>
+<p>This structure allows you to organize conversations hierarchically and scope context enrichment appropriately.</p>
+<h3 id="example-url-transformation"><a class="header" href="#example-url-transformation">Example URL Transformation</a></h3>
+<ul>
+<li><strong>Instead of</strong>:
+<pre><code>https://api.openai.com/v1/chat/completions
+</code></pre>
+</li>
+<li><strong>Use</strong>:
+<pre><code>http://localhost:3017/v1/partition/$USER/instance/my-application/chat/completions
+</code></pre>
+</li>
+</ul>
+<p>Here, <code>$USER</code> is your system username, and <code>my-application</code> is your application instance. All context enrichment and history retrieval are scoped to this specific partition/instance combination.</p>
+<h2 id="basic-request-structure"><a class="header" href="#basic-request-structure">Basic Request Structure</a></h2>
+<p>Reservoir maintains full compatibility with the OpenAI Chat Completions API. You can use the same request structure, headers, and parameters you would use with OpenAI directly.</p>
+<h3 id="required-headers"><a class="header" href="#required-headers">Required Headers</a></h3>
+<pre><code class="language-http">Content-Type: application/json
+Authorization: Bearer YOUR_API_KEY
+</code></pre>
+<h3 id="request-body"><a class="header" href="#request-body">Request Body</a></h3>
+<p>The request body follows the same format as OpenAI's Chat Completions API:</p>
+<pre><code class="language-json">{
+    "model": "gpt-4",
+    "messages": [
+        {
+            "role": "user",
+            "content": "Your message here"
+        }
+    ]
+}
+</code></pre>
+<h2 id="what-happens-behind-the-scenes"><a class="header" href="#what-happens-behind-the-scenes">What Happens Behind the Scenes</a></h2>
+<p>When you make a request to Reservoir:</p>
+<ol>
+<li><strong>Message Storage</strong>: Your message is stored with the specified partition/instance</li>
+<li><strong>Context Enrichment</strong>: Reservoir finds relevant past conversations and recent history</li>
+<li><strong>Token Management</strong>: The enriched context is checked against token limits</li>
+<li><strong>Request Forwarding</strong>: The enriched request is forwarded to the appropriate AI provider</li>
+<li><strong>Response Storage</strong>: The AI's response is stored for future context</li>
+</ol>
+<h2 id="response-format"><a class="header" href="#response-format">Response Format</a></h2>
+<p>Responses maintain the same format as the underlying AI provider (OpenAI, Ollama, etc.), so your existing code will work without modification.</p>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ul>
+<li><a href="./chat-completions.html">Chat Completions Endpoint</a> - Detailed endpoint documentation</li>
+<li><a href="./search.html">Search &amp; Retrieval</a> - Finding past conversations</li>
+<li><a href="./data-management.html">Data Management</a> - Import/export and management</li>
+<li><a href="./cli.html">Command Line Interface</a> - CLI usage and commands</li>
+</ul>
 
                     </main>
 

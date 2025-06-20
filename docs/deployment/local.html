@@ -162,7 +162,239 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="local-development"><a class="header" href="#local-development">Local Development</a></h1>
+                        <h1 id="local-deployment"><a class="header" href="#local-deployment">Local Deployment</a></h1>
+<p>This guide covers setting up Reservoir for local development and production use on your local machine.</p>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before deploying Reservoir locally, ensure you have the following installed:</p>
+<ul>
+<li><strong>Rust</strong> (latest stable version)</li>
+<li><strong>Docker</strong> (for Neo4j database)</li>
+<li><strong>Git</strong> for version control</li>
+</ul>
+<h2 id="quick-setup"><a class="header" href="#quick-setup">Quick Setup</a></h2>
+<h3 id="step-1-clone-the-repository"><a class="header" href="#step-1-clone-the-repository">Step 1: Clone the Repository</a></h3>
+<pre><code class="language-bash">git clone https://github.com/divanvisagie/reservoir.git
+cd reservoir
+</code></pre>
+<h3 id="step-2-start-neo4j-database"><a class="header" href="#step-2-start-neo4j-database">Step 2: Start Neo4j Database</a></h3>
+<p>You have several options for running Neo4j locally:</p>
+<h4 id="option-a-docker-compose-recommended"><a class="header" href="#option-a-docker-compose-recommended">Option A: Docker Compose (Recommended)</a></h4>
+<pre><code class="language-bash">docker-compose up -d
+</code></pre>
+<p>This starts Neo4j on the default <code>bolt://localhost:7687</code> with the credentials defined in the docker-compose file.</p>
+<h4 id="option-b-docker-manual-setup"><a class="header" href="#option-b-docker-manual-setup">Option B: Docker Manual Setup</a></h4>
+<pre><code class="language-bash">docker run \
+    --name neo4j \
+    -p7474:7474 -p7687:7687 \
+    -d \
+    -v $HOME/neo4j/data:/data \
+    -v $HOME/neo4j/logs:/logs \
+    -v $HOME/neo4j/import:/var/lib/neo4j/import \
+    -v $HOME/neo4j/plugins:/plugins \
+    --env NEO4J_AUTH=neo4j/password \
+    neo4j:latest
+</code></pre>
+<h4 id="option-c-homebrew-macos-service"><a class="header" href="#option-c-homebrew-macos-service">Option C: Homebrew (macOS Service)</a></h4>
+<p>If you prefer to run Neo4j as a permanent background service:</p>
+<pre><code class="language-bash">brew install neo4j
+brew services start neo4j
+</code></pre>
+<p>This will start Neo4j on <code>bolt://localhost:7687</code> and ensure it runs automatically when your computer boots.</p>
+<h3 id="step-3-configure-environment-variables"><a class="header" href="#step-3-configure-environment-variables">Step 3: Configure Environment Variables</a></h3>
+<p>Create a <code>.env</code> file in the project root or export the following environment variables:</p>
+<pre><code class="language-env"># Server Configuration
+RESERVOIR_PORT=3017
+RESERVOIR_HOST=127.0.0.1
+
+# Database Configuration
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password
+
+# API Keys (required for respective providers)
+OPENAI_API_KEY=sk-your-openai-key-here
+MISTRAL_API_KEY=your-mistral-key-here
+GEMINI_API_KEY=your-gemini-key-here
+
+# Custom Provider URLs (optional)
+RSV_OPENAI_BASE_URL=https://api.openai.com/v1/chat/completions
+RSV_OLLAMA_BASE_URL=http://localhost:11434/v1/chat/completions
+RSV_MISTRAL_BASE_URL=https://api.mistral.ai/v1/chat/completions
+</code></pre>
+<blockquote>
+<p><strong>Note</strong>: Most environment variables have sensible defaults. Only the API keys for your chosen providers are required.</p>
+</blockquote>
+<h3 id="step-4-build-and-run"><a class="header" href="#step-4-build-and-run">Step 4: Build and Run</a></h3>
+<h4 id="manual-execution"><a class="header" href="#manual-execution">Manual Execution</a></h4>
+<pre><code class="language-bash"># Build the project
+cargo build --release
+
+# Run Reservoir
+cargo run -- start
+</code></pre>
+<h4 id="using-make-commands"><a class="header" href="#using-make-commands">Using Make Commands</a></h4>
+<pre><code class="language-bash"># Build the release binary
+make main
+
+# Run for development (with auto-reload)
+make dev
+
+# Run normally
+make run
+</code></pre>
+<p>Reservoir will now be available at <code>http://localhost:3017</code>.</p>
+<h2 id="service-installation-macos"><a class="header" href="#service-installation-macos">Service Installation (macOS)</a></h2>
+<p>For a more permanent setup, you can install Reservoir as a macOS LaunchAgent service.</p>
+<h3 id="install-the-service"><a class="header" href="#install-the-service">Install the Service</a></h3>
+<pre><code class="language-bash">make install-service
+</code></pre>
+<p>This command:</p>
+<ul>
+<li>Copies the LaunchAgent plist to <code>~/Library/LaunchAgents/</code></li>
+<li>Loads the service using <code>launchctl</code></li>
+<li>Starts Reservoir automatically in the background</li>
+</ul>
+<h3 id="service-management"><a class="header" href="#service-management">Service Management</a></h3>
+<p><strong>Check service status:</strong></p>
+<pre><code class="language-bash">launchctl list | grep reservoir
+</code></pre>
+<p><strong>View service logs:</strong></p>
+<pre><code class="language-bash">tail -f /tmp/reservoir.log
+tail -f /tmp/reservoir.err
+</code></pre>
+<p><strong>Manually start/stop the service:</strong></p>
+<pre><code class="language-bash"># Start
+launchctl start com.sectorflabs.reservoir
+
+# Stop
+launchctl stop com.sectorflabs.reservoir
+</code></pre>
+<h3 id="uninstall-the-service"><a class="header" href="#uninstall-the-service">Uninstall the Service</a></h3>
+<pre><code class="language-bash">make uninstall-service
+</code></pre>
+<p>This removes the service and cleans up all related files.</p>
+<h2 id="verification"><a class="header" href="#verification">Verification</a></h2>
+<h3 id="test-the-installation"><a class="header" href="#test-the-installation">Test the Installation</a></h3>
+<ol>
+<li>
+<p><strong>Check if Reservoir is running:</strong></p>
+<pre><code class="language-bash">curl http://localhost:3017/health
+</code></pre>
+</li>
+<li>
+<p><strong>Test with a simple API call:</strong></p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello, Reservoir!"
+            }
+        ]
+    }'
+</code></pre>
+</li>
+<li>
+<p><strong>Run the test suite:</strong></p>
+<pre><code class="language-bash">./hurl/test.sh
+</code></pre>
+</li>
+</ol>
+<h3 id="check-neo4j-connection"><a class="header" href="#check-neo4j-connection">Check Neo4j Connection</a></h3>
+<p>Verify that Neo4j is accessible:</p>
+<pre><code class="language-bash"># Check Neo4j web interface
+open http://localhost:7474
+
+# Test connection with curl
+curl -u neo4j:password http://localhost:7474/db/data/
+</code></pre>
+<h2 id="configuration-options"><a class="header" href="#configuration-options">Configuration Options</a></h2>
+<h3 id="database-configuration"><a class="header" href="#database-configuration">Database Configuration</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>NEO4J_URI</code></td><td><code>bolt://localhost:7687</code></td><td>Neo4j connection URI</td></tr>
+<tr><td><code>NEO4J_USERNAME</code></td><td><code>neo4j</code></td><td>Database username</td></tr>
+<tr><td><code>NEO4J_PASSWORD</code></td><td><code>password</code></td><td>Database password</td></tr>
+</tbody></table>
+</div>
+<h3 id="server-configuration"><a class="header" href="#server-configuration">Server Configuration</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>RESERVOIR_PORT</code></td><td><code>3017</code></td><td>HTTP server port</td></tr>
+<tr><td><code>RESERVOIR_HOST</code></td><td><code>127.0.0.1</code></td><td>HTTP server host</td></tr>
+</tbody></table>
+</div>
+<h3 id="provider-configuration"><a class="header" href="#provider-configuration">Provider Configuration</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>RSV_OPENAI_BASE_URL</code></td><td><code>https://api.openai.com/v1/chat/completions</code></td><td>OpenAI API endpoint</td></tr>
+<tr><td><code>RSV_OLLAMA_BASE_URL</code></td><td><code>http://localhost:11434/v1/chat/completions</code></td><td>Ollama API endpoint</td></tr>
+<tr><td><code>RSV_MISTRAL_BASE_URL</code></td><td><code>https://api.mistral.ai/v1/chat/completions</code></td><td>Mistral API endpoint</td></tr>
+</tbody></table>
+</div>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="common-issues"><a class="header" href="#common-issues">Common Issues</a></h3>
+<p><strong>Port Already in Use:</strong></p>
+<pre><code class="language-bash"># Check what's using port 3017
+lsof -i :3017
+
+# Use a different port
+export RESERVOIR_PORT=3018
+</code></pre>
+<p><strong>Neo4j Connection Failed:</strong></p>
+<pre><code class="language-bash"># Check if Neo4j is running
+docker ps | grep neo4j
+
+# Check Neo4j logs
+docker logs neo4j
+</code></pre>
+<p><strong>Permission Issues (macOS Service):</strong></p>
+<pre><code class="language-bash"># Ensure the binary path is correct in the plist
+ls -la ~/.cargo/bin/reservoir
+
+# Update the path in scripts/com.sectorflabs.reservoir.plist if needed
+</code></pre>
+<p><strong>API Key Issues:</strong></p>
+<pre><code class="language-bash"># Verify your API key is set
+echo $OPENAI_API_KEY
+
+# Test the key directly with OpenAI
+curl https://api.openai.com/v1/models \
+    -H "Authorization: Bearer $OPENAI_API_KEY"
+</code></pre>
+<h3 id="performance-tuning"><a class="header" href="#performance-tuning">Performance Tuning</a></h3>
+<p>For better performance in local deployment:</p>
+<ol>
+<li>
+<p><strong>Increase Neo4j memory allocation:</strong></p>
+<pre><code class="language-bash"># In docker-compose.yml, add:
+NEO4J_dbms_memory_heap_initial__size=512m
+NEO4J_dbms_memory_heap_max__size=2G
+</code></pre>
+</li>
+<li>
+<p><strong>Use SSD storage for Neo4j data:</strong></p>
+<pre><code class="language-bash"># Mount Neo4j data on fast storage
+-v /path/to/fast/storage:/data
+</code></pre>
+</li>
+<li>
+<p><strong>Optimize connection pooling:</strong></p>
+<pre><code class="language-env"># Add to .env
+NEO4J_MAX_CONNECTIONS=20
+NEO4J_CONNECTION_TIMEOUT=30s
+</code></pre>
+</li>
+</ol>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>After successful local deployment:</p>
+<ul>
+<li><a href="./environment.html">Configure Environment Variables</a></li>
+<li><a href="./production.html">Set up Production Deployment</a></li>
+<li><a href="../api/overview.html">Learn about API Usage</a></li>
+<li><a href="../chat-gipitty.html">Explore Chat Gipitty Integration</a></li>
+</ul>
+<p>Your Reservoir instance is now ready for local development and testing!</p>
 
                     </main>
 

@@ -108,18 +108,11 @@ You can see an example of this structure in the following graph visualization:
 
 ## Documentation
 
-Reservoir documentation is available in two formats:
+### 📚 Complete Documentation
 
-### 📚 Interactive Documentation Book
+For comprehensive documentation, visit: **[sectorflabs.com/reservoir](http://sectorflabs.com/reservoir/)**
 
-The complete documentation is available as an interactive mdBook:
-
-```bash
-# Build and serve the documentation locally
-cd book && ./docs.sh serve
-```
-
-The documentation book includes:
+The documentation website includes:
 - **Quick Start Guide**: Get up and running in minutes
 - **Chat Gipitty Integration**: Add memory to your cgip conversations
 - **API Reference**: Complete endpoint documentation
@@ -127,6 +120,18 @@ The documentation book includes:
 - **Architecture Deep Dive**: System design and data model
 - **Deployment Guides**: Local and production setup
 - **Troubleshooting**: Common issues and solutions
+
+### 🛠️ Local Documentation
+
+You can also build and serve the documentation locally:
+
+```bash
+# Build documentation to docs/ folder
+make book
+
+# Serve locally with live reload
+make serve-book
+```
 
 ### 📄 Individual Documentation Files
 

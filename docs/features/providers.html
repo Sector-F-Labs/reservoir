@@ -163,6 +163,231 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="multi-provider-support"><a class="header" href="#multi-provider-support">Multi-Provider Support</a></h1>
+<p>Reservoir supports multiple AI providers through its flexible routing system. This allows you to use different AI models seamlessly while maintaining conversation context and history across all providers.</p>
+<h2 id="supported-providers"><a class="header" href="#supported-providers">Supported Providers</a></h2>
+<h3 id="openai"><a class="header" href="#openai">OpenAI</a></h3>
+<ul>
+<li><strong>Models</strong>: GPT-4, GPT-4o, GPT-4o-mini, GPT-3.5-turbo, GPT-4o-search-preview</li>
+<li><strong>API Key Required</strong>: Yes (<code>OPENAI_API_KEY</code>)</li>
+<li><strong>Endpoint</strong>: <code>https://api.openai.com/v1/chat/completions</code></li>
+<li><strong>Features</strong>: Full feature support, web search capabilities</li>
+</ul>
+<h3 id="ollama"><a class="header" href="#ollama">Ollama</a></h3>
+<ul>
+<li><strong>Models</strong>: llama3.2, gemma3, and any locally installed models</li>
+<li><strong>API Key Required</strong>: No</li>
+<li><strong>Endpoint</strong>: <code>http://localhost:11434/v1/chat/completions</code></li>
+<li><strong>Features</strong>: Local inference, privacy-focused, custom model support</li>
+</ul>
+<h3 id="mistral-ai"><a class="header" href="#mistral-ai">Mistral AI</a></h3>
+<ul>
+<li><strong>Models</strong>: mistral-large-2402, mistral-medium, mistral-small</li>
+<li><strong>API Key Required</strong>: Yes (<code>MISTRAL_API_KEY</code>)</li>
+<li><strong>Endpoint</strong>: <code>https://api.mistral.ai/v1/chat/completions</code></li>
+<li><strong>Features</strong>: European AI provider, competitive performance</li>
+</ul>
+<h3 id="google-gemini"><a class="header" href="#google-gemini">Google Gemini</a></h3>
+<ul>
+<li><strong>Models</strong>: gemini-2.0-flash, gemini-2.5-flash-preview-05-20</li>
+<li><strong>API Key Required</strong>: Yes (<code>GEMINI_API_KEY</code>)</li>
+<li><strong>Endpoint</strong>: Custom Google AI endpoint</li>
+<li><strong>Features</strong>: Google's latest AI models, multimodal capabilities</li>
+</ul>
+<h3 id="custom-providers"><a class="header" href="#custom-providers">Custom Providers</a></h3>
+<ul>
+<li><strong>Models</strong>: Any model name not explicitly configured</li>
+<li><strong>Default Routing</strong>: Routes to Ollama by default</li>
+<li><strong>Configuration</strong>: Set custom endpoints via environment variables</li>
+</ul>
+<h2 id="automatic-model-routing"><a class="header" href="#automatic-model-routing">Automatic Model Routing</a></h2>
+<p>Reservoir automatically determines which provider to use based on the model name in your request:</p>
+<pre><code class="language-json">{
+  "model": "gpt-4",           // → Routes to OpenAI
+  "model": "llama3.2",        // → Routes to Ollama
+  "model": "mistral-large",   // → Routes to Mistral
+  "model": "gemini-2.0-flash" // → Routes to Google
+}
+</code></pre>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<h3 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h3>
+<p>Set provider endpoints and API keys:</p>
+<pre><code class="language-bash"># API Keys
+export OPENAI_API_KEY="sk-your-openai-key"
+export MISTRAL_API_KEY="your-mistral-key"
+export GEMINI_API_KEY="your-gemini-key"
+
+# Custom Endpoints (optional)
+export RSV_OPENAI_BASE_URL="https://api.openai.com/v1/chat/completions"
+export RSV_OLLAMA_BASE_URL="http://localhost:11434/v1/chat/completions"
+export RSV_MISTRAL_BASE_URL="https://api.mistral.ai/v1/chat/completions"
+</code></pre>
+<h3 id="provider-specific-features"><a class="header" href="#provider-specific-features">Provider-Specific Features</a></h3>
+<h4 id="openai-features"><a class="header" href="#openai-features">OpenAI Features</a></h4>
+<ul>
+<li><strong>Web Search</strong>: Available with <code>gpt-4o-search-preview</code></li>
+<li><strong>Function Calling</strong>: Supported on compatible models</li>
+<li><strong>Vision</strong>: GPT-4o supports image inputs</li>
+<li><strong>JSON Mode</strong>: Structured output support</li>
+</ul>
+<p>Example with web search:</p>
+<pre><code class="language-bash">curl "http://localhost:3017/partition/$USER/instance/research/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4o-search-preview",
+        "messages": [{"role": "user", "content": "Latest AI developments"}],
+        "web_search_options": {
+            "enabled": true,
+            "max_results": 5
+        }
+    }'
+</code></pre>
+<h4 id="ollama-features"><a class="header" href="#ollama-features">Ollama Features</a></h4>
+<ul>
+<li><strong>Local Models</strong>: No API key required</li>
+<li><strong>Privacy</strong>: Data never leaves your machine</li>
+<li><strong>Custom Models</strong>: Load any compatible model</li>
+<li><strong>Performance</strong>: Direct local inference</li>
+</ul>
+<p>Example with local model:</p>
+<pre><code class="language-bash">curl "http://localhost:3017/partition/$USER/instance/local/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "llama3.2",
+        "messages": [{"role": "user", "content": "Explain quantum computing"}]
+    }'
+</code></pre>
+<h2 id="multi-provider-workflows"><a class="header" href="#multi-provider-workflows">Multi-Provider Workflows</a></h2>
+<h3 id="seamless-model-switching"><a class="header" href="#seamless-model-switching">Seamless Model Switching</a></h3>
+<p>You can switch between providers within the same conversation while maintaining context:</p>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:3017/v1/partition/myuser/instance/research",
+    api_key=os.environ.get("OPENAI_API_KEY")
+)
+
+# Start with OpenAI
+response1 = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Explain neural networks"}]
+)
+
+# Continue with Ollama (context is preserved)
+response2 = client.chat.completions.create(
+    model="llama3.2",
+    messages=[{"role": "user", "content": "What did we just discuss?"}]
+)
+
+# Switch to Mistral (still has context)
+response3 = client.chat.completions.create(
+    model="mistral-large-2402",
+    messages=[{"role": "user", "content": "How does this relate to AI safety?"}]
+)
+</code></pre>
+<h3 id="provider-specific-use-cases"><a class="header" href="#provider-specific-use-cases">Provider-Specific Use Cases</a></h3>
+<h4 id="development-workflow"><a class="header" href="#development-workflow">Development Workflow</a></h4>
+<pre><code class="language-bash"># Use Ollama for quick local testing
+curl -d '{"model": "llama3.2", "messages": [...]}' localhost:3017/...
+
+# Use OpenAI for production queries
+curl -d '{"model": "gpt-4", "messages": [...]}' localhost:3017/...
+
+# Use Mistral for European compliance
+curl -d '{"model": "mistral-large", "messages": [...]}' localhost:3017/...
+</code></pre>
+<h2 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h2>
+<p>Reservoir provides consistent error handling across all providers:</p>
+<h3 id="common-error-responses"><a class="header" href="#common-error-responses">Common Error Responses</a></h3>
+<pre><code class="language-json">{
+  "error": {
+    "type": "invalid_request_error",
+    "message": "Invalid model specified",
+    "code": "model_not_found"
+  }
+}
+</code></pre>
+<h3 id="provider-specific-errors"><a class="header" href="#provider-specific-errors">Provider-Specific Errors</a></h3>
+<ul>
+<li><strong>OpenAI</strong>: Rate limits, quota exceeded, invalid API key</li>
+<li><strong>Ollama</strong>: Model not found, service unavailable</li>
+<li><strong>Mistral</strong>: Authentication errors, model access restrictions</li>
+<li><strong>Gemini</strong>: API quota limits, geographic restrictions</li>
+</ul>
+<h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance Considerations</a></h2>
+<h3 id="provider-comparison"><a class="header" href="#provider-comparison">Provider Comparison</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Provider</th><th>Latency</th><th>Cost</th><th>Privacy</th><th>Features</th></tr></thead><tbody>
+<tr><td>OpenAI</td><td>Medium</td><td>High</td><td>Cloud</td><td>Most comprehensive</td></tr>
+<tr><td>Ollama</td><td>Low</td><td>Free</td><td>Local</td><td>Basic, customizable</td></tr>
+<tr><td>Mistral</td><td>Medium</td><td>Medium</td><td>Cloud</td><td>European focus</td></tr>
+<tr><td>Gemini</td><td>Medium</td><td>Medium</td><td>Cloud</td><td>Google integration</td></tr>
+</tbody></table>
+</div>
+<h3 id="optimization-tips"><a class="header" href="#optimization-tips">Optimization Tips</a></h3>
+<ol>
+<li><strong>Use Ollama for development</strong>: Faster iteration, no API costs</li>
+<li><strong>Use OpenAI for production</strong>: Most reliable, feature-rich</li>
+<li><strong>Use Mistral for compliance</strong>: European data residency</li>
+<li><strong>Cache responses</strong>: Reduce API calls and costs</li>
+</ol>
+<h2 id="custom-provider-integration"><a class="header" href="#custom-provider-integration">Custom Provider Integration</a></h2>
+<p>To add a new OpenAI-compatible provider:</p>
+<ol>
+<li>
+<p><strong>Set the endpoint URL</strong>:</p>
+<pre><code class="language-bash">export RSV_CUSTOM_BASE_URL="https://api.custom-provider.com/v1/chat/completions"
+</code></pre>
+</li>
+<li>
+<p><strong>Configure model routing</strong> (if needed):</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// In your configuration
+match model_name {
+    "custom-model" =&gt; "custom-provider",
+    _ =&gt; "default-provider"
+}
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Test the integration</strong>:</p>
+<pre><code class="language-bash">curl "http://localhost:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $CUSTOM_API_KEY" \
+    -d '{"model": "custom-model", "messages": [...]}'
+</code></pre>
+</li>
+</ol>
+<h2 id="future-enhancements"><a class="header" href="#future-enhancements">Future Enhancements</a></h2>
+<p>Planned improvements for multi-provider support:</p>
+<ul>
+<li><strong>Load Balancing</strong>: Distribute requests across multiple providers</li>
+<li><strong>Failover</strong>: Automatic fallback to backup providers</li>
+<li><strong>Cost Optimization</strong>: Route to cheapest provider based on request</li>
+<li><strong>Model Capabilities</strong>: Automatic routing based on required features</li>
+<li><strong>Custom Routing Rules</strong>: User-defined routing logic</li>
+</ul>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="provider-connection-issues"><a class="header" href="#provider-connection-issues">Provider Connection Issues</a></h3>
+<p><strong>Check provider availability</strong>:</p>
+<pre><code class="language-bash"># OpenAI
+curl https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY"
+
+# Ollama
+curl http://localhost:11434/api/tags
+
+# Mistral
+curl https://api.mistral.ai/v1/models -H "Authorization: Bearer $MISTRAL_API_KEY"
+</code></pre>
+<p><strong>Common solutions</strong>:</p>
+<ul>
+<li>Verify API keys are correctly set</li>
+<li>Check network connectivity</li>
+<li>Ensure provider services are running</li>
+<li>Validate model names and availability</li>
+</ul>
+<p>Multi-provider support makes Reservoir a flexible foundation for AI applications, allowing you to choose the best provider for each use case while maintaining conversation continuity.</p>
 
                     </main>
 

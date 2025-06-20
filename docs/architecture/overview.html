@@ -163,6 +163,198 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
+<p>Reservoir is designed as a transparent proxy for OpenAI-compatible APIs, with a focus on capturing and enriching AI conversations. This section provides an overview of the system architecture and how components interact.</p>
+<h2 id="high-level-architecture"><a class="header" href="#high-level-architecture">High-Level Architecture</a></h2>
+<pre><code class="language-mermaid">flowchart TB
+    Client(["Client App"]) --&gt;|API Request| HTTPServer{{HTTP Server}}
+    HTTPServer --&gt;|Process Request| Handler[Request Handler]
+
+    subgraph Handler Logic
+        direction LR
+        Handler_Start(Start) --&gt; CheckInputTokens(Check Input Tokens)
+        CheckInputTokens -- OK --&gt; StoreRequest(Store Request)
+        CheckInputTokens -- Too Long --&gt; ReturnError(Return Error Response)
+        StoreRequest --&gt; QueryContext(Query Neo4j for Context)
+        QueryContext --&gt; InjectContext(Inject Context)
+        InjectContext --&gt; CheckTotalTokens(Check/Truncate Total Tokens)
+        CheckTotalTokens --&gt; ForwardRequest(Forward to LLM)
+    end
+
+    Handler --&gt;|Store/Query| Neo4j[(Neo4j Database)]
+    Handler --&gt;|Forward/Receive| OpenAI([OpenAI/Ollama API])
+    OpenAI --&gt; Handler
+    Handler --&gt;|Return Response| HTTPServer
+    HTTPServer --&gt;|API Response| Client
+
+    Config[/Env Vars/] --&gt; HTTPServer
+    Config --&gt; Handler
+    Config --&gt; Neo4j
+</code></pre>
+<h2 id="core-components"><a class="header" href="#core-components">Core Components</a></h2>
+<h3 id="1-client-application"><a class="header" href="#1-client-application">1. Client Application</a></h3>
+<p>Your application making API calls to Reservoir. This could be:</p>
+<ul>
+<li>A web application using the OpenAI JavaScript library</li>
+<li>A Python script using the OpenAI Python library</li>
+<li>A command-line tool like curl</li>
+<li>Any application that can make HTTP requests</li>
+</ul>
+<h3 id="2-http-server-hypertokio"><a class="header" href="#2-http-server-hypertokio">2. HTTP Server (Hyper/Tokio)</a></h3>
+<p>The HTTP server built on Rust's async ecosystem:</p>
+<ul>
+<li><strong>Receives requests</strong> on the configured port (default: 3017)</li>
+<li><strong>Routes based on URL path</strong> following the pattern <code>/v1/partition/{partition}/instance/{instance}/chat/completions</code></li>
+<li><strong>Handles CORS</strong> for web applications</li>
+<li><strong>Manages concurrent requests</strong> efficiently using Tokio's async runtime</li>
+</ul>
+<h3 id="3-request-handler"><a class="header" href="#3-request-handler">3. Request Handler</a></h3>
+<p>The core logic that processes each request:</p>
+<h4 id="input-validation"><a class="header" href="#input-validation">Input Validation</a></h4>
+<ul>
+<li><strong>Token size checking</strong>: Validates that the last message doesn't exceed token limits</li>
+<li><strong>Request format validation</strong>: Ensures the request follows OpenAI's API structure</li>
+<li><strong>Authentication</strong>: Forwards API keys to the appropriate provider</li>
+</ul>
+<h4 id="context-management"><a class="header" href="#context-management">Context Management</a></h4>
+<ul>
+<li><strong>Trace ID assignment</strong>: Each request gets a unique identifier for tracking</li>
+<li><strong>Partition/Instance extraction</strong>: Pulls organization parameters from the URL path</li>
+<li><strong>Message storage</strong>: Stores incoming messages in Neo4j with proper tagging</li>
+</ul>
+<h4 id="context-enrichment"><a class="header" href="#context-enrichment">Context Enrichment</a></h4>
+<ul>
+<li><strong>Historical context query</strong>: Searches Neo4j for relevant past conversations</li>
+<li><strong>Similarity matching</strong>: Uses vector embeddings to find semantically similar messages</li>
+<li><strong>Recency filtering</strong>: Includes recent messages from the same partition/instance</li>
+<li><strong>Context injection</strong>: Adds relevant context to the request payload</li>
+</ul>
+<h4 id="token-management"><a class="header" href="#token-management">Token Management</a></h4>
+<ul>
+<li><strong>Total token calculation</strong>: Counts tokens in the enriched message list</li>
+<li><strong>Smart truncation</strong>: Removes older context while preserving system prompts and latest messages</li>
+<li><strong>Provider-specific limits</strong>: Respects different token limits for different models</li>
+</ul>
+<h4 id="request-forwarding"><a class="header" href="#request-forwarding">Request Forwarding</a></h4>
+<ul>
+<li><strong>Provider routing</strong>: Automatically routes to the correct provider based on model name</li>
+<li><strong>Request forwarding</strong>: Sends the enriched request to the upstream LLM</li>
+<li><strong>Response handling</strong>: Processes and stores the LLM's response</li>
+</ul>
+<h4 id="relationship-building"><a class="header" href="#relationship-building">Relationship Building</a></h4>
+<ul>
+<li><strong>Synapse connections</strong>: Links semantically similar messages using vector similarity</li>
+<li><strong>Weak connection removal</strong>: Removes relationships with similarity scores below 0.85</li>
+<li><strong>Conversation threading</strong>: Maintains coherent conversation threads over time</li>
+</ul>
+<h3 id="4-neo4j-database"><a class="header" href="#4-neo4j-database">4. Neo4j Database</a></h3>
+<p>The graph database that stores all conversation data:</p>
+<h4 id="data-storage"><a class="header" href="#data-storage">Data Storage</a></h4>
+<ul>
+<li><strong>MessageNode entities</strong>: Each message is stored as a node with properties</li>
+<li><strong>Partition/Instance tagging</strong>: Messages are tagged for proper organization</li>
+<li><strong>Vector embeddings</strong>: Semantic representations for similarity search</li>
+<li><strong>Temporal information</strong>: Timestamps for recency-based queries</li>
+</ul>
+<h4 id="graph-relationships"><a class="header" href="#graph-relationships">Graph Relationships</a></h4>
+<ul>
+<li><strong>Synapse relationships</strong>: Connect related messages across conversations</li>
+<li><strong>Conversation threads</strong>: Maintain sequential flow of discussions</li>
+<li><strong>Similarity scores</strong>: Weighted relationships based on semantic similarity</li>
+</ul>
+<h4 id="query-capabilities"><a class="header" href="#query-capabilities">Query Capabilities</a></h4>
+<ul>
+<li><strong>Vector similarity search</strong>: Find semantically similar messages</li>
+<li><strong>Temporal queries</strong>: Retrieve recent messages within time windows</li>
+<li><strong>Graph traversal</strong>: Navigate conversation relationships</li>
+<li><strong>Partition/Instance filtering</strong>: Scope queries to specific contexts</li>
+</ul>
+<h3 id="5-external-llm-services"><a class="header" href="#5-external-llm-services">5. External LLM Services</a></h3>
+<p>Reservoir supports multiple AI providers:</p>
+<ul>
+<li><strong>OpenAI</strong>: GPT-4, GPT-4o, GPT-3.5-turbo, and specialized models</li>
+<li><strong>Ollama</strong>: Local models like Llama, Gemma, and custom models</li>
+<li><strong>Mistral AI</strong>: Mistral's cloud-hosted models</li>
+<li><strong>Google Gemini</strong>: Google's AI models</li>
+<li><strong>Custom providers</strong>: Any OpenAI-compatible API endpoint</li>
+</ul>
+<h3 id="6-configuration-management"><a class="header" href="#6-configuration-management">6. Configuration Management</a></h3>
+<p>Environment-based configuration:</p>
+<ul>
+<li><strong>Database connection</strong>: Neo4j URI, credentials, and connection pooling</li>
+<li><strong>Server settings</strong>: Port, host, CORS configuration</li>
+<li><strong>API keys</strong>: Credentials for various AI providers</li>
+<li><strong>Provider endpoints</strong>: Custom URLs for different services</li>
+<li><strong>Token limits</strong>: Configurable limits for different models</li>
+</ul>
+<h2 id="request-processing-flow"><a class="header" href="#request-processing-flow">Request Processing Flow</a></h2>
+<ol>
+<li><strong>Request Arrival</strong>: Client sends a request to Reservoir's endpoint</li>
+<li><strong>URL Parsing</strong>: Extract partition and instance from the URL path</li>
+<li><strong>Input Validation</strong>: Check message format and token limits</li>
+<li><strong>Message Storage</strong>: Store the user's message in Neo4j</li>
+<li><strong>Context Retrieval</strong>: Query for relevant historical context</li>
+<li><strong>Context Enrichment</strong>: Inject relevant messages into the request</li>
+<li><strong>Token Management</strong>: Ensure the enriched request fits within limits</li>
+<li><strong>Provider Routing</strong>: Determine which AI provider to use</li>
+<li><strong>Request Forwarding</strong>: Send the enriched request to the AI provider</li>
+<li><strong>Response Processing</strong>: Receive and process the AI's response</li>
+<li><strong>Response Storage</strong>: Store the AI's response in Neo4j</li>
+<li><strong>Relationship Building</strong>: Create or update message relationships</li>
+<li><strong>Response Return</strong>: Send the response back to the client</li>
+</ol>
+<h2 id="scalability-considerations"><a class="header" href="#scalability-considerations">Scalability Considerations</a></h2>
+<h3 id="horizontal-scaling"><a class="header" href="#horizontal-scaling">Horizontal Scaling</a></h3>
+<ul>
+<li><strong>Stateless design</strong>: Each request is independent</li>
+<li><strong>Database connection pooling</strong>: Efficient resource utilization</li>
+<li><strong>Async processing</strong>: Non-blocking I/O for high concurrency</li>
+</ul>
+<h3 id="vertical-scaling"><a class="header" href="#vertical-scaling">Vertical Scaling</a></h3>
+<ul>
+<li><strong>Memory management</strong>: Efficient vector storage and retrieval</li>
+<li><strong>CPU optimization</strong>: Fast similarity calculations</li>
+<li><strong>Disk I/O</strong>: Optimized database queries and indexing</li>
+</ul>
+<h3 id="performance-optimizations"><a class="header" href="#performance-optimizations">Performance Optimizations</a></h3>
+<ul>
+<li><strong>Vector indexing</strong>: Fast similarity search in Neo4j</li>
+<li><strong>Connection pooling</strong>: Reuse database connections</li>
+<li><strong>Caching strategies</strong>: Cache frequently accessed data</li>
+<li><strong>Batching</strong>: Efficient bulk operations where possible</li>
+</ul>
+<h2 id="security-architecture"><a class="header" href="#security-architecture">Security Architecture</a></h2>
+<h3 id="authentication"><a class="header" href="#authentication">Authentication</a></h3>
+<ul>
+<li><strong>API key forwarding</strong>: Secure handling of provider credentials</li>
+<li><strong>No key storage</strong>: Reservoir doesn't store AI provider keys</li>
+<li><strong>Environment-based secrets</strong>: Secure configuration management</li>
+</ul>
+<h3 id="data-privacy"><a class="header" href="#data-privacy">Data Privacy</a></h3>
+<ul>
+<li><strong>Local storage</strong>: All conversation data stays on your infrastructure</li>
+<li><strong>No external logging</strong>: Conversation content never leaves your network</li>
+<li><strong>Configurable retention</strong>: Control how long data is stored</li>
+</ul>
+<h3 id="access-control"><a class="header" href="#access-control">Access Control</a></h3>
+<ul>
+<li><strong>Partition isolation</strong>: Conversations are isolated by partition/instance</li>
+<li><strong>URL-based permissions</strong>: Access control through URL structure</li>
+<li><strong>Network security</strong>: Configurable CORS and network policies</li>
+</ul>
+<h2 id="monitoring-and-observability"><a class="header" href="#monitoring-and-observability">Monitoring and Observability</a></h2>
+<h3 id="logging"><a class="header" href="#logging">Logging</a></h3>
+<ul>
+<li><strong>Request tracing</strong>: Unique trace IDs for each request</li>
+<li><strong>Error logging</strong>: Detailed error information for debugging</li>
+<li><strong>Performance metrics</strong>: Request timing and processing statistics</li>
+</ul>
+<h3 id="health-checks"><a class="header" href="#health-checks">Health Checks</a></h3>
+<ul>
+<li><strong>Database connectivity</strong>: Monitor Neo4j connection health</li>
+<li><strong>Provider availability</strong>: Check AI service availability</li>
+<li><strong>Resource utilization</strong>: Memory and CPU monitoring</li>
+</ul>
+<p>This architecture provides a robust, scalable foundation for AI conversation management while maintaining transparency and compatibility with existing applications.</p>
 
                     </main>
 
