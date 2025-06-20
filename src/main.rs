@@ -5,6 +5,8 @@ use commands::search::execute as search_execute;
 use commands::search::SearchOptions;
 use commands::view::execute;
 use handler::completions::handle_with_partition;
+use handler::embeddings::handle_embeddings;
+use handler::tts::handle_tts;
 use http_body_util::BodyExt;
 use http_body_util::Full;
 use hyper::body::Bytes;
@@ -41,6 +43,14 @@ fn get_instance_from_path(path: &str) -> Option<String> {
 
 fn is_chat_request(path: &str) -> bool {
     path.contains("/chat/completions")
+}
+
+fn is_embeddings_request(path: &str) -> bool {
+    path.ends_with("/embeddings")
+}
+
+fn is_tts_request(path: &str) -> bool {
+    path.contains("/audio/speech")
 }
 
 fn is_search_request(path: &str) -> bool {
@@ -84,6 +94,28 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
                 }
             };
             Ok(Response::new(Full::new(response_bytes)))
+        }
+
+        (&Method::POST, path) if is_embeddings_request(path) => {
+            let whole_body = req.into_body().collect().await.unwrap().to_bytes();
+            match handle_embeddings(whole_body).await {
+                Ok(bytes) => Ok(Response::new(Full::new(bytes))),
+                Err(e) => {
+                    error!("Error handling embeddings: {}", e);
+                    Ok(Response::new(Full::new(Bytes::from("Embeddings Error"))))
+                }
+            }
+        }
+
+        (&Method::POST, path) if is_tts_request(path) => {
+            let whole_body = req.into_body().collect().await.unwrap().to_bytes();
+            match handle_tts(whole_body).await {
+                Ok(bytes) => Ok(Response::new(Full::new(bytes))),
+                Err(e) => {
+                    error!("Error handling tts: {}", e);
+                    Ok(Response::new(Full::new(Bytes::from("TTS Error"))))
+                }
+            }
         }
 
         (&Method::POST, "/echo") => {

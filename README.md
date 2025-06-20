@@ -302,6 +302,22 @@ curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completio
     }'
 ```
 
+**Embeddings:**
+```bash
+curl "http://127.0.0.1:3017/v1/embeddings" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{"model": "text-embedding-ada-002", "input": "hello world"}'
+```
+
+**Text to Speech:**
+```bash
+curl "http://127.0.0.1:3017/v1/audio/speech" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{"model": "tts-1", "input": "hello", "voice": "alloy", "response_format": "mp3", "speed": 1.0}'
+```
+
 #### Python Examples (using `openai` library)
 
 **Basic Usage with OpenAI:**

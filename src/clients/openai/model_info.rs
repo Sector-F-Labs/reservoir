@@ -1,12 +1,51 @@
 use std::env;
 
 const RSV_OPENAI_BASE_URL: &str = "RSV_OPENAI_BASE_URL";
+const OPENAI_BASE_URL: &str = "OPENAI_BASE_URL";
 const RSV_OLLAMA_BASE_URL: &str = "RSV_OLLAMA_BASE_URL";
 const RSV_MISTRAL_BASE_URL: &str = "RSV_MISTRAL_BASE_URL";
 
+fn base_host() -> String {
+    env::var(OPENAI_BASE_URL)
+        .or_else(|_| env::var(RSV_OPENAI_BASE_URL))
+        .unwrap_or_else(|_| "https://api.openai.com".to_string())
+}
+
+fn completions_url() -> String {
+    let base = base_host();
+    if base.contains("/chat/completions") {
+        base
+    } else if base.ends_with("/v1") || base.ends_with("/v1/") {
+        format!("{}/chat/completions", base.trim_end_matches('/'))
+    } else {
+        format!("{}/v1/chat/completions", base.trim_end_matches('/'))
+    }
+}
+
+pub fn openai_embeddings_url() -> String {
+    let base = base_host();
+    if base.contains("/embeddings") {
+        base
+    } else if base.ends_with("/v1") || base.ends_with("/v1/") {
+        format!("{}/embeddings", base.trim_end_matches('/'))
+    } else {
+        format!("{}/v1/embeddings", base.trim_end_matches('/'))
+    }
+}
+
+pub fn openai_tts_url() -> String {
+    let base = base_host();
+    if base.contains("/audio/speech") {
+        base
+    } else if base.ends_with("/v1") || base.ends_with("/v1/") {
+        format!("{}/audio/speech", base.trim_end_matches('/'))
+    } else {
+        format!("{}/v1/audio/speech", base.trim_end_matches('/'))
+    }
+}
+
 fn openai_base_url() -> String {
-    env::var(RSV_OPENAI_BASE_URL)
-        .unwrap_or_else(|_| "https://api.openai.com/v1/chat/completions".to_string())
+    completions_url()
 }
 
 fn ollama_base_url() -> String {
