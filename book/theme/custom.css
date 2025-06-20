@@ -168,6 +168,14 @@ body {
     font-weight: 500;
     font-size: 1.2em;
     color: var(--reservoir-primary);
+    cursor: pointer;
+    transition: opacity 0.2s ease, color 0.2s ease;
+    user-select: none;
+}
+
+.menu-title:hover {
+    opacity: 0.8;
+    color: var(--reservoir-secondary);
 }
 
 /* Sidebar styling */

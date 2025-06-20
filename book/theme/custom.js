@@ -104,6 +104,33 @@
         }
     }
 
+    // Make title clickable to go to root website
+    function makeTitleClickable() {
+        const title = document.querySelector('.menu-title');
+        if (title) {
+            // Make it look clickable
+            title.style.cursor = 'pointer';
+            title.style.textDecoration = 'none';
+            title.style.transition = 'opacity 0.2s ease';
+            
+            // Add click handler
+            title.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Go to the root of the site (assuming docs are in a subdirectory)
+                window.location.href = '/';
+            });
+            
+            // Add hover effect
+            title.addEventListener('mouseenter', function() {
+                title.style.opacity = '0.8';
+            });
+            
+            title.addEventListener('mouseleave', function() {
+                title.style.opacity = '1';
+            });
+        }
+    }
+
     // Initialize everything when DOM is ready
     function initialize() {
         // Disable theme switching
@@ -120,6 +147,9 @@
 
         // Override theme functions
         overrideThemeFunctions();
+
+        // Make title clickable
+        makeTitleClickable();
 
         console.log('Reservoir documentation: System theme mode active');
     }
