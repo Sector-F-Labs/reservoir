@@ -16,11 +16,11 @@
     --link-color: #0066cc;
     --footer-bg: #e6e6e6;
     --footer-text: #666666;
-    --reservoir-primary: #0066cc;
-    --reservoir-secondary: #e77500;
+    --reservoir-primary: #e77500;
+    --reservoir-secondary: #0066cc;
     --sidebar-bg: #fafafa;
     --sidebar-text: #333333;
-    --sidebar-active: #0066cc;
+    --sidebar-active: #e77500;
     --code-inline-bg: #f0f0f0;
     --code-inline-text: #333333;
 }
@@ -39,7 +39,7 @@
         --copy-btn-text: #ffffff;
         --copy-btn-hover: #666666;
         --hr-color: #444444;
-        --link-color: #e77500;
+        --link-color: #0066cc;
         --footer-bg: #161616;
         --footer-text: #888888;
         --reservoir-primary: #e77500;
