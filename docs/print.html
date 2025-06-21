@@ -1751,8 +1751,740 @@ Authorization: Bearer YOUR_API_KEY
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="chat-completions-endpoint"><a class="header" href="#chat-completions-endpoint">Chat Completions Endpoint</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="search--retrieval"><a class="header" href="#search--retrieval">Search &amp; Retrieval</a></h1>
+<p>Reservoir provides powerful search capabilities for finding relevant conversations and messages across your entire conversation history. The search system supports both keyword-based and semantic similarity searches, enabling you to discover related discussions even when they use different terminology.</p>
+<h2 id="search-methods"><a class="header" href="#search-methods">Search Methods</a></h2>
+<h3 id="keyword-search"><a class="header" href="#keyword-search">Keyword Search</a></h3>
+<p>Traditional text-based search that finds exact matches or partial matches within message content.</p>
+<p><strong>CLI Usage:</strong></p>
+<pre><code class="language-bash"># Basic keyword search
+reservoir search "python programming"
+
+# Search in specific partition
+reservoir search --partition alice "machine learning"
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>Fast and precise for exact term matches</li>
+<li>Case-insensitive matching</li>
+<li>Supports partial word matching</li>
+<li>Best for finding specific technical terms or names</li>
+</ul>
+<h3 id="semantic-search"><a class="header" href="#semantic-search">Semantic Search</a></h3>
+<p>Vector-based similarity search that finds conceptually related messages even when they use different words.</p>
+<p><strong>CLI Usage:</strong></p>
+<pre><code class="language-bash"># Semantic search
+reservoir search --semantic "machine learning concepts"
+
+# Use RAG strategy (same as context enrichment)
+reservoir search --link --semantic "database design"
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>Finds conceptually similar content</li>
+<li>Works across different terminology</li>
+<li>Uses BGE-Large-EN-v1.5 embeddings</li>
+<li>Powers Reservoir's context enrichment system</li>
+</ul>
+<h2 id="search-options"><a class="header" href="#search-options">Search Options</a></h2>
+<h3 id="partitioning"><a class="header" href="#partitioning">Partitioning</a></h3>
+<p>Scope your search to specific organizational boundaries:</p>
+<pre><code class="language-bash"># Search in specific partition
+reservoir search --partition alice "neural networks"
+
+# Search in specific instance within partition
+reservoir search --partition alice --instance coding "API design"
+</code></pre>
+<h3 id="deduplication"><a class="header" href="#deduplication">Deduplication</a></h3>
+<p>Remove duplicate or highly similar results:</p>
+<pre><code class="language-bash"># Remove duplicate results
+reservoir search --deduplicate --semantic "error handling"
+</code></pre>
+<h3 id="rag-strategy"><a class="header" href="#rag-strategy">RAG Strategy</a></h3>
+<p>Use the same search strategy that powers context enrichment:</p>
+<pre><code class="language-bash"># Use advanced search with synapse expansion
+reservoir search --link --semantic "software architecture"
+</code></pre>
+<p>The <code>--link</code> option:</p>
+<ul>
+<li>Searches for semantically similar messages</li>
+<li>Expands results using synapse relationships</li>
+<li>Follows conversation threads</li>
+<li>Deduplicates automatically</li>
+<li>Limits results to most relevant matches</li>
+</ul>
+<h2 id="search-implementation"><a class="header" href="#search-implementation">Search Implementation</a></h2>
+<h3 id="vector-similarity"><a class="header" href="#vector-similarity">Vector Similarity</a></h3>
+<p>Reservoir uses cosine similarity to find related messages:</p>
+<ol>
+<li><strong>Query Embedding</strong>: Your search term is converted to a vector using BGE-Large-EN-v1.5</li>
+<li><strong>Index Search</strong>: Neo4j's vector index finds similar message embeddings</li>
+<li><strong>Scoring</strong>: Results are ranked by similarity score (0.0 to 1.0)</li>
+<li><strong>Filtering</strong>: Results are filtered by partition/instance boundaries</li>
+</ol>
+<h3 id="synapse-expansion"><a class="header" href="#synapse-expansion">Synapse Expansion</a></h3>
+<p>When using <code>--link</code>, the search expands beyond direct similarity:</p>
+<ol>
+<li><strong>Initial Search</strong>: Find semantically similar messages</li>
+<li><strong>Synapse Following</strong>: Explore connected messages via SYNAPSE relationships</li>
+<li><strong>Thread Discovery</strong>: Follow conversation threads and related discussions</li>
+<li><strong>Relevance Scoring</strong>: Combine similarity scores with relationship strength</li>
+<li><strong>Result Limiting</strong>: Return top matches within context limits</li>
+</ol>
+<h2 id="example-queries"><a class="header" href="#example-queries">Example Queries</a></h2>
+<h3 id="finding-programming-discussions"><a class="header" href="#finding-programming-discussions">Finding Programming Discussions</a></h3>
+<pre><code class="language-bash"># Find all Python-related conversations
+reservoir search --semantic "python programming"
+
+# Find specific error discussions
+reservoir search "TypeError" 
+
+# Find design pattern conversations
+reservoir search --link --semantic "software design patterns"
+</code></pre>
+<h3 id="research-and-analysis"><a class="header" href="#research-and-analysis">Research and Analysis</a></h3>
+<pre><code class="language-bash"># Find machine learning discussions
+reservoir search --semantic "neural networks deep learning"
+
+# Find database-related conversations
+reservoir search --partition research --semantic "database optimization"
+
+# Find recent discussions on a topic
+reservoir view 50 | grep -i "kubernetes"
+</code></pre>
+<h3 id="cross-conversation-discovery"><a class="header" href="#cross-conversation-discovery">Cross-Conversation Discovery</a></h3>
+<pre><code class="language-bash"># Find related discussions across all conversations
+reservoir search --link --semantic "microservices architecture"
+
+# Discover connections between topics
+reservoir search --deduplicate --semantic "testing strategies"
+</code></pre>
+<h2 id="search-results-format"><a class="header" href="#search-results-format">Search Results Format</a></h2>
+<h3 id="cli-output"><a class="header" href="#cli-output">CLI Output</a></h3>
+<p>Search results include:</p>
+<ul>
+<li><strong>Timestamp</strong>: When the message was created</li>
+<li><strong>Partition/Instance</strong>: Organizational context</li>
+<li><strong>Role</strong>: User or assistant message</li>
+<li><strong>Content</strong>: The actual message text</li>
+<li><strong>Score</strong>: Similarity score (for semantic search)</li>
+</ul>
+<h3 id="json-format"><a class="header" href="#json-format">JSON Format</a></h3>
+<p>When exported, search results follow the MessageNode structure:</p>
+<pre><code class="language-json">{
+  "trace_id": "abc123-def456",
+  "partition": "alice",
+  "instance": "coding",
+  "role": "user",
+  "content": "How do I implement error handling in async functions?",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "embedding": [0.1, -0.2, 0.3, ...],
+  "url": null
+}
+</code></pre>
+<h2 id="integration-with-context-enrichment"><a class="header" href="#integration-with-context-enrichment">Integration with Context Enrichment</a></h2>
+<p>The search system directly powers Reservoir's context enrichment:</p>
+<ol>
+<li><strong>Automatic Search</strong>: Every user message triggers a semantic search</li>
+<li><strong>Context Building</strong>: Search results become conversation context</li>
+<li><strong>Relevance Filtering</strong>: Only high-quality matches (&gt;0.85 similarity) are used</li>
+<li><strong>Token Management</strong>: Results are truncated to fit model token limits</li>
+</ol>
+<h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance Considerations</a></h2>
+<h3 id="vector-index"><a class="header" href="#vector-index">Vector Index</a></h3>
+<p>Reservoir maintains optimized vector indices for fast search:</p>
+<pre><code class="language-cypher">CREATE VECTOR INDEX embedding1536 
+FOR (n:Embedding1536) ON (n.embedding) 
+OPTIONS {
+  indexConfig: {
+    `vector.dimensions`: 1536,
+    `vector.similarity_function`: 'cosine'
+  }
+}
+</code></pre>
+<h3 id="search-strategies"><a class="header" href="#search-strategies">Search Strategies</a></h3>
+<ul>
+<li><strong>Keyword Search</strong>: Fastest for exact matches</li>
+<li><strong>Basic Semantic</strong>: Good balance of speed and relevance</li>
+<li><strong>RAG Strategy (<code>--link</code>)</strong>: Most comprehensive but slower</li>
+<li><strong>Deduplication</strong>: Adds processing time but improves result quality</li>
+</ul>
+<h3 id="optimization-tips"><a class="header" href="#optimization-tips">Optimization Tips</a></h3>
+<ol>
+<li><strong>Use Specific Partitions</strong>: Reduces search space</li>
+<li><strong>Keyword for Exact Terms</strong>: Faster than semantic for specific names</li>
+<li><strong>Semantic for Concepts</strong>: Better for finding related ideas</li>
+<li><strong>Limit Result Count</strong>: Implicit in CLI, configurable in API</li>
+</ol>
+<h2 id="advanced-usage"><a class="header" href="#advanced-usage">Advanced Usage</a></h2>
+<h3 id="combining-with-other-commands"><a class="header" href="#combining-with-other-commands">Combining with Other Commands</a></h3>
+<pre><code class="language-bash"># Search and then view context
+reservoir search --semantic "error handling" | head -5
+reservoir view 10
+
+# Search and ingest related information
+echo "Related to error handling discussion" | reservoir ingest
+
+# Export search results for analysis
+reservoir search --semantic "API design" &gt; api_discussions.txt
+</code></pre>
+<h3 id="scripting-and-automation"><a class="header" href="#scripting-and-automation">Scripting and Automation</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# Find and analyze topic discussions
+
+TOPIC="$1"
+echo "Searching for discussions about: $TOPIC"
+
+# Semantic search with RAG strategy
+reservoir search --link --semantic "$TOPIC" &gt; "search_results_$TOPIC.txt"
+
+# Count total discussions
+TOTAL=$(wc -l &lt; "search_results_$TOPIC.txt")
+echo "Found $TOTAL related messages"
+
+# Show recent activity
+echo "Recent activity:"
+reservoir view 20 | grep -i "$TOPIC" | head -3
+</code></pre>
+<p>The search system is designed to make your conversation history searchable and discoverable, turning your accumulated AI interactions into a valuable knowledge base that grows more useful over time.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="data-management"><a class="header" href="#data-management">Data Management</a></h1>
+<p>Reservoir provides comprehensive data management capabilities for backing up, migrating, and organizing your conversation data. The system supports full data export/import, individual message management, and flexible partitioning strategies.</p>
+<h2 id="export-and-import"><a class="header" href="#export-and-import">Export and Import</a></h2>
+<h3 id="export-all-data"><a class="header" href="#export-all-data">Export All Data</a></h3>
+<p>Export your entire conversation history as JSON for backup or migration:</p>
+<pre><code class="language-bash"># Export all messages to stdout
+reservoir export
+
+# Save to file with timestamp
+reservoir export &gt; backup_$(date +%Y%m%d_%H%M%S).json
+
+# Export and compress for storage
+reservoir export | gzip &gt; reservoir_backup.json.gz
+</code></pre>
+<p><strong>Export Format:</strong>
+Each message is exported as a complete MessageNode with all metadata:</p>
+<pre><code class="language-json">[
+  {
+    "trace_id": "550e8400-e29b-41d4-a716-446655440000",
+    "partition": "default",
+    "instance": "default", 
+    "role": "user",
+    "content": "How do I implement error handling in async functions?",
+    "timestamp": "2024-01-15T10:30:00.000Z",
+    "embedding": [0.123, -0.456, 0.789, ...],
+    "url": null
+  },
+  {
+    "trace_id": "550e8400-e29b-41d4-a716-446655440001",
+    "partition": "default",
+    "instance": "default",
+    "role": "assistant", 
+    "content": "Here are several approaches to error handling in async functions...",
+    "timestamp": "2024-01-15T10:30:15.000Z",
+    "embedding": [0.234, -0.567, 0.890, ...],
+    "url": null
+  }
+]
+</code></pre>
+<h3 id="import-data"><a class="header" href="#import-data">Import Data</a></h3>
+<p>Import message data from JSON files:</p>
+<pre><code class="language-bash"># Import from a backup file
+reservoir import backup_20240115.json
+
+# Import from another Reservoir instance
+reservoir import exported_conversations.json
+
+# Import compressed backup
+gunzip -c reservoir_backup.json.gz | reservoir import /dev/stdin
+</code></pre>
+<p><strong>Import Behavior:</strong></p>
+<ul>
+<li>Validates JSON format and MessageNode structure</li>
+<li>Preserves all metadata including timestamps and embeddings</li>
+<li>Maintains partition/instance organization</li>
+<li>Skips duplicate messages (based on trace_id)</li>
+<li>Rebuilds relationships and synapses</li>
+</ul>
+<h3 id="migration-workflows"><a class="header" href="#migration-workflows">Migration Workflows</a></h3>
+<p><strong>Complete System Migration:</strong></p>
+<pre><code class="language-bash"># On source system
+reservoir export &gt; full_backup.json
+
+# Transfer file to new system
+scp full_backup.json user@newserver:/path/to/reservoir/
+
+# On destination system
+reservoir import full_backup.json
+
+# Verify migration
+reservoir view 10
+reservoir search --semantic "test query"
+</code></pre>
+<p><strong>Selective Migration:</strong></p>
+<pre><code class="language-bash"># Export from specific partition
+reservoir export | jq '.[] | select(.partition=="alice")' &gt; alice_messages.json
+
+# Import to different partition (requires manual editing or processing)
+# Edit JSON to change partition names, then import
+reservoir import alice_messages.json
+</code></pre>
+<h2 id="message-management"><a class="header" href="#message-management">Message Management</a></h2>
+<h3 id="manual-message-ingestion"><a class="header" href="#manual-message-ingestion">Manual Message Ingestion</a></h3>
+<p>Add messages manually for testing, note-taking, or data entry:</p>
+<pre><code class="language-bash"># Add a user message
+echo "How do I configure Neo4j for production?" | reservoir ingest
+
+# Add to specific partition/instance
+echo "Remember to update dependencies" | reservoir ingest --partition alice --instance notes
+
+# Add assistant message
+echo "Here's the production Neo4j configuration..." | reservoir ingest --role assistant
+
+# Ingest from file
+cat meeting_notes.txt | reservoir ingest --partition team --instance meetings
+</code></pre>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li><strong>Documentation</strong>: Add important information manually</li>
+<li><strong>Testing</strong>: Create test scenarios with known data</li>
+<li><strong>Migration</strong>: Import data from other systems</li>
+<li><strong>Notes</strong>: Add personal reminders or observations</li>
+</ul>
+<h3 id="viewing-recent-data"><a class="header" href="#viewing-recent-data">Viewing Recent Data</a></h3>
+<p>Monitor recent activity and verify data integrity:</p>
+<pre><code class="language-bash"># View last 10 messages
+reservoir view 10
+
+# View from specific partition
+reservoir view --partition alice 15
+
+# View from specific instance
+reservoir view --partition alice --instance coding 20
+
+# Pipe to other tools for analysis
+reservoir view 50 | grep -i "error" | wc -l
+</code></pre>
+<h2 id="partitioning-strategy"><a class="header" href="#partitioning-strategy">Partitioning Strategy</a></h2>
+<h3 id="organizational-structure"><a class="header" href="#organizational-structure">Organizational Structure</a></h3>
+<p>Reservoir uses a two-level organizational hierarchy:</p>
+<ol>
+<li><strong>Partition</strong>: High-level boundary (user, project, team)</li>
+<li><strong>Instance</strong>: Sub-boundary within partition (topic, session, category)</li>
+</ol>
+<pre><code>default/
+├── default/          # General conversations
+├── coding/           # Programming discussions  
+└── research/         # Research and analysis
+
+alice/
+├── personal/         # Personal conversations
+├── work/            # Work-related discussions
+└── learning/        # Educational content
+
+team/
+├── meetings/        # Team meeting notes
+├── planning/        # Project planning
+└── retrospectives/  # Review sessions
+</code></pre>
+<h3 id="partition-management"><a class="header" href="#partition-management">Partition Management</a></h3>
+<p><strong>Creating Partitions:</strong>
+Partitions are created automatically when first used:</p>
+<pre><code class="language-bash"># Create new partition by using it
+echo "Starting new project discussions" | reservoir ingest --partition newproject
+
+# Create instance within partition
+echo "Technical architecture discussion" | reservoir ingest --partition newproject --instance architecture
+</code></pre>
+<p><strong>Partition Benefits:</strong></p>
+<ul>
+<li><strong>Isolation</strong>: Keep different contexts separate</li>
+<li><strong>Search Scoping</strong>: Limit searches to relevant content</li>
+<li><strong>Access Control</strong>: Enable future access restrictions</li>
+<li><strong>Organization</strong>: Maintain clean separation of concerns</li>
+</ul>
+<h3 id="data-isolation"><a class="header" href="#data-isolation">Data Isolation</a></h3>
+<p>Partitions provide logical isolation:</p>
+<ul>
+<li><strong>Context Enrichment</strong>: Only includes messages from same partition/instance</li>
+<li><strong>Search</strong>: Can be scoped to specific partitions</li>
+<li><strong>Export</strong>: Can filter by partition (with additional tooling)</li>
+<li><strong>Privacy</strong>: Enables separation of personal/professional content</li>
+</ul>
+<h2 id="data-integrity"><a class="header" href="#data-integrity">Data Integrity</a></h2>
+<h3 id="backup-strategies"><a class="header" href="#backup-strategies">Backup Strategies</a></h3>
+<p><strong>Daily Backups:</strong></p>
+<pre><code class="language-bash">#!/bin/bash
+# Daily backup script
+
+BACKUP_DIR="/backup/reservoir"
+DATE=$(date +%Y%m%d)
+TIMESTAMP=$(date +%H%M%S)
+
+# Create backup directory
+mkdir -p "$BACKUP_DIR/$DATE"
+
+# Export data
+reservoir export &gt; "$BACKUP_DIR/$DATE/reservoir_$TIMESTAMP.json"
+
+# Compress older backups
+find "$BACKUP_DIR" -name "*.json" -mtime +7 -exec gzip {} \;
+
+# Clean old backups (keep 30 days)
+find "$BACKUP_DIR" -name "*.json.gz" -mtime +30 -delete
+
+# Log backup
+echo "$(date): Backup completed - $BACKUP_DIR/$DATE/reservoir_$TIMESTAMP.json" &gt;&gt; /var/log/reservoir_backup.log
+</code></pre>
+<p><strong>Incremental Exports:</strong></p>
+<pre><code class="language-bash"># Export recent messages (last 24 hours)
+reservoir view 1000 | jq -r '.[] | select(.timestamp &gt; "'$(date -d '1 day ago' -Iseconds)'")' &gt; incremental_backup.json
+</code></pre>
+<h3 id="data-validation"><a class="header" href="#data-validation">Data Validation</a></h3>
+<p><strong>Verify Data Integrity:</strong></p>
+<pre><code class="language-bash"># Check message count
+TOTAL_MESSAGES=$(reservoir export | jq length)
+echo "Total messages: $TOTAL_MESSAGES"
+
+# Verify embeddings
+EMBEDDED_COUNT=$(reservoir export | jq '[.[] | select(.embedding != null)] | length')
+echo "Messages with embeddings: $EMBEDDED_COUNT"
+
+# Check partition distribution
+reservoir export | jq -r '.[] | .partition' | sort | uniq -c
+</code></pre>
+<h3 id="recovery-procedures"><a class="header" href="#recovery-procedures">Recovery Procedures</a></h3>
+<p><strong>Restore from Backup:</strong></p>
+<pre><code class="language-bash"># Stop Reservoir (if running as service)
+systemctl stop reservoir
+
+# Clear existing data (WARNING: destructive)
+# This requires manual Neo4j database clearing
+
+# Import backup
+reservoir import /backup/reservoir/20240115/reservoir_full.json
+
+# Verify restoration
+reservoir view 10
+reservoir search --semantic "test"
+
+# Restart service
+systemctl start reservoir
+</code></pre>
+<h2 id="advanced-data-operations"><a class="header" href="#advanced-data-operations">Advanced Data Operations</a></h2>
+<h3 id="data-analysis"><a class="header" href="#data-analysis">Data Analysis</a></h3>
+<p><strong>Export for Analysis:</strong></p>
+<pre><code class="language-bash"># Export specific fields for analysis
+reservoir export | jq -r '.[] | [.timestamp, .partition, .role, (.content | length)] | @csv' &gt; message_stats.csv
+
+# Analyze conversation patterns
+reservoir export | jq -r '.[] | .partition' | sort | uniq -c | sort -nr
+
+# Find most active time periods
+reservoir export | jq -r '.[] | .timestamp[0:10]' | sort | uniq -c | sort -nr
+</code></pre>
+<h3 id="data-transformation"><a class="header" href="#data-transformation">Data Transformation</a></h3>
+<p><strong>Format Conversion:</strong></p>
+<pre><code class="language-bash"># Convert to CSV format
+reservoir export | jq -r '.[] | [.timestamp, .partition, .instance, .role, .content] | @csv' &gt; conversations.csv
+
+# Extract just message content
+reservoir export | jq -r '.[] | .content' &gt; all_messages.txt
+
+# Create markdown format
+reservoir export | jq -r '.[] | "## " + .timestamp + " (" + .role + ")\n\n" + .content + "\n"' &gt; conversations.md
+</code></pre>
+<h3 id="embedding-management"><a class="header" href="#embedding-management">Embedding Management</a></h3>
+<p><strong>Replay Embeddings:</strong>
+When embedding models change or for data recovery:</p>
+<pre><code class="language-bash"># Replay embeddings for all messages
+reservoir replay
+
+# Replay for specific model/partition
+reservoir replay bge-large-en-v15
+
+# Monitor embedding progress
+# (Check logs for embedding generation status)
+tail -f /var/log/reservoir.log | grep -i embedding
+</code></pre>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<h3 id="regular-maintenance"><a class="header" href="#regular-maintenance">Regular Maintenance</a></h3>
+<ol>
+<li><strong>Schedule Regular Backups</strong>: Daily exports with compression</li>
+<li><strong>Monitor Disk Usage</strong>: Embeddings require significant storage</li>
+<li><strong>Validate Data Integrity</strong>: Regular checks for missing embeddings</li>
+<li><strong>Clean Old Logs</strong>: Rotate and archive log files</li>
+<li><strong>Test Recovery</strong>: Periodically test backup restoration</li>
+</ol>
+<h3 id="storage-optimization"><a class="header" href="#storage-optimization">Storage Optimization</a></h3>
+<ol>
+<li><strong>Compress Backups</strong>: Use gzip for long-term storage</li>
+<li><strong>Archive Old Data</strong>: Move historical data to cold storage</li>
+<li><strong>Monitor Neo4j Storage</strong>: Regular database maintenance</li>
+<li><strong>Embedding Efficiency</strong>: Consider embedding model size vs. quality</li>
+</ol>
+<h3 id="security-considerations"><a class="header" href="#security-considerations">Security Considerations</a></h3>
+<ol>
+<li><strong>Encrypt Backups</strong>: Sensitive conversation data should be encrypted</li>
+<li><strong>Access Controls</strong>: Limit access to export/import capabilities</li>
+<li><strong>Audit Trails</strong>: Log all data management operations</li>
+<li><strong>Data Retention</strong>: Define policies for data lifecycle management</li>
+</ol>
+<p>Data management in Reservoir is designed to be straightforward while providing enterprise-grade capabilities for backup, migration, and organization of your conversation data.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command Line Interface</a></h1>
+<p>Reservoir provides a comprehensive command-line interface for managing your conversation data, searching through message history, and configuring the system. This section covers all available commands and their usage.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Reservoir's CLI allows you to:</p>
+<ul>
+<li>Start the proxy server</li>
+<li>Search through conversations</li>
+<li>Import and export conversation data</li>
+<li>View recent messages</li>
+<li>Ingest new messages manually</li>
+<li>Configure system settings</li>
+<li>Replay embeddings for existing data</li>
+</ul>
+<h2 id="available-commands"><a class="header" href="#available-commands">Available Commands</a></h2>
+<h3 id="reservoir-start"><a class="header" href="#reservoir-start"><code>reservoir start</code></a></h3>
+<p>Start the Reservoir proxy server.</p>
+<pre><code class="language-bash">reservoir start [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-o, --ollama</code> - Ollama mode which sets up on same default port as ollama useful for using as a proxy for clients that don't support setting a url</li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Start in normal mode
+reservoir start
+
+# Start in Ollama mode (uses port 11434)
+reservoir start --ollama
+</code></pre>
+<h3 id="reservoir-search"><a class="header" href="#reservoir-search"><code>reservoir search</code></a></h3>
+<p>Search messages by keyword or semantic similarity.</p>
+<pre><code class="language-bash">reservoir search [OPTIONS] &lt;TERM&gt;
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;TERM&gt;</code> - The search term (keyword or semantic)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--semantic</code> - Use semantic search instead of keyword search</li>
+<li><code>-p, --partition &lt;PARTITION&gt;</code> - Partition to search (defaults to "default")</li>
+<li><code>-i, --instance &lt;INSTANCE&gt;</code> - Instance to search (defaults to partition)</li>
+<li><code>-l, --link</code> - Use the same search strategy as RAG does when injecting into the model</li>
+<li><code>-d, --deduplicate</code> - Deduplicate first similarity results</li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Keyword search
+reservoir search "python programming"
+
+# Semantic search
+reservoir search --semantic "machine learning concepts"
+
+# Search in specific partition/instance
+reservoir search --partition alice --instance coding "neural networks"
+
+# Use RAG search strategy
+reservoir search --link --semantic "database design"
+
+# Deduplicate results
+reservoir search --deduplicate --semantic "API design"
+</code></pre>
+<h3 id="reservoir-export"><a class="header" href="#reservoir-export"><code>reservoir export</code></a></h3>
+<p>Export all message nodes as JSON.</p>
+<pre><code class="language-bash">reservoir export
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-h, --help</code> - Print help</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Export all messages to stdout
+reservoir export &gt; my_conversations.json
+
+# Export and view
+reservoir export | jq '.[0]'
+</code></pre>
+<h3 id="reservoir-import"><a class="header" href="#reservoir-import"><code>reservoir import</code></a></h3>
+<p>Import message nodes from a JSON file.</p>
+<pre><code class="language-bash">reservoir import &lt;FILE&gt;
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;FILE&gt;</code> - Path to the JSON file to import</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Import from a file
+reservoir import my_conversations.json
+
+# Import from a backup
+reservoir import backup_2024_01_15.json
+</code></pre>
+<h3 id="reservoir-view"><a class="header" href="#reservoir-view"><code>reservoir view</code></a></h3>
+<p>View last x messages in the default partition/instance.</p>
+<pre><code class="language-bash">reservoir view [OPTIONS] &lt;COUNT&gt;
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;COUNT&gt;</code> - Number of messages to display</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-p, --partition &lt;PARTITION&gt;</code> - Partition to view (defaults to "default")</li>
+<li><code>-i, --instance &lt;INSTANCE&gt;</code> - Instance to view (defaults to partition)</li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># View last 10 messages
+reservoir view 10
+
+# View messages from specific partition
+reservoir view --partition alice 5
+
+# View messages from specific instance
+reservoir view --partition alice --instance coding 15
+</code></pre>
+<h3 id="reservoir-ingest"><a class="header" href="#reservoir-ingest"><code>reservoir ingest</code></a></h3>
+<p>Ingest a message from stdin as a user MessageNode.</p>
+<pre><code class="language-bash">reservoir ingest [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-p, --partition &lt;PARTITION&gt;</code> - Partition to save the message in (defaults to "default")</li>
+<li><code>-i, --instance &lt;INSTANCE&gt;</code> - Instance to save the message in (defaults to partition)</li>
+<li><code>--role &lt;ROLE&gt;</code> - Role to assign to the message (defaults to "user")</li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Ingest a user message
+echo "How do I implement a binary search tree?" | reservoir ingest
+
+# Ingest to specific partition/instance
+echo "What are design patterns?" | reservoir ingest --partition alice --instance coding
+
+# Ingest as assistant message
+echo "Here's how to implement a BST..." | reservoir ingest --role assistant
+
+# Ingest from file
+cat question.txt | reservoir ingest --partition research --instance ai
+</code></pre>
+<h3 id="reservoir-config"><a class="header" href="#reservoir-config"><code>reservoir config</code></a></h3>
+<p>Set or get default configuration values with your config.toml.</p>
+<pre><code class="language-bash">reservoir config [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-s, --set &lt;SET&gt;</code> - Set a configuration value. Use the format key=value. <code>reservoir config --set model=gpt-4-turbo</code></li>
+<li><code>-g, --get &lt;GET&gt;</code> - Get your current configuration value. <code>reservoir config --get model</code></li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># View current configuration
+reservoir config --get semantic_context_size
+
+# Set configuration value
+reservoir config --set semantic_context_size=20
+
+# Set Neo4j connection
+reservoir config --set neo4j_uri=bolt://localhost:7687
+</code></pre>
+<h3 id="reservoir-replay"><a class="header" href="#reservoir-replay"><code>reservoir replay</code></a></h3>
+<p>Replay embeddings process.</p>
+<pre><code class="language-bash">reservoir replay [MODEL]
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>[MODEL]</code> - Partition to replay (defaults to "default")</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Replay embeddings for default model
+reservoir replay
+
+# Replay for specific model
+reservoir replay bge-large-en-v15
+</code></pre>
+<h2 id="common-workflows"><a class="header" href="#common-workflows">Common Workflows</a></h2>
+<h3 id="daily-usage"><a class="header" href="#daily-usage">Daily Usage</a></h3>
+<pre><code class="language-bash"># Start the server
+reservoir start
+
+# View recent conversations
+reservoir view 10
+
+# Search for specific topics
+reservoir search --semantic "machine learning"
+
+# Add a note or question
+echo "Remember to implement error handling" | reservoir ingest
+</code></pre>
+<h3 id="data-management-1"><a class="header" href="#data-management-1">Data Management</a></h3>
+<pre><code class="language-bash"># Export all data for backup
+reservoir export &gt; backup_$(date +%Y%m%d).json
+
+# Import previous backup
+reservoir import backup_20240115.json
+
+# View configuration
+reservoir config --get semantic_context_size
+</code></pre>
+<h3 id="development-and-testing"><a class="header" href="#development-and-testing">Development and Testing</a></h3>
+<pre><code class="language-bash"># Start in Ollama mode for local testing
+reservoir start --ollama
+
+# Search with debugging
+reservoir search --link --deduplicate --semantic "API design"
+
+# Replay embeddings after model changes
+reservoir replay bge-large-en-v15
+</code></pre>
+<h2 id="configuration-1"><a class="header" href="#configuration-1">Configuration</a></h2>
+<p>The CLI respects configuration from:</p>
+<ol>
+<li>Command-line arguments (highest priority)</li>
+<li>Configuration file (<code>~/.config/reservoir/reservoir.toml</code>)</li>
+<li>Environment variables</li>
+<li>Default values (lowest priority)</li>
+</ol>
+<p>See <a href="api/../deployment/environment.html">Environment Variables</a> for detailed configuration options.</p>
+<h2 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h2>
+<p>The CLI provides helpful error messages for common issues:</p>
+<ul>
+<li><strong>Connection errors</strong>: Check if Neo4j is running</li>
+<li><strong>Permission errors</strong>: Verify file permissions for import/export</li>
+<li><strong>Invalid arguments</strong>: Use <code>--help</code> for correct syntax</li>
+<li><strong>Configuration errors</strong>: Verify config file format</li>
+</ul>
+<h2 id="integration-with-scripts"><a class="header" href="#integration-with-scripts">Integration with Scripts</a></h2>
+<p>The CLI is designed to work well in scripts and automation:</p>
+<pre><code class="language-bash">#!/bin/bash
+# Backup and restart script
+
+# Export current data
+reservoir export &gt; "backup_$(date +%Y%m%d_%H%M%S).json"
+
+# Restart with fresh embeddings
+reservoir replay
+
+# Start the server
+reservoir start
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
 <p>Reservoir is designed as a transparent proxy for OpenAI-compatible APIs, with a focus on capturing and enriching AI conversations. This section provides an overview of the system architecture and how components interact.</p>
 <h2 id="request-processing-sequence"><a class="header" href="#request-processing-sequence">Request Processing Sequence</a></h2>
@@ -1974,7 +2706,7 @@ Authorization: Bearer YOUR_API_KEY
 <p>This architecture provides a robust, scalable foundation for AI conversation management while maintaining transparency and compatibility with existing applications.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="data-model"><a class="header" href="#data-model">Data Model</a></h1>
 <p>Reservoir uses Neo4j as its graph database to store conversations and their relationships. This section provides a detailed overview of the data model, including nodes, relationships, and how they work together to enable intelligent conversation management.</p>
-<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
 <p>The data model is designed around the concept of messages as nodes in a graph, with relationships that capture both the conversational flow and semantic similarities. This approach enables powerful querying capabilities for context enrichment and conversation analysis.</p>
 <h2 id="nodes"><a class="header" href="#nodes">Nodes</a></h2>
 <h3 id="messagenode"><a class="header" href="#messagenode">MessageNode</a></h3>
@@ -2064,7 +2796,7 @@ Authorization: Bearer YOUR_API_KEY
 <li><strong>Cross-conversation connections</strong> where topics are discussed in multiple conversations</li>
 </ul>
 <p>The graph structure enables Reservoir to find relevant context from past conversations when enriching new requests, creating a rich conversational memory that spans multiple sessions and topics.</p>
-<h2 id="vector-index"><a class="header" href="#vector-index">Vector Index</a></h2>
+<h2 id="vector-index-1"><a class="header" href="#vector-index-1">Vector Index</a></h2>
 <p>Reservoir maintains a vector index called <code>messageEmbeddings</code> in Neo4j for efficient similarity searches.</p>
 <h3 id="index-configuration"><a class="header" href="#index-configuration">Index Configuration</a></h3>
 <pre><code class="language-cypher">CREATE VECTOR INDEX messageEmbeddings 
@@ -2082,7 +2814,7 @@ WHERE node.partition = $partition AND node.instance = $instance
 RETURN node, score
 ORDER BY score DESC
 </code></pre>
-<h2 id="partitioning-strategy"><a class="header" href="#partitioning-strategy">Partitioning Strategy</a></h2>
+<h2 id="partitioning-strategy-1"><a class="header" href="#partitioning-strategy-1">Partitioning Strategy</a></h2>
 <h3 id="partition"><a class="header" href="#partition">Partition</a></h3>
 <ul>
 <li><strong>Purpose</strong>: Top-level organization boundary</li>
@@ -2192,7 +2924,7 @@ ORDER BY connectionCount DESC, avgScore DESC
 <li><strong>Index Optimization</strong>: Regular vector index maintenance</li>
 <li><strong>Storage Optimization</strong>: Archival of old messages based on retention policies</li>
 </ul>
-<h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance Considerations</a></h2>
+<h2 id="performance-considerations-1"><a class="header" href="#performance-considerations-1">Performance Considerations</a></h2>
 <h3 id="indexing-strategy"><a class="header" href="#indexing-strategy">Indexing Strategy</a></h3>
 <ul>
 <li><strong>Vector Index</strong>: Primary index for similarity searches</li>
@@ -2217,7 +2949,7 @@ ORDER BY connectionCount DESC, avgScore DESC
 <p>This data model provides a robust foundation for conversation storage and retrieval while maintaining flexibility for future enhancements and optimizations.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="context-enrichment-1"><a class="header" href="#context-enrichment-1">Context Enrichment</a></h1>
 <p>Context enrichment is Reservoir's core mechanism for providing intelligent, memory-aware AI conversations. By automatically injecting relevant historical context and recent conversation history into each request, Reservoir gives AI models a persistent memory that improves response quality and maintains conversational continuity across sessions.</p>
-<h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
+<h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
 <p>When you send a message to Reservoir, the system automatically enhances your request with:</p>
 <ul>
 <li><strong>Semantically similar messages</strong> from past conversations (using vector similarity search)</li>
@@ -2289,7 +3021,7 @@ ORDER BY connectionCount DESC, avgScore DESC
         embedding_info.get_index_name()
     );
 </code></pre>
-<h4 id="synapse-expansion"><a class="header" href="#synapse-expansion">Synapse Expansion</a></h4>
+<h4 id="synapse-expansion-1"><a class="header" href="#synapse-expansion-1">Synapse Expansion</a></h4>
 <pre><code class="language-rs">pub async fn get_related_messages_with_strategy(
     embedding: Vec&lt;f32&gt;,
     embedding_info: &amp;EmbeddingInfo,
@@ -2466,23 +3198,23 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 </ul>
 <h3 id="7-response-storage-and-synapse-building"><a class="header" href="#7-response-storage-and-synapse-building">7. Response Storage and Synapse Building</a></h3>
 <p>After receiving the AI's response:</p>
-<pre><code class="language-149:162:src/handler/completions.rs">    let message_node = chat_response.choices.first().unwrap().message.clone();
-    let embedding =
-        get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
-    let message_node = MessageNode::from_message(
-        &amp;message_node,
-        trace_id.as_str(),
-        partition,
-        instance,
-        embedding,
-    );
-    save_message_node(connect, &amp;message_node, &amp;embedding_info)
-        .await
-        .expect("Failed to save message node");
+<pre><code class="language-rs">let message_node = chat_response.choices.first().unwrap().message.clone();
+let embedding =
+    get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
+let message_node = MessageNode::from_message(
+    &amp;message_node,
+    trace_id.as_str(),
+    partition,
+    instance,
+    embedding,
+);
+save_message_node(connect, &amp;message_node, &amp;embedding_info)
+    .await
+    .expect("Failed to save message node");
 
-    connect_synapses(connect)
-        .await
-        .expect("Failed to connect synapses");
+connect_synapses(connect)
+    .await
+    .expect("Failed to connect synapses");
 </code></pre>
 <ol>
 <li>The AI's response is stored with its own embedding</li>
@@ -2567,24 +3299,23 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 </pre>
 <h2 id="key-configuration-parameters"><a class="header" href="#key-configuration-parameters">Key Configuration Parameters</a></h2>
 <h3 id="context-size"><a class="header" href="#context-size">Context Size</a></h3>
-<pre><code class="language-116:118:src/repos/config.rs">pub fn get_context_size() -&gt; usize {
+<pre><code class="language-rs">pub fn get_context_size() -&gt; usize {
     get_config().semantic_context_size.unwrap_or(15)
 }
 </code></pre>
 <p>The semantic context size (default: 15) determines how many semantically similar messages are retrieved and potentially included in the context.</p>
 <h3 id="recent-messages-limit"><a class="header" href="#recent-messages-limit">Recent Messages Limit</a></h3>
-<pre><code class="language-25:25:src/handler/completions.rs">const LAST_MESSAGES_LIMIT: usize = 15;
+<pre><code class="language-rs">const LAST_MESSAGES_LIMIT: usize = 15;
 </code></pre>
 <p>The system retrieves up to 15 most recent messages from the same partition/instance for chronological context.</p>
 <h3 id="embedding-model"><a class="header" href="#embedding-model">Embedding Model</a></h3>
-<pre><code class="language-95:95:src/handler/completions.rs">    let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
+<pre><code class="language-rs">let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
 </code></pre>
-<p>Reservoir uses BGE-Large-EN-v1.5 for generating embeddings, providing high-quality semantic representations.</p>
+<p>Reservoir by default uses a local instace of BGE-Large-EN-v1.5 for generating embeddings, for providing high-quality semantic representations.</p>
 <h3 id="synapse-threshold"><a class="header" href="#synapse-threshold">Synapse Threshold</a></h3>
-<pre><code class="language-297:300:src/repos/message/neo4j_message.rs">            MATCH (m1:MessageNode)-[r:SYNAPSE]-&gt;(m2:MessageNode)
-            WHERE r.score &lt; 0.85
-            DELETE r
-        "#;
+<pre><code class="language-cypher">MATCH (m1:MessageNode)-[r:SYNAPSE]-&gt;(m2:MessageNode)
+WHERE r.score &lt; 0.85
+DELETE r
 </code></pre>
 <p>Only relationships with cosine similarity scores above 0.85 are maintained as synapses, ensuring high-quality semantic connections.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key Concepts</a></h2>
@@ -2612,7 +3343,7 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 <li><strong>Supports parallel processing</strong> of multiple simultaneous requests</li>
 </ul>
 <h3 id="system-context-compression"><a class="header" href="#system-context-compression">System Context Compression</a></h3>
-<pre><code class="language-22:41:src/utils/mod.rs">pub fn compress_system_context(messages: &amp;[Message]) -&gt; Vec&lt;Message&gt; {
+<pre><code class="language-rs">pub fn compress_system_context(messages: &amp;[Message]) -&gt; Vec&lt;Message&gt; {
     let first_index = messages.iter().position(|m| m.role == "system");
     let last_index = messages.iter().rposition(|m| m.role == "system");
 
@@ -2644,7 +3375,7 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 <li><strong>Intelligent Prioritization</strong>: Most relevant historical context is prioritized while respecting token limits</li>
 <li><strong>Automatic Organization</strong>: The system builds its own knowledge graph without manual intervention</li>
 </ol>
-<h2 id="performance-considerations-1"><a class="header" href="#performance-considerations-1">Performance Considerations</a></h2>
+<h2 id="performance-considerations-2"><a class="header" href="#performance-considerations-2">Performance Considerations</a></h2>
 <ul>
 <li><strong>Vector Indexing</strong>: Neo4j's vector indices provide sub-second similarity search even with large conversation histories</li>
 <li><strong>Parallel Processing</strong>: Semantic search and recent history retrieval happen concurrently</li>
@@ -2653,6 +3384,238 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 <li><strong>Token Optimization</strong>: System messages are compressed to maximize available context within token limits</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="conversation-threads-synapses"><a class="header" href="#conversation-threads-synapses">Conversation Threads (Synapses)</a></h1>
+<p>Synapses are Reservoir's intelligent connection system that links semantically related messages across different conversations. Unlike traditional conversation threads that follow chronological order, synapses create a web of connections based on semantic similarity, enabling cross-conversation context discovery and knowledge building.</p>
+<h2 id="what-are-synapses"><a class="header" href="#what-are-synapses">What are Synapses?</a></h2>
+<p>Synapses are bidirectional relationships between MessageNodes that represent semantic similarity. They enable Reservoir to:</p>
+<ul>
+<li><strong>Connect related discussions</strong> across different conversations</li>
+<li><strong>Build knowledge networks</strong> from accumulated conversations</li>
+<li><strong>Enable context jumping</strong> between related topics</li>
+<li><strong>Create conversational memory</strong> that spans sessions</li>
+</ul>
+<h2 id="how-synapses-work"><a class="header" href="#how-synapses-work">How Synapses Work</a></h2>
+<h3 id="similarity-calculation"><a class="header" href="#similarity-calculation">Similarity Calculation</a></h3>
+<p>Synapses are created based on vector similarity between message embeddings:</p>
+<ol>
+<li><strong>Embedding Generation</strong>: Each message is converted to a vector using BGE-Large-EN-v1.5</li>
+<li><strong>Similarity Scoring</strong>: Cosine similarity is calculated between message vectors</li>
+<li><strong>Threshold Filtering</strong>: Only connections with similarity ≥ 0.85 become synapses</li>
+<li><strong>Bidirectional Links</strong>: Synapses work in both directions (A ↔ B)</li>
+</ol>
+<h3 id="synapse-creation-process"><a class="header" href="#synapse-creation-process">Synapse Creation Process</a></h3>
+<pre class="mermaid">flowchart TD
+    A[&quot;New Message Arrives&quot;] --&gt; B[&quot;Generate Embedding&quot;]
+    B --&gt; C[&quot;Find Similar Messages&quot;]
+    C --&gt; D[&quot;Calculate Similarity Scores&quot;]
+    D --&gt; E{&quot;Score ≥ 0.85?&quot;}
+    E --&gt;|Yes| F[&quot;Create SYNAPSE Relationship&quot;]
+    E --&gt;|No| G[&quot;Skip Connection&quot;]
+    F --&gt; H[&quot;Store Score and Model Info&quot;]
+    H --&gt; I[&quot;Enable Cross-Conversation Context&quot;]
+    G --&gt; I
+</pre>
+<h3 id="sequential-vs-semantic-synapses"><a class="header" href="#sequential-vs-semantic-synapses">Sequential vs. Semantic Synapses</a></h3>
+<p><strong>Sequential Synapses</strong>: Connect consecutive messages in the same conversation</p>
+<pre><code class="language-cypher">// Messages in same conversation thread
+(msg1)-[:SYNAPSE {score: 0.95, model: "embedding1536"}]-(msg2)
+</code></pre>
+<p><strong>Semantic Synapses</strong>: Connect similar messages from different conversations</p>
+<pre><code class="language-cypher">// Messages from different conversations with similar content
+(msg_python_q1)-[:SYNAPSE {score: 0.88, model: "embedding1536"}]-(msg_python_q2)
+</code></pre>
+<h2 id="synapse-properties"><a class="header" href="#synapse-properties">Synapse Properties</a></h2>
+<h3 id="score"><a class="header" href="#score">Score</a></h3>
+<p>Represents the semantic similarity strength between two messages:</p>
+<ul>
+<li><strong>Range</strong>: 0.0 to 1.0 (higher is more similar)</li>
+<li><strong>Threshold</strong>: Minimum 0.85 for synapse creation</li>
+<li><strong>Calculation</strong>: Cosine similarity between embedding vectors</li>
+<li><strong>Update</strong>: Can be recalculated as models improve</li>
+</ul>
+<h3 id="model"><a class="header" href="#model">Model</a></h3>
+<p>Indicates which embedding model was used for similarity calculation:</p>
+<ul>
+<li><strong>Current Default</strong>: "embedding1536" (BGE-Large-EN-v1.5)</li>
+<li><strong>Purpose</strong>: Enables model-specific synapse management</li>
+<li><strong>Future-Proofing</strong>: Supports multiple embedding models</li>
+</ul>
+<h3 id="example-synapse-relationship"><a class="header" href="#example-synapse-relationship">Example Synapse Relationship</a></h3>
+<pre><code class="language-cypher">(message1:MessageNode)-[:SYNAPSE {
+    score: 0.92,
+    model: "embedding1536"
+}]-(message2:MessageNode)
+</code></pre>
+<h2 id="synapse-network-examples"><a class="header" href="#synapse-network-examples">Synapse Network Examples</a></h2>
+<h3 id="programming-discussion-network"><a class="header" href="#programming-discussion-network">Programming Discussion Network</a></h3>
+<pre><code>"How do I handle errors in Python?"
+    ↓ SYNAPSE (0.91)
+"What's the best way to catch exceptions?"
+    ↓ SYNAPSE (0.87)
+"Try/except blocks best practices"
+    ↓ SYNAPSE (0.89)
+"Error handling in async functions"
+</code></pre>
+<h3 id="cross-topic-connections"><a class="header" href="#cross-topic-connections">Cross-Topic Connections</a></h3>
+<pre><code>"Database optimization techniques"
+    ↓ SYNAPSE (0.86)
+"Slow query performance issues"
+    ↓ SYNAPSE (0.88)
+"Index design for better performance"
+</code></pre>
+<h2 id="synapse-management"><a class="header" href="#synapse-management">Synapse Management</a></h2>
+<h3 id="automatic-creation"><a class="header" href="#automatic-creation">Automatic Creation</a></h3>
+<p>Synapses are created automatically during conversation processing:</p>
+<pre><code class="language-rs">// Simplified creation logic
+if similarity_score &gt;= 0.85 {
+    create_synapse(message1, message2, similarity_score, "embedding1536");
+}
+</code></pre>
+<h3 id="pruning-low-quality-synapses"><a class="header" href="#pruning-low-quality-synapses">Pruning Low-Quality Synapses</a></h3>
+<p>Weak connections are automatically removed to maintain network quality:</p>
+<pre><code class="language-cypher">// Remove synapses below threshold
+MATCH (m1:MessageNode)-[r:SYNAPSE]-&gt;(m2:MessageNode)
+WHERE r.score &lt; 0.85
+DELETE r
+</code></pre>
+<h3 id="synapse-evolution-1"><a class="header" href="#synapse-evolution-1">Synapse Evolution</a></h3>
+<p>Synapses can be updated as the system learns:</p>
+<ol>
+<li><strong>Score Updates</strong>: Recalculate similarity with improved models</li>
+<li><strong>Model Migration</strong>: Update synapses when switching embedding models</li>
+<li><strong>Network Optimization</strong>: Remove redundant or weak connections</li>
+</ol>
+<h2 id="using-synapses-for-context"><a class="header" href="#using-synapses-for-context">Using Synapses for Context</a></h2>
+<h3 id="rag-strategy-with-synapses"><a class="header" href="#rag-strategy-with-synapses">RAG Strategy with Synapses</a></h3>
+<p>When using <code>--link</code> search strategy, Reservoir leverages synapses:</p>
+<pre><code class="language-bash"># Use synapse network for enhanced search
+reservoir search --link --semantic "error handling"
+</code></pre>
+<p><strong>Process:</strong></p>
+<ol>
+<li>Find semantically similar messages</li>
+<li>Follow SYNAPSE relationships to connected messages</li>
+<li>Explore conversation threads via synapse networks</li>
+<li>Deduplicate and rank results</li>
+<li>Return most relevant connected discussions</li>
+</ol>
+<h3 id="context-enrichment-2"><a class="header" href="#context-enrichment-2">Context Enrichment</a></h3>
+<p>Synapses enable intelligent context building:</p>
+<pre><code class="language-cypher">// Context enrichment query using synapses
+MATCH (query_msg:MessageNode)-[:SYNAPSE*1..3]-(related:MessageNode)
+WHERE query_msg.content CONTAINS "database"
+  AND related.partition = $partition
+  AND related.instance = $instance
+RETURN related
+ORDER BY related.timestamp DESC
+LIMIT 10
+</code></pre>
+<h2 id="synapse-network-analysis-1"><a class="header" href="#synapse-network-analysis-1">Synapse Network Analysis</a></h2>
+<h3 id="finding-conversation-hubs"><a class="header" href="#finding-conversation-hubs">Finding Conversation Hubs</a></h3>
+<p>Identify messages that are highly connected (conversation hubs):</p>
+<pre><code class="language-bash"># CLI command to export and analyze
+reservoir export | jq -r '.[].content' &gt; messages.txt
+
+# Or via Neo4j query
+MATCH (m:MessageNode)-[s:SYNAPSE]-(related:MessageNode)
+WITH m, count(s) as connectionCount, avg(s.score) as avgScore
+WHERE connectionCount &gt; 5
+RETURN m.content, connectionCount, avgScore
+ORDER BY connectionCount DESC
+</code></pre>
+<h3 id="topic-clustering"><a class="header" href="#topic-clustering">Topic Clustering</a></h3>
+<p>Synapses naturally create topic clusters:</p>
+<pre><code>Cluster 1: Web Development
+├── "React component best practices" (8 connections)
+├── "JavaScript async patterns" (6 connections)
+└── "CSS flexbox layouts" (4 connections)
+
+Cluster 2: Database Design
+├── "SQL query optimization" (7 connections)
+├── "Database normalization" (5 connections)
+└── "Index strategy for performance" (3 connections)
+</code></pre>
+<h2 id="performance-considerations-3"><a class="header" href="#performance-considerations-3">Performance Considerations</a></h2>
+<h3 id="synapse-creation-overhead"><a class="header" href="#synapse-creation-overhead">Synapse Creation Overhead</a></h3>
+<ul>
+<li><strong>Computation</strong>: Vector similarity calculation for each new message</li>
+<li><strong>Storage</strong>: Additional relationships in Neo4j graph</li>
+<li><strong>Indexing</strong>: Maintenance of vector indices</li>
+</ul>
+<h3 id="optimization-strategies"><a class="header" href="#optimization-strategies">Optimization Strategies</a></h3>
+<ol>
+<li><strong>Batch Processing</strong>: Create synapses in batches during low-usage periods</li>
+<li><strong>Threshold Tuning</strong>: Adjust similarity threshold based on use case</li>
+<li><strong>Network Pruning</strong>: Regular cleanup of weak or obsolete synapses</li>
+<li><strong>Model Efficiency</strong>: Balance embedding quality vs. computation cost</li>
+</ol>
+<h2 id="advanced-synapse-features"><a class="header" href="#advanced-synapse-features">Advanced Synapse Features</a></h2>
+<h3 id="multi-hop-connections"><a class="header" href="#multi-hop-connections">Multi-Hop Connections</a></h3>
+<p>Synapses enable multi-hop context discovery:</p>
+<pre><code class="language-cypher">// Find messages connected within 3 hops
+MATCH path=(start:MessageNode)-[:SYNAPSE*1..3]-(end:MessageNode)
+WHERE start.content CONTAINS "machine learning"
+RETURN path, length(path)
+ORDER BY length(path)
+</code></pre>
+<h3 id="conversation-path-finding"><a class="header" href="#conversation-path-finding">Conversation Path Finding</a></h3>
+<p>Discover how topics connect across conversations:</p>
+<pre><code class="language-cypher">// Find shortest path between two topics
+MATCH path=shortestPath(
+    (topic1:MessageNode {content: "Python async"})-[:SYNAPSE*]-(topic2:MessageNode {content: "Error handling"})
+)
+RETURN path
+</code></pre>
+<h3 id="synapse-based-recommendations"><a class="header" href="#synapse-based-recommendations">Synapse-Based Recommendations</a></h3>
+<p>Use synapse networks to suggest related topics:</p>
+<pre><code class="language-bash"># Find related discussions
+reservoir search --link --semantic "current topic"
+
+# Or get synapse-connected messages directly
+echo "What related topics should I explore?" | reservoir ingest
+# Context will include synapse-connected discussions
+</code></pre>
+<h2 id="troubleshooting-synapses"><a class="header" href="#troubleshooting-synapses">Troubleshooting Synapses</a></h2>
+<h3 id="common-issues-2"><a class="header" href="#common-issues-2">Common Issues</a></h3>
+<ol>
+<li><strong>Too Many Synapses</strong>: Lower the similarity threshold</li>
+<li><strong>Too Few Synapses</strong>: Check embedding quality and threshold</li>
+<li><strong>Irrelevant Connections</strong>: Review similarity calculation method</li>
+<li><strong>Performance Issues</strong>: Implement batch processing</li>
+</ol>
+<h3 id="diagnostic-commands"><a class="header" href="#diagnostic-commands">Diagnostic Commands</a></h3>
+<pre><code class="language-bash"># View synapse statistics
+reservoir export | jq '[.[] | select(.role=="user")] | length'
+
+# Check similarity scores distribution
+# (Requires Neo4j query access)
+</code></pre>
+<h3 id="synapse-replay"><a class="header" href="#synapse-replay">Synapse Replay</a></h3>
+<p>Rebuild synapse network when needed:</p>
+<pre><code class="language-bash"># Replay embeddings and rebuild synapses
+reservoir replay
+
+# This will:
+# 1. Recalculate embeddings for all messages
+# 2. Rebuild synapse relationships
+# 3. Update similarity scores
+# 4. Prune weak connections
+</code></pre>
+<h2 id="future-enhancements"><a class="header" href="#future-enhancements">Future Enhancements</a></h2>
+<h3 id="planned-features"><a class="header" href="#planned-features">Planned Features</a></h3>
+<ol>
+<li><strong>Weighted Synapses</strong>: Consider recency and conversation importance</li>
+<li><strong>Topic-Aware Synapses</strong>: Enhanced similarity based on topic detection</li>
+<li><strong>Hierarchical Synapses</strong>: Multi-level relationship strengths</li>
+<li><strong>Synapse Analytics</strong>: Dashboard for network visualization</li>
+</ol>
+<h3 id="customization-options"><a class="header" href="#customization-options">Customization Options</a></h3>
+<ol>
+<li><strong>Custom Similarity Functions</strong>: Beyond cosine similarity</li>
+<li><strong>Domain-Specific Models</strong>: Specialized embeddings for specific fields</li>
+<li><strong>User-Defined Thresholds</strong>: Per-partition similarity thresholds</li>
+<li><strong>Manual Synapse Management</strong>: User-controlled connection creation</li>
+</ol>
+<p>Synapses transform Reservoir from a simple conversation store into an intelligent knowledge network that grows more valuable with each interaction, creating a personalized AI assistant with genuine conversational memory.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-provider-support"><a class="header" href="#multi-provider-support">Multi-Provider Support</a></h1>
 <p>Reservoir supports multiple AI providers through its flexible routing system. This allows you to use different AI models seamlessly while maintaining conversation context and history across all providers.</p>
 <h2 id="supported-providers-1"><a class="header" href="#supported-providers-1">Supported Providers</a></h2>
@@ -2699,7 +3662,7 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
   "model": "gemini-2.0-flash" // → Routes to Google
 }
 </code></pre>
-<h2 id="configuration-1"><a class="header" href="#configuration-1">Configuration</a></h2>
+<h2 id="configuration-2"><a class="header" href="#configuration-2">Configuration</a></h2>
 <h3 id="environment-variables-4"><a class="header" href="#environment-variables-4">Environment Variables</a></h3>
 <p>Set provider endpoints and API keys:</p>
 <pre><code class="language-bash"># API Keys
@@ -2788,7 +3751,7 @@ curl -d '{"model": "gpt-4", "messages": [...]}' localhost:3017/...
 # Use Mistral for European compliance
 curl -d '{"model": "mistral-large", "messages": [...]}' localhost:3017/...
 </code></pre>
-<h2 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h2>
+<h2 id="error-handling-2"><a class="header" href="#error-handling-2">Error Handling</a></h2>
 <p>Reservoir provides consistent error handling across all providers:</p>
 <h3 id="common-error-responses"><a class="header" href="#common-error-responses">Common Error Responses</a></h3>
 <pre><code class="language-json">{
@@ -2806,7 +3769,7 @@ curl -d '{"model": "mistral-large", "messages": [...]}' localhost:3017/...
 <li><strong>Mistral</strong>: Authentication errors, model access restrictions</li>
 <li><strong>Gemini</strong>: API quota limits, geographic restrictions</li>
 </ul>
-<h2 id="performance-considerations-2"><a class="header" href="#performance-considerations-2">Performance Considerations</a></h2>
+<h2 id="performance-considerations-4"><a class="header" href="#performance-considerations-4">Performance Considerations</a></h2>
 <h3 id="provider-comparison"><a class="header" href="#provider-comparison">Provider Comparison</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Provider</th><th>Latency</th><th>Cost</th><th>Privacy</th><th>Features</th></tr></thead><tbody>
 <tr><td>OpenAI</td><td>Medium</td><td>High</td><td>Cloud</td><td>Most comprehensive</td></tr>
@@ -2815,7 +3778,7 @@ curl -d '{"model": "mistral-large", "messages": [...]}' localhost:3017/...
 <tr><td>Gemini</td><td>Medium</td><td>Medium</td><td>Cloud</td><td>Google integration</td></tr>
 </tbody></table>
 </div>
-<h3 id="optimization-tips"><a class="header" href="#optimization-tips">Optimization Tips</a></h3>
+<h3 id="optimization-tips-1"><a class="header" href="#optimization-tips-1">Optimization Tips</a></h3>
 <ol>
 <li><strong>Use Ollama for development</strong>: Faster iteration, no API costs</li>
 <li><strong>Use OpenAI for production</strong>: Most reliable, feature-rich</li>
@@ -2850,7 +3813,7 @@ match model_name {
 </code></pre>
 </li>
 </ol>
-<h2 id="future-enhancements"><a class="header" href="#future-enhancements">Future Enhancements</a></h2>
+<h2 id="future-enhancements-1"><a class="header" href="#future-enhancements-1">Future Enhancements</a></h2>
 <p>Planned improvements for multi-provider support:</p>
 <ul>
 <li><strong>Load Balancing</strong>: Distribute requests across multiple providers</li>
@@ -2880,9 +3843,842 @@ curl https://api.mistral.ai/v1/models -H "Authorization: Bearer $MISTRAL_API_KEY
 </ul>
 <p>Multi-provider support makes Reservoir a flexible foundation for AI applications, allowing you to choose the best provider for each use case while maintaining conversation continuity.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="token-management-1"><a class="header" href="#token-management-1">Token Management</a></h1>
+<p>Reservoir intelligently manages token limits to ensure optimal context enrichment while staying within model constraints. The system automatically calculates token usage, prioritizes the most relevant context, and truncates content when necessary to fit within API limits.</p>
+<h2 id="context-token-management"><a class="header" href="#context-token-management">Context Token Management</a></h2>
+<h3 id="automatic-context-sizing"><a class="header" href="#automatic-context-sizing">Automatic Context Sizing</a></h3>
+<p>Reservoir dynamically adjusts context size based on:</p>
+<ul>
+<li><strong>Model Token Limits</strong>: Respects each model's maximum context window</li>
+<li><strong>Content Priority</strong>: Prioritizes most relevant and recent context</li>
+<li><strong>Message Truncation</strong>: Intelligently cuts content when limits are exceeded</li>
+<li><strong>Reserve Allocation</strong>: Maintains buffer for user input and model response</li>
+</ul>
+<h3 id="token-calculation"><a class="header" href="#token-calculation">Token Calculation</a></h3>
+<p>The system estimates token usage using standard approximations:</p>
+<ul>
+<li><strong>English Text</strong>: ~4 characters per token</li>
+<li><strong>Code Content</strong>: ~3 characters per token (more tokens due to syntax)</li>
+<li><strong>Special Characters</strong>: Variable token usage</li>
+<li><strong>Embeddings</strong>: Not included in context token count</li>
+</ul>
+<h3 id="context-building-strategy"><a class="header" href="#context-building-strategy">Context Building Strategy</a></h3>
+<pre class="mermaid">flowchart TD
+    A[&quot;User Message Arrives&quot;] --&gt; B[&quot;Calculate Available Tokens&quot;]
+    B --&gt; C[&quot;Get Semantic Context&quot;]
+    C --&gt; D[&quot;Get Recent History&quot;]
+    D --&gt; E[&quot;Combine Context Sources&quot;]
+    E --&gt; F{&quot;Within Token Limit?&quot;}
+    F --&gt;|Yes| G[&quot;Use Full Context&quot;]
+    F --&gt;|No| H[&quot;Prioritize and Truncate&quot;]
+    H --&gt; I[&quot;Recent Messages Priority&quot;]
+    I --&gt; J[&quot;High Similarity Priority&quot;]  
+    J --&gt; K[&quot;Truncate Oldest/Lowest Score&quot;]
+    K --&gt; G
+    G --&gt; L[&quot;Send to Model&quot;]
+</pre>
+<h2 id="token-limits-by-model"><a class="header" href="#token-limits-by-model">Token Limits by Model</a></h2>
+<h3 id="openai-models-2"><a class="header" href="#openai-models-2">OpenAI Models</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Model</th><th>Context Window</th><th>Reservoir Reserve</th><th>Available for Context</th></tr></thead><tbody>
+<tr><td>GPT-3.5-turbo</td><td>4,096 tokens</td><td>1,024 tokens</td><td>~3,000 tokens</td></tr>
+<tr><td>GPT-4</td><td>8,192 tokens</td><td>2,048 tokens</td><td>~6,000 tokens</td></tr>
+<tr><td>GPT-4-turbo</td><td>128,000 tokens</td><td>8,000 tokens</td><td>~120,000 tokens</td></tr>
+<tr><td>GPT-4o</td><td>128,000 tokens</td><td>8,000 tokens</td><td>~120,000 tokens</td></tr>
+</tbody></table>
+</div>
+<h3 id="local-models-ollama"><a class="header" href="#local-models-ollama">Local Models (Ollama)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Model</th><th>Context Window</th><th>Reservoir Reserve</th><th>Available for Context</th></tr></thead><tbody>
+<tr><td>Llama 3.1 8B</td><td>32,768 tokens</td><td>2,048 tokens</td><td>~30,000 tokens</td></tr>
+<tr><td>Llama 3.1 70B</td><td>32,768 tokens</td><td>2,048 tokens</td><td>~30,000 tokens</td></tr>
+<tr><td>Mistral 7B</td><td>32,768 tokens</td><td>2,048 tokens</td><td>~30,000 tokens</td></tr>
+<tr><td>CodeLlama</td><td>16,384 tokens</td><td>1,024 tokens</td><td>~15,000 tokens</td></tr>
+</tbody></table>
+</div>
+<h2 id="context-prioritization"><a class="header" href="#context-prioritization">Context Prioritization</a></h2>
+<h3 id="priority-order"><a class="header" href="#priority-order">Priority Order</a></h3>
+<p>When token limits are exceeded, Reservoir prioritizes context in this order:</p>
+<ol>
+<li><strong>User's Current Message</strong>: Always included (highest priority)</li>
+<li><strong>Recent History</strong>: Last 15 messages from same partition/instance</li>
+<li><strong>High Similarity Matches</strong>: Messages with similarity score &gt; 0.85</li>
+<li><strong>Synapse Connections</strong>: Messages connected via SYNAPSE relationships</li>
+<li><strong>Older Context</strong>: Historical messages (first to be truncated)</li>
+</ol>
+<h3 id="similarity-based-prioritization"><a class="header" href="#similarity-based-prioritization">Similarity-Based Prioritization</a></h3>
+<p>Context is ranked by relevance:</p>
+<pre><code>Priority Score = (Similarity Score × 0.7) + (Recency Score × 0.3)
+
+Where:
+- Similarity Score: 0.0-1.0 from semantic search
+- Recency Score: 0.0-1.0 based on message age
+</code></pre>
+<h3 id="truncation-strategy"><a class="header" href="#truncation-strategy">Truncation Strategy</a></h3>
+<p>When content must be truncated:</p>
+<ol>
+<li><strong>Message-Level Truncation</strong>: Remove entire messages (preserves coherence)</li>
+<li><strong>LIFO for Semantic</strong>: Last-In-First-Out for semantic matches</li>
+<li><strong>FIFO for Recent</strong>: First-In-First-Out for chronological history</li>
+<li><strong>Preserve Pairs</strong>: Keep user/assistant pairs together when possible</li>
+</ol>
+<h2 id="configuration-options"><a class="header" href="#configuration-options">Configuration Options</a></h2>
+<h3 id="context-size-limits"><a class="header" href="#context-size-limits">Context Size Limits</a></h3>
+<p>Configure via environment variables or config file:</p>
+<pre><code class="language-bash"># Set maximum semantic context messages
+reservoir config --set semantic_context_size=20
+
+# Set recent history limit
+reservoir config --set recent_context_size=15
+
+# Set token reserve buffer
+reservoir config --set token_reserve=2048
+</code></pre>
+<h3 id="model-specific-overrides"><a class="header" href="#model-specific-overrides">Model-Specific Overrides</a></h3>
+<pre><code class="language-toml"># In reservoir.toml
+[models.gpt-4-turbo]
+max_context_tokens = 120000
+reserve_tokens = 8000
+semantic_context_size = 50
+
+[models.gpt-3.5-turbo]
+max_context_tokens = 4096
+reserve_tokens = 1024
+semantic_context_size = 10
+</code></pre>
+<h2 id="token-usage-monitoring"><a class="header" href="#token-usage-monitoring">Token Usage Monitoring</a></h2>
+<h3 id="built-in-monitoring"><a class="header" href="#built-in-monitoring">Built-in Monitoring</a></h3>
+<p>Reservoir automatically tracks:</p>
+<ul>
+<li><strong>Input Tokens</strong>: Context + user message tokens</li>
+<li><strong>Reserve Usage</strong>: How much buffer is being used</li>
+<li><strong>Truncation Events</strong>: When content is cut due to limits</li>
+<li><strong>Model Utilization</strong>: Percentage of context window used</li>
+</ul>
+<h3 id="usage-examples"><a class="header" href="#usage-examples">Usage Examples</a></h3>
+<pre><code class="language-bash"># View recent messages with estimated token usage
+reservoir view 10 | while read -r line; do
+    echo "$line (est. tokens: $((${#line}/4)))"
+done
+
+# Estimate total context size
+TOTAL_CHARS=$(reservoir view 15 | wc -c)
+echo "Estimated tokens: $((TOTAL_CHARS/4))"
+
+# Check if context might be truncated for a model
+CONTEXT_SIZE=$(($(reservoir view 15 | wc -c) / 4))
+echo "Context tokens: $CONTEXT_SIZE"
+echo "Fits in GPT-3.5: $([ $CONTEXT_SIZE -lt 3000 ] &amp;&amp; echo 'Yes' || echo 'No')"
+</code></pre>
+<h2 id="optimization-strategies-1"><a class="header" href="#optimization-strategies-1">Optimization Strategies</a></h2>
+<h3 id="reduce-context-size"><a class="header" href="#reduce-context-size">Reduce Context Size</a></h3>
+<p><strong>Adjust Semantic Context</strong></p>
+<pre><code class="language-bash"># Reduce semantic matches
+reservoir config --set semantic_context_size=10
+
+# Increase similarity threshold (fewer matches)
+# Note: This requires code modification currently
+</code></pre>
+<p><strong>Limit Recent History</strong></p>
+<pre><code class="language-bash"># Reduce recent message count
+reservoir config --set recent_context_size=8
+</code></pre>
+<h3 id="improve-context-quality"><a class="header" href="#improve-context-quality">Improve Context Quality</a></h3>
+<p><strong>Use Higher Similarity Threshold</strong></p>
+<ul>
+<li>Fewer but more relevant semantic matches</li>
+<li>Better context quality with less noise</li>
+<li>Requires code-level configuration changes</li>
+</ul>
+<p><strong>Partition Strategy</strong></p>
+<ul>
+<li>Use specific partitions for focused contexts</li>
+<li>Separate unrelated discussions</li>
+<li>Improves relevance within token limits</li>
+</ul>
+<pre><code class="language-bash"># Focused partition for coding discussions
+echo "Python async/await question" | reservoir ingest --partition alice --instance coding
+
+# Separate partition for general chat
+echo "Weather discussion" | reservoir ingest --partition alice --instance general
+</code></pre>
+<h2 id="model-specific-considerations"><a class="header" href="#model-specific-considerations">Model-Specific Considerations</a></h2>
+<h3 id="small-context-models-gpt-35"><a class="header" href="#small-context-models-gpt-35">Small Context Models (GPT-3.5)</a></h3>
+<p><strong>Optimization Strategy:</strong></p>
+<ul>
+<li>Prioritize recent messages heavily</li>
+<li>Limit semantic context to top 5-10 matches</li>
+<li>Use aggressive truncation</li>
+<li>Consider shorter message summaries</li>
+</ul>
+<pre><code class="language-bash"># Configuration for small context models
+reservoir config --set semantic_context_size=5
+reservoir config --set recent_context_size=8
+</code></pre>
+<h3 id="large-context-models-gpt-4-turbo"><a class="header" href="#large-context-models-gpt-4-turbo">Large Context Models (GPT-4-turbo)</a></h3>
+<p><strong>Utilization Strategy:</strong></p>
+<ul>
+<li>Include extensive semantic context</li>
+<li>Preserve longer conversation history</li>
+<li>Enable deeper synapse exploration</li>
+<li>Allow for more comprehensive context</li>
+</ul>
+<pre><code class="language-bash"># Configuration for large context models
+reservoir config --set semantic_context_size=30
+reservoir config --set recent_context_size=25
+</code></pre>
+<h2 id="advanced-token-management"><a class="header" href="#advanced-token-management">Advanced Token Management</a></h2>
+<h3 id="dynamic-context-adjustment"><a class="header" href="#dynamic-context-adjustment">Dynamic Context Adjustment</a></h3>
+<p>Reservoir can adjust context based on content type:</p>
+<p><strong>Code-Heavy Contexts</strong>: Reduce character-to-token ratio assumption
+<strong>Natural Language</strong>: Use standard ratios
+<strong>Mixed Content</strong>: Apply weighted calculations</p>
+<h3 id="future-enhancements-2"><a class="header" href="#future-enhancements-2">Future Enhancements</a></h3>
+<p><strong>Planned Features:</strong></p>
+<ol>
+<li><strong>Semantic Summarization</strong>: Summarize older context instead of truncating</li>
+<li><strong>Token-Aware Similarity</strong>: Consider token cost in similarity ranking</li>
+<li><strong>Model-Aware Optimization</strong>: Automatic settings per model</li>
+<li><strong>Context Compression</strong>: Compress historical context intelligently</li>
+</ol>
+<h3 id="custom-token-strategies"><a class="header" href="#custom-token-strategies">Custom Token Strategies</a></h3>
+<p><strong>Per-Partition Settings</strong></p>
+<pre><code class="language-bash"># Different strategies for different use cases
+reservoir config --set partitions.coding.semantic_context_size=20
+reservoir config --set partitions.research.recent_context_size=30
+</code></pre>
+<p><strong>Content-Type Awareness</strong></p>
+<pre><code class="language-bash"># Adjust for code vs text heavy partitions
+reservoir config --set partitions.coding.token_multiplier=1.3
+reservoir config --set partitions.writing.token_multiplier=0.9
+</code></pre>
+<h2 id="troubleshooting-token-issues"><a class="header" href="#troubleshooting-token-issues">Troubleshooting Token Issues</a></h2>
+<h3 id="common-problems"><a class="header" href="#common-problems">Common Problems</a></h3>
+<p><strong>Context Too Large</strong></p>
+<pre><code class="language-bash"># Symptoms: API errors about token limits
+# Solution: Reduce context sizes
+reservoir config --set semantic_context_size=10
+reservoir config --set recent_context_size=5
+</code></pre>
+<p><strong>Context Too Small</strong></p>
+<pre><code class="language-bash"># Symptoms: Poor context quality, missing relevant information
+# Solution: Increase context sizes (if model supports it)
+reservoir config --set semantic_context_size=25
+reservoir config --set recent_context_size=20
+</code></pre>
+<p><strong>Frequent Truncation</strong></p>
+<pre><code class="language-bash"># Symptoms: Important context being cut off
+# Solution: Use larger context model or adjust priorities
+</code></pre>
+<h3 id="diagnostic-commands-1"><a class="header" href="#diagnostic-commands-1">Diagnostic Commands</a></h3>
+<pre><code class="language-bash"># Estimate current context size
+SEMANTIC_SIZE=$(reservoir search --semantic "test" | wc -c)
+RECENT_SIZE=$(reservoir view 15 | wc -c)
+TOTAL_SIZE=$((SEMANTIC_SIZE + RECENT_SIZE))
+echo "Total context estimate: $((TOTAL_SIZE/4)) tokens"
+
+# Check truncation frequency
+# (This would require log analysis)
+grep -i "truncat" /var/log/reservoir.log | wc -l
+</code></pre>
+<p>Token management in Reservoir ensures optimal AI performance by providing the right amount of relevant context while respecting model limitations, creating an intelligent balance between comprehensive memory and computational efficiency.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="partitioning--organization"><a class="header" href="#partitioning--organization">Partitioning &amp; Organization</a></h1>
+<p>Reservoir uses a flexible partitioning system to organize your conversations and data. This two-level hierarchy enables you to separate different contexts, users, projects, or topics while maintaining intelligent context enrichment within each boundary.</p>
+<h2 id="partitioning-concepts"><a class="header" href="#partitioning-concepts">Partitioning Concepts</a></h2>
+<h3 id="two-level-hierarchy"><a class="header" href="#two-level-hierarchy">Two-Level Hierarchy</a></h3>
+<p>Reservoir organizes data using two levels:</p>
+<ol>
+<li><strong>Partition</strong>: The top-level organizational boundary</li>
+<li><strong>Instance</strong>: The sub-level within each partition</li>
+</ol>
+<pre><code>partition_name/
+├── instance_1/
+├── instance_2/
+└── instance_3/
+</code></pre>
+<h3 id="default-organization"><a class="header" href="#default-organization">Default Organization</a></h3>
+<p>When no partition is specified, Reservoir uses:</p>
+<ul>
+<li><strong>Partition</strong>: <code>"default"</code></li>
+<li><strong>Instance</strong>: <code>"default"</code></li>
+</ul>
+<pre><code class="language-bash"># These are equivalent
+reservoir view 10
+reservoir view --partition default --instance default 10
+</code></pre>
+<h2 id="partition-use-cases"><a class="header" href="#partition-use-cases">Partition Use Cases</a></h2>
+<h3 id="user-separation"><a class="header" href="#user-separation">User Separation</a></h3>
+<p>Separate different users or personas:</p>
+<pre><code>alice/
+├── personal/      # Personal conversations
+├── work/         # Work-related discussions  
+└── research/     # Research and learning
+
+bob/
+├── coding/       # Programming discussions
+├── writing/      # Content creation
+└── planning/     # Project planning
+</code></pre>
+<p><strong>Usage Examples:</strong></p>
+<pre><code class="language-bash"># Alice's personal conversations
+echo "What's the weather like?" | reservoir ingest --partition alice --instance personal
+
+# Bob's coding discussions
+echo "How do I implement OAuth2?" | reservoir ingest --partition bob --instance coding
+
+# View Alice's work conversations
+reservoir view --partition alice --instance work 15
+
+# Search Bob's coding history
+reservoir search --partition bob --instance coding --semantic "database optimization"
+</code></pre>
+<h3 id="project-organization"><a class="header" href="#project-organization">Project Organization</a></h3>
+<p>Organize by projects or domains:</p>
+<pre><code>webapp_project/
+├── backend/      # Backend development
+├── frontend/     # Frontend development
+├── database/     # Database design
+└── deployment/   # DevOps and deployment
+
+mobile_app/
+├── ios/          # iOS development
+├── android/      # Android development
+├── api/          # API integration
+└── testing/      # QA and testing
+</code></pre>
+<p><strong>Usage Examples:</strong></p>
+<pre><code class="language-bash"># Backend development discussions
+echo "Should we use microservices or monolith?" | reservoir ingest --partition webapp_project --instance backend
+
+# Mobile API integration
+echo "API authentication best practices" | reservoir ingest --partition mobile_app --instance api
+
+# Search across web project
+reservoir search --partition webapp_project --semantic "authentication"
+
+# View mobile testing discussions
+reservoir view --partition mobile_app --instance testing 20
+</code></pre>
+<h3 id="team-collaboration"><a class="header" href="#team-collaboration">Team Collaboration</a></h3>
+<p>Organize by teams or functional areas:</p>
+<pre><code>engineering/
+├── architecture/  # System architecture
+├── reviews/      # Code reviews
+├── planning/     # Sprint planning
+└── incidents/    # Incident response
+
+product/
+├── requirements/ # Requirements gathering
+├── research/     # User research
+├── roadmap/      # Product roadmap
+└── metrics/      # Analytics and metrics
+</code></pre>
+<p><strong>Usage Examples:</strong></p>
+<pre><code class="language-bash"># Architecture discussions
+echo "Microservices vs serverless trade-offs" | reservoir ingest --partition engineering --instance architecture
+
+# Product research notes
+echo "User feedback on new feature" | reservoir ingest --partition product --instance research
+
+# Search engineering incidents
+reservoir search --partition engineering --instance incidents "database"
+
+# View product roadmap discussions
+reservoir view --partition product --instance roadmap 10
+</code></pre>
+<h2 id="context-isolation"><a class="header" href="#context-isolation">Context Isolation</a></h2>
+<h3 id="how-partitioning-affects-context"><a class="header" href="#how-partitioning-affects-context">How Partitioning Affects Context</a></h3>
+<p>Reservoir's context enrichment respects partition boundaries:</p>
+<ol>
+<li><strong>Same Partition/Instance</strong>: Full context sharing</li>
+<li><strong>Same Partition, Different Instance</strong>: Limited context sharing</li>
+<li><strong>Different Partition</strong>: Complete isolation</li>
+</ol>
+<p><strong>Context Rules:</strong></p>
+<pre><code class="language-bash"># These will share context with each other
+reservoir ingest --partition alice --instance coding "How do I use async/await?"
+reservoir ingest --partition alice --instance coding "What about error handling?"
+
+# This will have separate context
+reservoir ingest --partition alice --instance personal "What should I cook for dinner?"
+
+# This will be completely isolated
+reservoir ingest --partition bob --instance coding "How do I use async/await?"
+</code></pre>
+<h3 id="privacy-and-separation"><a class="header" href="#privacy-and-separation">Privacy and Separation</a></h3>
+<p>Partitions provide data privacy:</p>
+<ul>
+<li><strong>Search Isolation</strong>: Searches are scoped to partitions</li>
+<li><strong>Context Isolation</strong>: AI responses don't leak across partitions</li>
+<li><strong>Export Control</strong>: Can selectively export partition data</li>
+<li><strong>Access Control</strong>: Enables future per-partition access controls</li>
+</ul>
+<h2 id="partition-management-1"><a class="header" href="#partition-management-1">Partition Management</a></h2>
+<h3 id="creating-partitions"><a class="header" href="#creating-partitions">Creating Partitions</a></h3>
+<p>Partitions are created automatically when first used:</p>
+<pre><code class="language-bash"># Creates "newproject" partition with "planning" instance
+echo "Project kickoff meeting notes" | reservoir ingest --partition newproject --instance planning
+</code></pre>
+<h3 id="viewing-partition-data"><a class="header" href="#viewing-partition-data">Viewing Partition Data</a></h3>
+<pre><code class="language-bash"># View messages from specific partition/instance
+reservoir view --partition alice --instance coding 15
+
+# View without specifying instance (shows from all instances in partition)
+reservoir view --partition alice 25
+
+# Search within partition
+reservoir search --partition engineering --semantic "deployment strategy"
+
+# Search within specific instance
+reservoir search --partition engineering --instance architecture --semantic "microservices"
+</code></pre>
+<h3 id="partition-listing"><a class="header" href="#partition-listing">Partition Listing</a></h3>
+<p>Currently, there's no direct command to list all partitions, but you can discover them through data export and analysis:</p>
+<pre><code class="language-bash"># Export and analyze partition distribution
+reservoir export | jq -r '.[] | .partition' | sort | uniq -c | sort -nr
+
+# Find all instances within a partition
+reservoir export | jq -r '.[] | select(.partition=="alice") | .instance' | sort | uniq -c
+</code></pre>
+<h2 id="advanced-partitioning-strategies"><a class="header" href="#advanced-partitioning-strategies">Advanced Partitioning Strategies</a></h2>
+<h3 id="time-based-partitioning"><a class="header" href="#time-based-partitioning">Time-Based Partitioning</a></h3>
+<p>Organize by time periods:</p>
+<pre><code>conversations_2024/
+├── january/
+├── february/
+└── march/
+
+conversations_2023/
+├── q1/
+├── q2/
+├── q3/
+└── q4/
+</code></pre>
+<pre><code class="language-bash"># Current month's discussions
+MONTH=$(date +%B | tr '[:upper:]' '[:lower:]')
+echo "Today's important insight" | reservoir ingest --partition conversations_2024 --instance $MONTH
+</code></pre>
+<h3 id="topic-based-partitioning"><a class="header" href="#topic-based-partitioning">Topic-Based Partitioning</a></h3>
+<p>Organize by subject matter:</p>
+<pre><code>machine_learning/
+├── theory/       # Theoretical discussions
+├── implementation/ # Code and implementation
+├── papers/       # Research papers
+└── experiments/  # Experimental results
+
+web_development/
+├── frontend/     # Frontend technologies
+├── backend/      # Backend systems
+├── databases/    # Database design
+└── devops/       # Operations and deployment
+</code></pre>
+<h3 id="environment-based-partitioning"><a class="header" href="#environment-based-partitioning">Environment-Based Partitioning</a></h3>
+<p>Separate by environment or context:</p>
+<pre><code>development/
+├── local/        # Local development
+├── testing/      # Testing environment
+├── staging/      # Staging discussions
+└── production/   # Production issues
+
+personal/
+├── learning/     # Educational content
+├── projects/     # Personal projects
+├── notes/        # General notes
+└── ideas/        # Ideas and brainstorming
+</code></pre>
+<h2 id="best-practices-1"><a class="header" href="#best-practices-1">Best Practices</a></h2>
+<h3 id="naming-conventions"><a class="header" href="#naming-conventions">Naming Conventions</a></h3>
+<ol>
+<li><strong>Use Lowercase</strong>: Partition and instance names should be lowercase</li>
+<li><strong>Use Underscores</strong>: Separate words with underscores: <code>machine_learning</code></li>
+<li><strong>Be Descriptive</strong>: Choose clear, meaningful names</li>
+<li><strong>Keep Consistent</strong>: Maintain consistent naming across partitions</li>
+</ol>
+<pre><code class="language-bash"># Good naming
+reservoir ingest --partition web_development --instance frontend
+reservoir ingest --partition machine_learning --instance deep_learning
+
+# Avoid these patterns
+reservoir ingest --partition WebDev --instance FE  # Mixed case, abbreviated
+reservoir ingest --partition "web development" --instance "front end"  # Spaces
+</code></pre>
+<h3 id="partition-strategy"><a class="header" href="#partition-strategy">Partition Strategy</a></h3>
+<ol>
+<li><strong>Plan Your Structure</strong>: Design partition hierarchy before heavy usage</li>
+<li><strong>Balance Granularity</strong>: Too many partitions reduce context benefits</li>
+<li><strong>Consider Growth</strong>: Design for future expansion</li>
+<li><strong>Document Structure</strong>: Keep a record of partition purposes</li>
+</ol>
+<h3 id="migration-between-partitions"><a class="header" href="#migration-between-partitions">Migration Between Partitions</a></h3>
+<p>Currently, partition migration requires export/import workflow:</p>
+<pre><code class="language-bash"># Export messages from one partition
+reservoir export | jq '.[] | select(.partition=="old_partition")' &gt; old_partition.json
+
+# Edit JSON to change partition/instance names
+sed 's/"partition":"old_partition"/"partition":"new_partition"/g' old_partition.json &gt; new_partition.json
+
+# Import to new structure
+reservoir import new_partition.json
+
+# Verify migration
+reservoir view --partition new_partition 10
+</code></pre>
+<h2 id="integration-with-other-features"><a class="header" href="#integration-with-other-features">Integration with Other Features</a></h2>
+<h3 id="search-scoping"><a class="header" href="#search-scoping">Search Scoping</a></h3>
+<p>All search operations can be scoped to partitions:</p>
+<pre><code class="language-bash"># Search across all data
+reservoir search --semantic "error handling"
+
+# Search within partition  
+reservoir search --partition engineering --semantic "error handling"
+
+# Search within specific instance
+reservoir search --partition engineering --instance backend --semantic "error handling"
+</code></pre>
+<h3 id="data-export"><a class="header" href="#data-export">Data Export</a></h3>
+<p>Partitioning enables selective data export:</p>
+<pre><code class="language-bash"># Export everything
+reservoir export &gt; all_data.json
+
+# Export specific partition (requires jq processing)
+reservoir export | jq '.[] | select(.partition=="alice")' &gt; alice_data.json
+
+# Export specific instance
+reservoir export | jq '.[] | select(.partition=="alice" and .instance=="coding")' &gt; alice_coding.json
+</code></pre>
+<h3 id="context-enrichment-3"><a class="header" href="#context-enrichment-3">Context Enrichment</a></h3>
+<p>Partitioning directly affects how context is built:</p>
+<ul>
+<li><strong>Semantic Search</strong>: Limited to same partition/instance</li>
+<li><strong>Recent History</strong>: Limited to same partition/instance</li>
+<li><strong>Synapse Relationships</strong>: Respect partition boundaries</li>
+<li><strong>Token Limits</strong>: Applied per partition context</li>
+</ul>
+<p>This partitioning system makes Reservoir suitable for multi-user environments, project-based work, and any scenario where logical separation of conversation contexts is beneficial.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="web-search-integration-1"><a class="header" href="#web-search-integration-1">Web Search Integration</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="importexport"><a class="header" href="#importexport">Import/Export</a></h1>
+<p>Reservoir provides comprehensive import and export capabilities for backing up your conversation data, migrating between systems, and integrating with external tools. The system exports data in JSON format, preserving all message metadata, embeddings, and relationships.</p>
+<h2 id="export-functionality"><a class="header" href="#export-functionality">Export Functionality</a></h2>
+<h3 id="basic-export"><a class="header" href="#basic-export">Basic Export</a></h3>
+<p>Export all conversation data to JSON format:</p>
+<pre><code class="language-bash"># Export to stdout
+reservoir export
+
+# Save to file
+reservoir export &gt; conversations.json
+
+# Export with timestamp
+reservoir export &gt; backup_$(date +%Y%m%d_%H%M%S).json
+</code></pre>
+<h3 id="export-format"><a class="header" href="#export-format">Export Format</a></h3>
+<p>Each exported message includes complete metadata:</p>
+<pre><code class="language-json">[
+  {
+    "id": null,
+    "trace_id": "550e8400-e29b-41d4-a716-446655440000",
+    "partition": "alice",
+    "instance": "coding",
+    "content": "How do I implement error handling in async functions?",
+    "role": "user",
+    "embedding": [0.123, -0.456, 0.789, ...],
+    "url": null,
+    "timestamp": 1705315800000
+  },
+  {
+    "id": null,
+    "trace_id": "550e8400-e29b-41d4-a716-446655440001",
+    "partition": "alice",
+    "instance": "coding",
+    "content": "Here are several approaches to error handling in async functions...",
+    "role": "assistant",
+    "embedding": [0.234, -0.567, 0.890, ...],
+    "url": null,
+    "timestamp": 1705315815000
+  }
+]
+</code></pre>
+<h3 id="whats-included-in-export"><a class="header" href="#whats-included-in-export">What's Included in Export</a></h3>
+<ul>
+<li><strong>Complete Message Data</strong>: All message content and metadata</li>
+<li><strong>Vector Embeddings</strong>: Full embedding vectors for similarity search</li>
+<li><strong>Partition Organization</strong>: Partition and instance information</li>
+<li><strong>Conversation Structure</strong>: Trace IDs linking user/assistant pairs</li>
+<li><strong>Timestamps</strong>: Precise timing information</li>
+<li><strong>Roles</strong>: User, assistant, and system message roles</li>
+</ul>
+<h3 id="export-use-cases"><a class="header" href="#export-use-cases">Export Use Cases</a></h3>
+<p><strong>Data Backup</strong></p>
+<pre><code class="language-bash"># Daily backup
+reservoir export &gt; "backup_$(date +%Y%m%d).json"
+
+# Compressed backup
+reservoir export | gzip &gt; "backup_$(date +%Y%m%d).json.gz"
+</code></pre>
+<p><strong>Migration</strong></p>
+<pre><code class="language-bash"># Export from source system
+reservoir export &gt; migration_data.json
+
+# Transfer to new system
+scp migration_data.json user@newserver:/path/to/reservoir/
+</code></pre>
+<p><strong>Analysis</strong></p>
+<pre><code class="language-bash"># Export for external analysis
+reservoir export | jq '.[] | select(.role=="user")' &gt; user_messages.json
+
+# Export specific time range
+reservoir export | jq '.[] | select(.timestamp &gt; 1705315800000)' &gt; recent_messages.json
+</code></pre>
+<h2 id="import-functionality"><a class="header" href="#import-functionality">Import Functionality</a></h2>
+<h3 id="basic-import"><a class="header" href="#basic-import">Basic Import</a></h3>
+<p>Import conversation data from JSON files:</p>
+<pre><code class="language-bash"># Import from file
+reservoir import conversations.json
+
+# Import from compressed backup
+gunzip -c backup_20240115.json.gz | reservoir import /dev/stdin
+</code></pre>
+<h3 id="import-behavior"><a class="header" href="#import-behavior">Import Behavior</a></h3>
+<p><strong>Data Validation</strong></p>
+<ul>
+<li>Validates JSON format and structure</li>
+<li>Checks required fields (trace_id, partition, instance, role, content)</li>
+<li>Verifies embedding vector format and dimensions</li>
+</ul>
+<p><strong>Duplicate Handling</strong></p>
+<ul>
+<li>Skips messages with duplicate trace_id and role combinations</li>
+<li>Preserves existing data integrity</li>
+<li>Logs skipped duplicates for review</li>
+</ul>
+<p><strong>Relationship Reconstruction</strong></p>
+<ul>
+<li>Automatically rebuilds RESPONDED_WITH relationships</li>
+<li>Recreates HAS_EMBEDDING connections</li>
+<li>Maintains partition/instance boundaries</li>
+</ul>
+<h3 id="import-process"><a class="header" href="#import-process">Import Process</a></h3>
+<ol>
+<li><strong>File Reading</strong>: Load and parse JSON data</li>
+<li><strong>Validation</strong>: Check data format and completeness</li>
+<li><strong>Message Creation</strong>: Create MessageNode entries</li>
+<li><strong>Embedding Processing</strong>: Store vector embeddings</li>
+<li><strong>Relationship Building</strong>: Establish graph relationships</li>
+<li><strong>Index Updates</strong>: Update vector indices</li>
+</ol>
+<h3 id="import-examples"><a class="header" href="#import-examples">Import Examples</a></h3>
+<p><strong>Complete System Restore</strong></p>
+<pre><code class="language-bash"># Stop Reservoir service
+systemctl stop reservoir
+
+# Clear existing data (if needed)
+# WARNING: This is destructive!
+
+# Import backup
+reservoir import full_backup_20240115.json
+
+# Verify import
+reservoir view 10
+</code></pre>
+<p><strong>Selective Import</strong></p>
+<pre><code class="language-bash"># Import specific partition data
+cat full_backup.json | jq '.[] | select(.partition=="alice")' &gt; alice_data.json
+reservoir import alice_data.json
+
+# Import recent messages only
+cat backup.json | jq '.[] | select(.timestamp &gt; 1705315800000)' &gt; recent.json
+reservoir import recent.json
+</code></pre>
+<h2 id="advanced-exportimport"><a class="header" href="#advanced-exportimport">Advanced Export/Import</a></h2>
+<h3 id="filtering-exports"><a class="header" href="#filtering-exports">Filtering Exports</a></h3>
+<p><strong>By Partition</strong></p>
+<pre><code class="language-bash"># Export specific user's data
+reservoir export | jq '.[] | select(.partition=="alice")' &gt; alice_conversations.json
+</code></pre>
+<p><strong>By Time Range</strong></p>
+<pre><code class="language-bash"># Export last 24 hours
+YESTERDAY=$(date -d '1 day ago' +%s)000
+reservoir export | jq ".[] | select(.timestamp &gt; $YESTERDAY)" &gt; recent_conversations.json
+</code></pre>
+<p><strong>By Role</strong></p>
+<pre><code class="language-bash"># Export only user messages
+reservoir export | jq '.[] | select(.role=="user")' &gt; user_questions.json
+
+# Export only assistant responses
+reservoir export | jq '.[] | select(.role=="assistant")' &gt; ai_responses.json
+</code></pre>
+<p><strong>By Content</strong></p>
+<pre><code class="language-bash"># Export messages containing specific terms
+reservoir export | jq '.[] | select(.content | test("python|programming"; "i"))' &gt; programming_discussions.json
+</code></pre>
+<h3 id="data-transformation-1"><a class="header" href="#data-transformation-1">Data Transformation</a></h3>
+<p><strong>Convert to CSV</strong></p>
+<pre><code class="language-bash">reservoir export | jq -r '.[] | [.timestamp, .partition, .instance, .role, .content] | @csv' &gt; conversations.csv
+</code></pre>
+<p><strong>Extract Text Only</strong></p>
+<pre><code class="language-bash">reservoir export | jq -r '.[] | .content' &gt; all_messages.txt
+</code></pre>
+<p><strong>Create Markdown Format</strong></p>
+<pre><code class="language-bash">reservoir export | jq -r '.[] | "## " + (.timestamp | tostring) + " (" + .role + ")\n\n" + .content + "\n"' &gt; conversations.md
+</code></pre>
+<h3 id="batch-operations"><a class="header" href="#batch-operations">Batch Operations</a></h3>
+<p><strong>Multiple File Import</strong></p>
+<pre><code class="language-bash"># Import multiple backup files
+for file in backup_*.json; do
+    echo "Importing $file..."
+    reservoir import "$file"
+done
+</code></pre>
+<p><strong>Incremental Backup Strategy</strong></p>
+<pre><code class="language-bash">#!/bin/bash
+# Incremental backup script
+
+BACKUP_DIR="/backup/reservoir"
+LAST_BACKUP_TIME=$(cat "$BACKUP_DIR/.last_backup" 2&gt;/dev/null || echo "0")
+CURRENT_TIME=$(date +%s)000
+
+# Export messages since last backup
+reservoir export | jq ".[] | select(.timestamp &gt; $LAST_BACKUP_TIME)" &gt; "$BACKUP_DIR/incremental_$(date +%Y%m%d_%H%M%S).json"
+
+# Update last backup time
+echo "$CURRENT_TIME" &gt; "$BACKUP_DIR/.last_backup"
+</code></pre>
+<h2 id="data-migration-workflows"><a class="header" href="#data-migration-workflows">Data Migration Workflows</a></h2>
+<h3 id="system-migration"><a class="header" href="#system-migration">System Migration</a></h3>
+<p><strong>Complete Migration</strong></p>
+<pre><code class="language-bash"># Source system
+reservoir export &gt; complete_migration.json
+
+# Target system  
+reservoir import complete_migration.json
+
+# Verify migration
+SOURCE_COUNT=$(jq length complete_migration.json)
+TARGET_COUNT=$(reservoir export | jq length)
+echo "Source: $SOURCE_COUNT messages, Target: $TARGET_COUNT messages"
+</code></pre>
+<p><strong>Partition Migration</strong></p>
+<pre><code class="language-bash"># Migrate specific user to new system
+reservoir export | jq '.[] | select(.partition=="alice")' &gt; alice_migration.json
+
+# On target system
+reservoir import alice_migration.json
+
+# Verify partition migration
+reservoir view --partition alice 10
+</code></pre>
+<h3 id="cross-system-integration"><a class="header" href="#cross-system-integration">Cross-System Integration</a></h3>
+<p><strong>Export for External Processing</strong></p>
+<pre><code class="language-bash"># Export for machine learning analysis
+reservoir export | jq '.[] | {content: .content, embedding: .embedding}' &gt; ml_dataset.json
+
+# Export conversation pairs for training
+reservoir export | jq -r 'group_by(.trace_id) | .[] | select(length == 2) | {user: .[0].content, assistant: .[1].content}' &gt; conversation_pairs.json
+</code></pre>
+<p><strong>Import from External Sources</strong></p>
+<p>Convert external data to Reservoir format:</p>
+<pre><code class="language-json">{
+  "trace_id": "external-001",
+  "partition": "imported",
+  "instance": "external_system",
+  "content": "Question from external system",
+  "role": "user",
+  "embedding": [], // Will be generated if empty
+  "url": null,
+  "timestamp": 1705315800000
+}
+</code></pre>
+<h2 id="data-integrity-and-verification"><a class="header" href="#data-integrity-and-verification">Data Integrity and Verification</a></h2>
+<h3 id="export-verification"><a class="header" href="#export-verification">Export Verification</a></h3>
+<pre><code class="language-bash"># Check export completeness
+EXPORTED_COUNT=$(reservoir export | jq length)
+echo "Exported $EXPORTED_COUNT messages"
+
+# Verify embeddings
+EMBEDDED_COUNT=$(reservoir export | jq '[.[] | select(.embedding | length &gt; 0)] | length')
+echo "$EMBEDDED_COUNT messages have embeddings"
+
+# Check partition distribution
+reservoir export | jq -r '.[] | .partition' | sort | uniq -c
+</code></pre>
+<h3 id="import-validation"><a class="header" href="#import-validation">Import Validation</a></h3>
+<pre><code class="language-bash"># Validate JSON format before import
+jq . backup.json &gt; /dev/null &amp;&amp; echo "Valid JSON" || echo "Invalid JSON"
+
+# Check required fields
+jq '.[] | select(.trace_id and .partition and .instance and .role and .content)' backup.json | jq length
+
+# Verify import success
+reservoir view 10
+reservoir search --semantic "test query"
+</code></pre>
+<h2 id="performance-considerations-5"><a class="header" href="#performance-considerations-5">Performance Considerations</a></h2>
+<h3 id="large-dataset-handling"><a class="header" href="#large-dataset-handling">Large Dataset Handling</a></h3>
+<p><strong>Streaming Export</strong></p>
+<pre><code class="language-bash"># For very large datasets, process in chunks
+reservoir export | jq -c '.[]' | split -l 1000 - chunk_
+
+# Import chunks
+for chunk in chunk_*; do
+    jq -s '.' "$chunk" | reservoir import /dev/stdin
+done
+</code></pre>
+<p><strong>Compression</strong></p>
+<pre><code class="language-bash"># Compress exports to save space
+reservoir export | gzip &gt; backup.json.gz
+
+# Decompress for import
+gunzip -c backup.json.gz | reservoir import /dev/stdin
+</code></pre>
+<h3 id="network-transfer"><a class="header" href="#network-transfer">Network Transfer</a></h3>
+<p><strong>Efficient Transfer</strong></p>
+<pre><code class="language-bash"># Direct transfer without intermediate files
+ssh source_server 'reservoir export' | reservoir import /dev/stdin
+
+# Compressed transfer
+ssh source_server 'reservoir export | gzip' | gunzip | reservoir import /dev/stdin
+</code></pre>
+<h2 id="troubleshooting-2"><a class="header" href="#troubleshooting-2">Troubleshooting</a></h2>
+<h3 id="common-issues-3"><a class="header" href="#common-issues-3">Common Issues</a></h3>
+<p><strong>Import Failures</strong></p>
+<pre><code class="language-bash"># Check JSON validity
+jq . import_file.json
+
+# Verify required fields
+jq '.[] | keys' import_file.json | head -5
+
+# Check for duplicate trace_ids
+jq -r '.[] | .trace_id' import_file.json | sort | uniq -d
+</code></pre>
+<p><strong>Missing Embeddings</strong></p>
+<pre><code class="language-bash"># Check embedding status
+reservoir export | jq '[.[] | select(.embedding | length == 0)] | length'
+
+# Regenerate embeddings if needed
+reservoir replay
+</code></pre>
+<p><strong>Partition Issues</strong></p>
+<pre><code class="language-bash"># Check partition consistency
+reservoir export | jq -r '.[] | "\(.partition)/\(.instance)"' | sort | uniq -c
+
+# View messages in specific partition
+reservoir view --partition problematic_partition 10
+</code></pre>
+<h3 id="recovery-procedures-1"><a class="header" href="#recovery-procedures-1">Recovery Procedures</a></h3>
+<p><strong>Partial Import Recovery</strong></p>
+<pre><code class="language-bash"># If import fails partway through, check what was imported
+IMPORTED_COUNT=$(reservoir export | jq length)
+TOTAL_COUNT=$(jq length backup.json)
+echo "Imported $IMPORTED_COUNT of $TOTAL_COUNT messages"
+
+# Import remaining messages (requires identifying what's missing)
+</code></pre>
+<p><strong>Data Corruption Recovery</strong></p>
+<pre><code class="language-bash"># Export current state
+reservoir export &gt; current_state.json
+
+# Restore from known good backup
+reservoir import good_backup.json
+
+# Compare and merge if needed
+</code></pre>
+<p>The import/export system provides a robust foundation for data management, enabling seamless backup, migration, and integration workflows while maintaining complete data fidelity and system integrity.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="local-deployment"><a class="header" href="#local-deployment">Local Deployment</a></h1>
 <p>This guide covers setting up Reservoir for local development and production use on your local machine.</p>
 <h2 id="prerequisites-4"><a class="header" href="#prerequisites-4">Prerequisites</a></h2>
@@ -3032,7 +4828,7 @@ open http://localhost:7474
 # Test connection with curl
 curl -u neo4j:password http://localhost:7474/db/data/
 </code></pre>
-<h2 id="configuration-options"><a class="header" href="#configuration-options">Configuration Options</a></h2>
+<h2 id="configuration-options-1"><a class="header" href="#configuration-options-1">Configuration Options</a></h2>
 <h3 id="database-configuration"><a class="header" href="#database-configuration">Database Configuration</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>NEO4J_URI</code></td><td><code>bolt://localhost:7687</code></td><td>Neo4j connection URI</td></tr>
@@ -3053,8 +4849,8 @@ curl -u neo4j:password http://localhost:7474/db/data/
 <tr><td><code>RSV_MISTRAL_BASE_URL</code></td><td><code>https://api.mistral.ai/v1/chat/completions</code></td><td>Mistral API endpoint</td></tr>
 </tbody></table>
 </div>
-<h2 id="troubleshooting-2"><a class="header" href="#troubleshooting-2">Troubleshooting</a></h2>
-<h3 id="common-issues-2"><a class="header" href="#common-issues-2">Common Issues</a></h3>
+<h2 id="troubleshooting-3"><a class="header" href="#troubleshooting-3">Troubleshooting</a></h2>
+<h3 id="common-issues-4"><a class="header" href="#common-issues-4">Common Issues</a></h3>
 <p><strong>Port Already in Use:</strong></p>
 <pre><code class="language-bash"># Check what's using port 3017
 lsof -i :3017
@@ -3118,7 +4914,7 @@ NEO4J_CONNECTION_TIMEOUT=30s
 <p>Your Reservoir instance is now ready for local development and testing!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="production-setup"><a class="header" href="#production-setup">Production Setup</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="environment-variables-5"><a class="header" href="#environment-variables-5">Environment Variables</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="common-issues-3"><a class="header" href="#common-issues-3">Common Issues</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="common-issues-5"><a class="header" href="#common-issues-5">Common Issues</a></h1>
 <p>This page covers the most common issues you might encounter when using Reservoir and how to solve them.</p>
 <h2 id="server-issues"><a class="header" href="#server-issues">Server Issues</a></h2>
 <h3 id="server-not-starting"><a class="header" href="#server-not-starting">Server Not Starting</a></h3>
@@ -3524,7 +5320,7 @@ NEO4J_PASSWORD="your-password"
 <li>Using different Neo4j databases</li>
 <li>Using different partition/instance combinations</li>
 </ul>
-<h2 id="troubleshooting-3"><a class="header" href="#troubleshooting-3">Troubleshooting</a></h2>
+<h2 id="troubleshooting-4"><a class="header" href="#troubleshooting-4">Troubleshooting</a></h2>
 <h3 id="neo4j-connection-issues"><a class="header" href="#neo4j-connection-issues">Neo4j Connection Issues</a></h3>
 <p><strong>Problem</strong>: Unable to connect to Neo4j.</p>
 <p><strong>Solutions</strong>:</p>
@@ -3658,7 +5454,7 @@ reservoir export &gt; conversations.json
 # Import into Reservoir
 reservoir import conversations.json
 </code></pre>
-<h2 id="advanced-usage"><a class="header" href="#advanced-usage">Advanced Usage</a></h2>
+<h2 id="advanced-usage-1"><a class="header" href="#advanced-usage-1">Advanced Usage</a></h2>
 <h3 id="can-i-customize-the-similarity-threshold-for-context-matching"><a class="header" href="#can-i-customize-the-similarity-threshold-for-context-matching">Can I customize the similarity threshold for context matching?</a></h3>
 <p>Currently, the similarity threshold (0.85) is hardcoded, but this may become configurable in future versions.</p>
 <h3 id="how-do-i-backup-my-conversation-data"><a class="header" href="#how-do-i-backup-my-conversation-data">How do I backup my conversation data?</a></h3>

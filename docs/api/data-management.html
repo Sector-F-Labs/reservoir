@@ -163,6 +163,288 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="data-management"><a class="header" href="#data-management">Data Management</a></h1>
+<p>Reservoir provides comprehensive data management capabilities for backing up, migrating, and organizing your conversation data. The system supports full data export/import, individual message management, and flexible partitioning strategies.</p>
+<h2 id="export-and-import"><a class="header" href="#export-and-import">Export and Import</a></h2>
+<h3 id="export-all-data"><a class="header" href="#export-all-data">Export All Data</a></h3>
+<p>Export your entire conversation history as JSON for backup or migration:</p>
+<pre><code class="language-bash"># Export all messages to stdout
+reservoir export
+
+# Save to file with timestamp
+reservoir export &gt; backup_$(date +%Y%m%d_%H%M%S).json
+
+# Export and compress for storage
+reservoir export | gzip &gt; reservoir_backup.json.gz
+</code></pre>
+<p><strong>Export Format:</strong>
+Each message is exported as a complete MessageNode with all metadata:</p>
+<pre><code class="language-json">[
+  {
+    "trace_id": "550e8400-e29b-41d4-a716-446655440000",
+    "partition": "default",
+    "instance": "default", 
+    "role": "user",
+    "content": "How do I implement error handling in async functions?",
+    "timestamp": "2024-01-15T10:30:00.000Z",
+    "embedding": [0.123, -0.456, 0.789, ...],
+    "url": null
+  },
+  {
+    "trace_id": "550e8400-e29b-41d4-a716-446655440001",
+    "partition": "default",
+    "instance": "default",
+    "role": "assistant", 
+    "content": "Here are several approaches to error handling in async functions...",
+    "timestamp": "2024-01-15T10:30:15.000Z",
+    "embedding": [0.234, -0.567, 0.890, ...],
+    "url": null
+  }
+]
+</code></pre>
+<h3 id="import-data"><a class="header" href="#import-data">Import Data</a></h3>
+<p>Import message data from JSON files:</p>
+<pre><code class="language-bash"># Import from a backup file
+reservoir import backup_20240115.json
+
+# Import from another Reservoir instance
+reservoir import exported_conversations.json
+
+# Import compressed backup
+gunzip -c reservoir_backup.json.gz | reservoir import /dev/stdin
+</code></pre>
+<p><strong>Import Behavior:</strong></p>
+<ul>
+<li>Validates JSON format and MessageNode structure</li>
+<li>Preserves all metadata including timestamps and embeddings</li>
+<li>Maintains partition/instance organization</li>
+<li>Skips duplicate messages (based on trace_id)</li>
+<li>Rebuilds relationships and synapses</li>
+</ul>
+<h3 id="migration-workflows"><a class="header" href="#migration-workflows">Migration Workflows</a></h3>
+<p><strong>Complete System Migration:</strong></p>
+<pre><code class="language-bash"># On source system
+reservoir export &gt; full_backup.json
+
+# Transfer file to new system
+scp full_backup.json user@newserver:/path/to/reservoir/
+
+# On destination system
+reservoir import full_backup.json
+
+# Verify migration
+reservoir view 10
+reservoir search --semantic "test query"
+</code></pre>
+<p><strong>Selective Migration:</strong></p>
+<pre><code class="language-bash"># Export from specific partition
+reservoir export | jq '.[] | select(.partition=="alice")' &gt; alice_messages.json
+
+# Import to different partition (requires manual editing or processing)
+# Edit JSON to change partition names, then import
+reservoir import alice_messages.json
+</code></pre>
+<h2 id="message-management"><a class="header" href="#message-management">Message Management</a></h2>
+<h3 id="manual-message-ingestion"><a class="header" href="#manual-message-ingestion">Manual Message Ingestion</a></h3>
+<p>Add messages manually for testing, note-taking, or data entry:</p>
+<pre><code class="language-bash"># Add a user message
+echo "How do I configure Neo4j for production?" | reservoir ingest
+
+# Add to specific partition/instance
+echo "Remember to update dependencies" | reservoir ingest --partition alice --instance notes
+
+# Add assistant message
+echo "Here's the production Neo4j configuration..." | reservoir ingest --role assistant
+
+# Ingest from file
+cat meeting_notes.txt | reservoir ingest --partition team --instance meetings
+</code></pre>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li><strong>Documentation</strong>: Add important information manually</li>
+<li><strong>Testing</strong>: Create test scenarios with known data</li>
+<li><strong>Migration</strong>: Import data from other systems</li>
+<li><strong>Notes</strong>: Add personal reminders or observations</li>
+</ul>
+<h3 id="viewing-recent-data"><a class="header" href="#viewing-recent-data">Viewing Recent Data</a></h3>
+<p>Monitor recent activity and verify data integrity:</p>
+<pre><code class="language-bash"># View last 10 messages
+reservoir view 10
+
+# View from specific partition
+reservoir view --partition alice 15
+
+# View from specific instance
+reservoir view --partition alice --instance coding 20
+
+# Pipe to other tools for analysis
+reservoir view 50 | grep -i "error" | wc -l
+</code></pre>
+<h2 id="partitioning-strategy"><a class="header" href="#partitioning-strategy">Partitioning Strategy</a></h2>
+<h3 id="organizational-structure"><a class="header" href="#organizational-structure">Organizational Structure</a></h3>
+<p>Reservoir uses a two-level organizational hierarchy:</p>
+<ol>
+<li><strong>Partition</strong>: High-level boundary (user, project, team)</li>
+<li><strong>Instance</strong>: Sub-boundary within partition (topic, session, category)</li>
+</ol>
+<pre><code>default/
+├── default/          # General conversations
+├── coding/           # Programming discussions  
+└── research/         # Research and analysis
+
+alice/
+├── personal/         # Personal conversations
+├── work/            # Work-related discussions
+└── learning/        # Educational content
+
+team/
+├── meetings/        # Team meeting notes
+├── planning/        # Project planning
+└── retrospectives/  # Review sessions
+</code></pre>
+<h3 id="partition-management"><a class="header" href="#partition-management">Partition Management</a></h3>
+<p><strong>Creating Partitions:</strong>
+Partitions are created automatically when first used:</p>
+<pre><code class="language-bash"># Create new partition by using it
+echo "Starting new project discussions" | reservoir ingest --partition newproject
+
+# Create instance within partition
+echo "Technical architecture discussion" | reservoir ingest --partition newproject --instance architecture
+</code></pre>
+<p><strong>Partition Benefits:</strong></p>
+<ul>
+<li><strong>Isolation</strong>: Keep different contexts separate</li>
+<li><strong>Search Scoping</strong>: Limit searches to relevant content</li>
+<li><strong>Access Control</strong>: Enable future access restrictions</li>
+<li><strong>Organization</strong>: Maintain clean separation of concerns</li>
+</ul>
+<h3 id="data-isolation"><a class="header" href="#data-isolation">Data Isolation</a></h3>
+<p>Partitions provide logical isolation:</p>
+<ul>
+<li><strong>Context Enrichment</strong>: Only includes messages from same partition/instance</li>
+<li><strong>Search</strong>: Can be scoped to specific partitions</li>
+<li><strong>Export</strong>: Can filter by partition (with additional tooling)</li>
+<li><strong>Privacy</strong>: Enables separation of personal/professional content</li>
+</ul>
+<h2 id="data-integrity"><a class="header" href="#data-integrity">Data Integrity</a></h2>
+<h3 id="backup-strategies"><a class="header" href="#backup-strategies">Backup Strategies</a></h3>
+<p><strong>Daily Backups:</strong></p>
+<pre><code class="language-bash">#!/bin/bash
+# Daily backup script
+
+BACKUP_DIR="/backup/reservoir"
+DATE=$(date +%Y%m%d)
+TIMESTAMP=$(date +%H%M%S)
+
+# Create backup directory
+mkdir -p "$BACKUP_DIR/$DATE"
+
+# Export data
+reservoir export &gt; "$BACKUP_DIR/$DATE/reservoir_$TIMESTAMP.json"
+
+# Compress older backups
+find "$BACKUP_DIR" -name "*.json" -mtime +7 -exec gzip {} \;
+
+# Clean old backups (keep 30 days)
+find "$BACKUP_DIR" -name "*.json.gz" -mtime +30 -delete
+
+# Log backup
+echo "$(date): Backup completed - $BACKUP_DIR/$DATE/reservoir_$TIMESTAMP.json" &gt;&gt; /var/log/reservoir_backup.log
+</code></pre>
+<p><strong>Incremental Exports:</strong></p>
+<pre><code class="language-bash"># Export recent messages (last 24 hours)
+reservoir view 1000 | jq -r '.[] | select(.timestamp &gt; "'$(date -d '1 day ago' -Iseconds)'")' &gt; incremental_backup.json
+</code></pre>
+<h3 id="data-validation"><a class="header" href="#data-validation">Data Validation</a></h3>
+<p><strong>Verify Data Integrity:</strong></p>
+<pre><code class="language-bash"># Check message count
+TOTAL_MESSAGES=$(reservoir export | jq length)
+echo "Total messages: $TOTAL_MESSAGES"
+
+# Verify embeddings
+EMBEDDED_COUNT=$(reservoir export | jq '[.[] | select(.embedding != null)] | length')
+echo "Messages with embeddings: $EMBEDDED_COUNT"
+
+# Check partition distribution
+reservoir export | jq -r '.[] | .partition' | sort | uniq -c
+</code></pre>
+<h3 id="recovery-procedures"><a class="header" href="#recovery-procedures">Recovery Procedures</a></h3>
+<p><strong>Restore from Backup:</strong></p>
+<pre><code class="language-bash"># Stop Reservoir (if running as service)
+systemctl stop reservoir
+
+# Clear existing data (WARNING: destructive)
+# This requires manual Neo4j database clearing
+
+# Import backup
+reservoir import /backup/reservoir/20240115/reservoir_full.json
+
+# Verify restoration
+reservoir view 10
+reservoir search --semantic "test"
+
+# Restart service
+systemctl start reservoir
+</code></pre>
+<h2 id="advanced-data-operations"><a class="header" href="#advanced-data-operations">Advanced Data Operations</a></h2>
+<h3 id="data-analysis"><a class="header" href="#data-analysis">Data Analysis</a></h3>
+<p><strong>Export for Analysis:</strong></p>
+<pre><code class="language-bash"># Export specific fields for analysis
+reservoir export | jq -r '.[] | [.timestamp, .partition, .role, (.content | length)] | @csv' &gt; message_stats.csv
+
+# Analyze conversation patterns
+reservoir export | jq -r '.[] | .partition' | sort | uniq -c | sort -nr
+
+# Find most active time periods
+reservoir export | jq -r '.[] | .timestamp[0:10]' | sort | uniq -c | sort -nr
+</code></pre>
+<h3 id="data-transformation"><a class="header" href="#data-transformation">Data Transformation</a></h3>
+<p><strong>Format Conversion:</strong></p>
+<pre><code class="language-bash"># Convert to CSV format
+reservoir export | jq -r '.[] | [.timestamp, .partition, .instance, .role, .content] | @csv' &gt; conversations.csv
+
+# Extract just message content
+reservoir export | jq -r '.[] | .content' &gt; all_messages.txt
+
+# Create markdown format
+reservoir export | jq -r '.[] | "## " + .timestamp + " (" + .role + ")\n\n" + .content + "\n"' &gt; conversations.md
+</code></pre>
+<h3 id="embedding-management"><a class="header" href="#embedding-management">Embedding Management</a></h3>
+<p><strong>Replay Embeddings:</strong>
+When embedding models change or for data recovery:</p>
+<pre><code class="language-bash"># Replay embeddings for all messages
+reservoir replay
+
+# Replay for specific model/partition
+reservoir replay bge-large-en-v15
+
+# Monitor embedding progress
+# (Check logs for embedding generation status)
+tail -f /var/log/reservoir.log | grep -i embedding
+</code></pre>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<h3 id="regular-maintenance"><a class="header" href="#regular-maintenance">Regular Maintenance</a></h3>
+<ol>
+<li><strong>Schedule Regular Backups</strong>: Daily exports with compression</li>
+<li><strong>Monitor Disk Usage</strong>: Embeddings require significant storage</li>
+<li><strong>Validate Data Integrity</strong>: Regular checks for missing embeddings</li>
+<li><strong>Clean Old Logs</strong>: Rotate and archive log files</li>
+<li><strong>Test Recovery</strong>: Periodically test backup restoration</li>
+</ol>
+<h3 id="storage-optimization"><a class="header" href="#storage-optimization">Storage Optimization</a></h3>
+<ol>
+<li><strong>Compress Backups</strong>: Use gzip for long-term storage</li>
+<li><strong>Archive Old Data</strong>: Move historical data to cold storage</li>
+<li><strong>Monitor Neo4j Storage</strong>: Regular database maintenance</li>
+<li><strong>Embedding Efficiency</strong>: Consider embedding model size vs. quality</li>
+</ol>
+<h3 id="security-considerations"><a class="header" href="#security-considerations">Security Considerations</a></h3>
+<ol>
+<li><strong>Encrypt Backups</strong>: Sensitive conversation data should be encrypted</li>
+<li><strong>Access Controls</strong>: Limit access to export/import capabilities</li>
+<li><strong>Audit Trails</strong>: Log all data management operations</li>
+<li><strong>Data Retention</strong>: Define policies for data lifecycle management</li>
+</ol>
+<p>Data management in Reservoir is designed to be straightforward while providing enterprise-grade capabilities for backup, migration, and organization of your conversation data.</p>
 
                     </main>
 

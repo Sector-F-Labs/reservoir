@@ -163,6 +163,331 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="importexport"><a class="header" href="#importexport">Import/Export</a></h1>
+<p>Reservoir provides comprehensive import and export capabilities for backing up your conversation data, migrating between systems, and integrating with external tools. The system exports data in JSON format, preserving all message metadata, embeddings, and relationships.</p>
+<h2 id="export-functionality"><a class="header" href="#export-functionality">Export Functionality</a></h2>
+<h3 id="basic-export"><a class="header" href="#basic-export">Basic Export</a></h3>
+<p>Export all conversation data to JSON format:</p>
+<pre><code class="language-bash"># Export to stdout
+reservoir export
+
+# Save to file
+reservoir export &gt; conversations.json
+
+# Export with timestamp
+reservoir export &gt; backup_$(date +%Y%m%d_%H%M%S).json
+</code></pre>
+<h3 id="export-format"><a class="header" href="#export-format">Export Format</a></h3>
+<p>Each exported message includes complete metadata:</p>
+<pre><code class="language-json">[
+  {
+    "id": null,
+    "trace_id": "550e8400-e29b-41d4-a716-446655440000",
+    "partition": "alice",
+    "instance": "coding",
+    "content": "How do I implement error handling in async functions?",
+    "role": "user",
+    "embedding": [0.123, -0.456, 0.789, ...],
+    "url": null,
+    "timestamp": 1705315800000
+  },
+  {
+    "id": null,
+    "trace_id": "550e8400-e29b-41d4-a716-446655440001",
+    "partition": "alice",
+    "instance": "coding",
+    "content": "Here are several approaches to error handling in async functions...",
+    "role": "assistant",
+    "embedding": [0.234, -0.567, 0.890, ...],
+    "url": null,
+    "timestamp": 1705315815000
+  }
+]
+</code></pre>
+<h3 id="whats-included-in-export"><a class="header" href="#whats-included-in-export">What's Included in Export</a></h3>
+<ul>
+<li><strong>Complete Message Data</strong>: All message content and metadata</li>
+<li><strong>Vector Embeddings</strong>: Full embedding vectors for similarity search</li>
+<li><strong>Partition Organization</strong>: Partition and instance information</li>
+<li><strong>Conversation Structure</strong>: Trace IDs linking user/assistant pairs</li>
+<li><strong>Timestamps</strong>: Precise timing information</li>
+<li><strong>Roles</strong>: User, assistant, and system message roles</li>
+</ul>
+<h3 id="export-use-cases"><a class="header" href="#export-use-cases">Export Use Cases</a></h3>
+<p><strong>Data Backup</strong></p>
+<pre><code class="language-bash"># Daily backup
+reservoir export &gt; "backup_$(date +%Y%m%d).json"
+
+# Compressed backup
+reservoir export | gzip &gt; "backup_$(date +%Y%m%d).json.gz"
+</code></pre>
+<p><strong>Migration</strong></p>
+<pre><code class="language-bash"># Export from source system
+reservoir export &gt; migration_data.json
+
+# Transfer to new system
+scp migration_data.json user@newserver:/path/to/reservoir/
+</code></pre>
+<p><strong>Analysis</strong></p>
+<pre><code class="language-bash"># Export for external analysis
+reservoir export | jq '.[] | select(.role=="user")' &gt; user_messages.json
+
+# Export specific time range
+reservoir export | jq '.[] | select(.timestamp &gt; 1705315800000)' &gt; recent_messages.json
+</code></pre>
+<h2 id="import-functionality"><a class="header" href="#import-functionality">Import Functionality</a></h2>
+<h3 id="basic-import"><a class="header" href="#basic-import">Basic Import</a></h3>
+<p>Import conversation data from JSON files:</p>
+<pre><code class="language-bash"># Import from file
+reservoir import conversations.json
+
+# Import from compressed backup
+gunzip -c backup_20240115.json.gz | reservoir import /dev/stdin
+</code></pre>
+<h3 id="import-behavior"><a class="header" href="#import-behavior">Import Behavior</a></h3>
+<p><strong>Data Validation</strong></p>
+<ul>
+<li>Validates JSON format and structure</li>
+<li>Checks required fields (trace_id, partition, instance, role, content)</li>
+<li>Verifies embedding vector format and dimensions</li>
+</ul>
+<p><strong>Duplicate Handling</strong></p>
+<ul>
+<li>Skips messages with duplicate trace_id and role combinations</li>
+<li>Preserves existing data integrity</li>
+<li>Logs skipped duplicates for review</li>
+</ul>
+<p><strong>Relationship Reconstruction</strong></p>
+<ul>
+<li>Automatically rebuilds RESPONDED_WITH relationships</li>
+<li>Recreates HAS_EMBEDDING connections</li>
+<li>Maintains partition/instance boundaries</li>
+</ul>
+<h3 id="import-process"><a class="header" href="#import-process">Import Process</a></h3>
+<ol>
+<li><strong>File Reading</strong>: Load and parse JSON data</li>
+<li><strong>Validation</strong>: Check data format and completeness</li>
+<li><strong>Message Creation</strong>: Create MessageNode entries</li>
+<li><strong>Embedding Processing</strong>: Store vector embeddings</li>
+<li><strong>Relationship Building</strong>: Establish graph relationships</li>
+<li><strong>Index Updates</strong>: Update vector indices</li>
+</ol>
+<h3 id="import-examples"><a class="header" href="#import-examples">Import Examples</a></h3>
+<p><strong>Complete System Restore</strong></p>
+<pre><code class="language-bash"># Stop Reservoir service
+systemctl stop reservoir
+
+# Clear existing data (if needed)
+# WARNING: This is destructive!
+
+# Import backup
+reservoir import full_backup_20240115.json
+
+# Verify import
+reservoir view 10
+</code></pre>
+<p><strong>Selective Import</strong></p>
+<pre><code class="language-bash"># Import specific partition data
+cat full_backup.json | jq '.[] | select(.partition=="alice")' &gt; alice_data.json
+reservoir import alice_data.json
+
+# Import recent messages only
+cat backup.json | jq '.[] | select(.timestamp &gt; 1705315800000)' &gt; recent.json
+reservoir import recent.json
+</code></pre>
+<h2 id="advanced-exportimport"><a class="header" href="#advanced-exportimport">Advanced Export/Import</a></h2>
+<h3 id="filtering-exports"><a class="header" href="#filtering-exports">Filtering Exports</a></h3>
+<p><strong>By Partition</strong></p>
+<pre><code class="language-bash"># Export specific user's data
+reservoir export | jq '.[] | select(.partition=="alice")' &gt; alice_conversations.json
+</code></pre>
+<p><strong>By Time Range</strong></p>
+<pre><code class="language-bash"># Export last 24 hours
+YESTERDAY=$(date -d '1 day ago' +%s)000
+reservoir export | jq ".[] | select(.timestamp &gt; $YESTERDAY)" &gt; recent_conversations.json
+</code></pre>
+<p><strong>By Role</strong></p>
+<pre><code class="language-bash"># Export only user messages
+reservoir export | jq '.[] | select(.role=="user")' &gt; user_questions.json
+
+# Export only assistant responses
+reservoir export | jq '.[] | select(.role=="assistant")' &gt; ai_responses.json
+</code></pre>
+<p><strong>By Content</strong></p>
+<pre><code class="language-bash"># Export messages containing specific terms
+reservoir export | jq '.[] | select(.content | test("python|programming"; "i"))' &gt; programming_discussions.json
+</code></pre>
+<h3 id="data-transformation"><a class="header" href="#data-transformation">Data Transformation</a></h3>
+<p><strong>Convert to CSV</strong></p>
+<pre><code class="language-bash">reservoir export | jq -r '.[] | [.timestamp, .partition, .instance, .role, .content] | @csv' &gt; conversations.csv
+</code></pre>
+<p><strong>Extract Text Only</strong></p>
+<pre><code class="language-bash">reservoir export | jq -r '.[] | .content' &gt; all_messages.txt
+</code></pre>
+<p><strong>Create Markdown Format</strong></p>
+<pre><code class="language-bash">reservoir export | jq -r '.[] | "## " + (.timestamp | tostring) + " (" + .role + ")\n\n" + .content + "\n"' &gt; conversations.md
+</code></pre>
+<h3 id="batch-operations"><a class="header" href="#batch-operations">Batch Operations</a></h3>
+<p><strong>Multiple File Import</strong></p>
+<pre><code class="language-bash"># Import multiple backup files
+for file in backup_*.json; do
+    echo "Importing $file..."
+    reservoir import "$file"
+done
+</code></pre>
+<p><strong>Incremental Backup Strategy</strong></p>
+<pre><code class="language-bash">#!/bin/bash
+# Incremental backup script
+
+BACKUP_DIR="/backup/reservoir"
+LAST_BACKUP_TIME=$(cat "$BACKUP_DIR/.last_backup" 2&gt;/dev/null || echo "0")
+CURRENT_TIME=$(date +%s)000
+
+# Export messages since last backup
+reservoir export | jq ".[] | select(.timestamp &gt; $LAST_BACKUP_TIME)" &gt; "$BACKUP_DIR/incremental_$(date +%Y%m%d_%H%M%S).json"
+
+# Update last backup time
+echo "$CURRENT_TIME" &gt; "$BACKUP_DIR/.last_backup"
+</code></pre>
+<h2 id="data-migration-workflows"><a class="header" href="#data-migration-workflows">Data Migration Workflows</a></h2>
+<h3 id="system-migration"><a class="header" href="#system-migration">System Migration</a></h3>
+<p><strong>Complete Migration</strong></p>
+<pre><code class="language-bash"># Source system
+reservoir export &gt; complete_migration.json
+
+# Target system  
+reservoir import complete_migration.json
+
+# Verify migration
+SOURCE_COUNT=$(jq length complete_migration.json)
+TARGET_COUNT=$(reservoir export | jq length)
+echo "Source: $SOURCE_COUNT messages, Target: $TARGET_COUNT messages"
+</code></pre>
+<p><strong>Partition Migration</strong></p>
+<pre><code class="language-bash"># Migrate specific user to new system
+reservoir export | jq '.[] | select(.partition=="alice")' &gt; alice_migration.json
+
+# On target system
+reservoir import alice_migration.json
+
+# Verify partition migration
+reservoir view --partition alice 10
+</code></pre>
+<h3 id="cross-system-integration"><a class="header" href="#cross-system-integration">Cross-System Integration</a></h3>
+<p><strong>Export for External Processing</strong></p>
+<pre><code class="language-bash"># Export for machine learning analysis
+reservoir export | jq '.[] | {content: .content, embedding: .embedding}' &gt; ml_dataset.json
+
+# Export conversation pairs for training
+reservoir export | jq -r 'group_by(.trace_id) | .[] | select(length == 2) | {user: .[0].content, assistant: .[1].content}' &gt; conversation_pairs.json
+</code></pre>
+<p><strong>Import from External Sources</strong></p>
+<p>Convert external data to Reservoir format:</p>
+<pre><code class="language-json">{
+  "trace_id": "external-001",
+  "partition": "imported",
+  "instance": "external_system",
+  "content": "Question from external system",
+  "role": "user",
+  "embedding": [], // Will be generated if empty
+  "url": null,
+  "timestamp": 1705315800000
+}
+</code></pre>
+<h2 id="data-integrity-and-verification"><a class="header" href="#data-integrity-and-verification">Data Integrity and Verification</a></h2>
+<h3 id="export-verification"><a class="header" href="#export-verification">Export Verification</a></h3>
+<pre><code class="language-bash"># Check export completeness
+EXPORTED_COUNT=$(reservoir export | jq length)
+echo "Exported $EXPORTED_COUNT messages"
+
+# Verify embeddings
+EMBEDDED_COUNT=$(reservoir export | jq '[.[] | select(.embedding | length &gt; 0)] | length')
+echo "$EMBEDDED_COUNT messages have embeddings"
+
+# Check partition distribution
+reservoir export | jq -r '.[] | .partition' | sort | uniq -c
+</code></pre>
+<h3 id="import-validation"><a class="header" href="#import-validation">Import Validation</a></h3>
+<pre><code class="language-bash"># Validate JSON format before import
+jq . backup.json &gt; /dev/null &amp;&amp; echo "Valid JSON" || echo "Invalid JSON"
+
+# Check required fields
+jq '.[] | select(.trace_id and .partition and .instance and .role and .content)' backup.json | jq length
+
+# Verify import success
+reservoir view 10
+reservoir search --semantic "test query"
+</code></pre>
+<h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance Considerations</a></h2>
+<h3 id="large-dataset-handling"><a class="header" href="#large-dataset-handling">Large Dataset Handling</a></h3>
+<p><strong>Streaming Export</strong></p>
+<pre><code class="language-bash"># For very large datasets, process in chunks
+reservoir export | jq -c '.[]' | split -l 1000 - chunk_
+
+# Import chunks
+for chunk in chunk_*; do
+    jq -s '.' "$chunk" | reservoir import /dev/stdin
+done
+</code></pre>
+<p><strong>Compression</strong></p>
+<pre><code class="language-bash"># Compress exports to save space
+reservoir export | gzip &gt; backup.json.gz
+
+# Decompress for import
+gunzip -c backup.json.gz | reservoir import /dev/stdin
+</code></pre>
+<h3 id="network-transfer"><a class="header" href="#network-transfer">Network Transfer</a></h3>
+<p><strong>Efficient Transfer</strong></p>
+<pre><code class="language-bash"># Direct transfer without intermediate files
+ssh source_server 'reservoir export' | reservoir import /dev/stdin
+
+# Compressed transfer
+ssh source_server 'reservoir export | gzip' | gunzip | reservoir import /dev/stdin
+</code></pre>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="common-issues"><a class="header" href="#common-issues">Common Issues</a></h3>
+<p><strong>Import Failures</strong></p>
+<pre><code class="language-bash"># Check JSON validity
+jq . import_file.json
+
+# Verify required fields
+jq '.[] | keys' import_file.json | head -5
+
+# Check for duplicate trace_ids
+jq -r '.[] | .trace_id' import_file.json | sort | uniq -d
+</code></pre>
+<p><strong>Missing Embeddings</strong></p>
+<pre><code class="language-bash"># Check embedding status
+reservoir export | jq '[.[] | select(.embedding | length == 0)] | length'
+
+# Regenerate embeddings if needed
+reservoir replay
+</code></pre>
+<p><strong>Partition Issues</strong></p>
+<pre><code class="language-bash"># Check partition consistency
+reservoir export | jq -r '.[] | "\(.partition)/\(.instance)"' | sort | uniq -c
+
+# View messages in specific partition
+reservoir view --partition problematic_partition 10
+</code></pre>
+<h3 id="recovery-procedures"><a class="header" href="#recovery-procedures">Recovery Procedures</a></h3>
+<p><strong>Partial Import Recovery</strong></p>
+<pre><code class="language-bash"># If import fails partway through, check what was imported
+IMPORTED_COUNT=$(reservoir export | jq length)
+TOTAL_COUNT=$(jq length backup.json)
+echo "Imported $IMPORTED_COUNT of $TOTAL_COUNT messages"
+
+# Import remaining messages (requires identifying what's missing)
+</code></pre>
+<p><strong>Data Corruption Recovery</strong></p>
+<pre><code class="language-bash"># Export current state
+reservoir export &gt; current_state.json
+
+# Restore from known good backup
+reservoir import good_backup.json
+
+# Compare and merge if needed
+</code></pre>
+<p>The import/export system provides a robust foundation for data management, enabling seamless backup, migration, and integration workflows while maintaining complete data fidelity and system integrity.</p>
 
                     </main>
 

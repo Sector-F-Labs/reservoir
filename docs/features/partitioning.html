@@ -163,6 +163,278 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="partitioning--organization"><a class="header" href="#partitioning--organization">Partitioning &amp; Organization</a></h1>
+<p>Reservoir uses a flexible partitioning system to organize your conversations and data. This two-level hierarchy enables you to separate different contexts, users, projects, or topics while maintaining intelligent context enrichment within each boundary.</p>
+<h2 id="partitioning-concepts"><a class="header" href="#partitioning-concepts">Partitioning Concepts</a></h2>
+<h3 id="two-level-hierarchy"><a class="header" href="#two-level-hierarchy">Two-Level Hierarchy</a></h3>
+<p>Reservoir organizes data using two levels:</p>
+<ol>
+<li><strong>Partition</strong>: The top-level organizational boundary</li>
+<li><strong>Instance</strong>: The sub-level within each partition</li>
+</ol>
+<pre><code>partition_name/
+├── instance_1/
+├── instance_2/
+└── instance_3/
+</code></pre>
+<h3 id="default-organization"><a class="header" href="#default-organization">Default Organization</a></h3>
+<p>When no partition is specified, Reservoir uses:</p>
+<ul>
+<li><strong>Partition</strong>: <code>"default"</code></li>
+<li><strong>Instance</strong>: <code>"default"</code></li>
+</ul>
+<pre><code class="language-bash"># These are equivalent
+reservoir view 10
+reservoir view --partition default --instance default 10
+</code></pre>
+<h2 id="partition-use-cases"><a class="header" href="#partition-use-cases">Partition Use Cases</a></h2>
+<h3 id="user-separation"><a class="header" href="#user-separation">User Separation</a></h3>
+<p>Separate different users or personas:</p>
+<pre><code>alice/
+├── personal/      # Personal conversations
+├── work/         # Work-related discussions  
+└── research/     # Research and learning
+
+bob/
+├── coding/       # Programming discussions
+├── writing/      # Content creation
+└── planning/     # Project planning
+</code></pre>
+<p><strong>Usage Examples:</strong></p>
+<pre><code class="language-bash"># Alice's personal conversations
+echo "What's the weather like?" | reservoir ingest --partition alice --instance personal
+
+# Bob's coding discussions
+echo "How do I implement OAuth2?" | reservoir ingest --partition bob --instance coding
+
+# View Alice's work conversations
+reservoir view --partition alice --instance work 15
+
+# Search Bob's coding history
+reservoir search --partition bob --instance coding --semantic "database optimization"
+</code></pre>
+<h3 id="project-organization"><a class="header" href="#project-organization">Project Organization</a></h3>
+<p>Organize by projects or domains:</p>
+<pre><code>webapp_project/
+├── backend/      # Backend development
+├── frontend/     # Frontend development
+├── database/     # Database design
+└── deployment/   # DevOps and deployment
+
+mobile_app/
+├── ios/          # iOS development
+├── android/      # Android development
+├── api/          # API integration
+└── testing/      # QA and testing
+</code></pre>
+<p><strong>Usage Examples:</strong></p>
+<pre><code class="language-bash"># Backend development discussions
+echo "Should we use microservices or monolith?" | reservoir ingest --partition webapp_project --instance backend
+
+# Mobile API integration
+echo "API authentication best practices" | reservoir ingest --partition mobile_app --instance api
+
+# Search across web project
+reservoir search --partition webapp_project --semantic "authentication"
+
+# View mobile testing discussions
+reservoir view --partition mobile_app --instance testing 20
+</code></pre>
+<h3 id="team-collaboration"><a class="header" href="#team-collaboration">Team Collaboration</a></h3>
+<p>Organize by teams or functional areas:</p>
+<pre><code>engineering/
+├── architecture/  # System architecture
+├── reviews/      # Code reviews
+├── planning/     # Sprint planning
+└── incidents/    # Incident response
+
+product/
+├── requirements/ # Requirements gathering
+├── research/     # User research
+├── roadmap/      # Product roadmap
+└── metrics/      # Analytics and metrics
+</code></pre>
+<p><strong>Usage Examples:</strong></p>
+<pre><code class="language-bash"># Architecture discussions
+echo "Microservices vs serverless trade-offs" | reservoir ingest --partition engineering --instance architecture
+
+# Product research notes
+echo "User feedback on new feature" | reservoir ingest --partition product --instance research
+
+# Search engineering incidents
+reservoir search --partition engineering --instance incidents "database"
+
+# View product roadmap discussions
+reservoir view --partition product --instance roadmap 10
+</code></pre>
+<h2 id="context-isolation"><a class="header" href="#context-isolation">Context Isolation</a></h2>
+<h3 id="how-partitioning-affects-context"><a class="header" href="#how-partitioning-affects-context">How Partitioning Affects Context</a></h3>
+<p>Reservoir's context enrichment respects partition boundaries:</p>
+<ol>
+<li><strong>Same Partition/Instance</strong>: Full context sharing</li>
+<li><strong>Same Partition, Different Instance</strong>: Limited context sharing</li>
+<li><strong>Different Partition</strong>: Complete isolation</li>
+</ol>
+<p><strong>Context Rules:</strong></p>
+<pre><code class="language-bash"># These will share context with each other
+reservoir ingest --partition alice --instance coding "How do I use async/await?"
+reservoir ingest --partition alice --instance coding "What about error handling?"
+
+# This will have separate context
+reservoir ingest --partition alice --instance personal "What should I cook for dinner?"
+
+# This will be completely isolated
+reservoir ingest --partition bob --instance coding "How do I use async/await?"
+</code></pre>
+<h3 id="privacy-and-separation"><a class="header" href="#privacy-and-separation">Privacy and Separation</a></h3>
+<p>Partitions provide data privacy:</p>
+<ul>
+<li><strong>Search Isolation</strong>: Searches are scoped to partitions</li>
+<li><strong>Context Isolation</strong>: AI responses don't leak across partitions</li>
+<li><strong>Export Control</strong>: Can selectively export partition data</li>
+<li><strong>Access Control</strong>: Enables future per-partition access controls</li>
+</ul>
+<h2 id="partition-management"><a class="header" href="#partition-management">Partition Management</a></h2>
+<h3 id="creating-partitions"><a class="header" href="#creating-partitions">Creating Partitions</a></h3>
+<p>Partitions are created automatically when first used:</p>
+<pre><code class="language-bash"># Creates "newproject" partition with "planning" instance
+echo "Project kickoff meeting notes" | reservoir ingest --partition newproject --instance planning
+</code></pre>
+<h3 id="viewing-partition-data"><a class="header" href="#viewing-partition-data">Viewing Partition Data</a></h3>
+<pre><code class="language-bash"># View messages from specific partition/instance
+reservoir view --partition alice --instance coding 15
+
+# View without specifying instance (shows from all instances in partition)
+reservoir view --partition alice 25
+
+# Search within partition
+reservoir search --partition engineering --semantic "deployment strategy"
+
+# Search within specific instance
+reservoir search --partition engineering --instance architecture --semantic "microservices"
+</code></pre>
+<h3 id="partition-listing"><a class="header" href="#partition-listing">Partition Listing</a></h3>
+<p>Currently, there's no direct command to list all partitions, but you can discover them through data export and analysis:</p>
+<pre><code class="language-bash"># Export and analyze partition distribution
+reservoir export | jq -r '.[] | .partition' | sort | uniq -c | sort -nr
+
+# Find all instances within a partition
+reservoir export | jq -r '.[] | select(.partition=="alice") | .instance' | sort | uniq -c
+</code></pre>
+<h2 id="advanced-partitioning-strategies"><a class="header" href="#advanced-partitioning-strategies">Advanced Partitioning Strategies</a></h2>
+<h3 id="time-based-partitioning"><a class="header" href="#time-based-partitioning">Time-Based Partitioning</a></h3>
+<p>Organize by time periods:</p>
+<pre><code>conversations_2024/
+├── january/
+├── february/
+└── march/
+
+conversations_2023/
+├── q1/
+├── q2/
+├── q3/
+└── q4/
+</code></pre>
+<pre><code class="language-bash"># Current month's discussions
+MONTH=$(date +%B | tr '[:upper:]' '[:lower:]')
+echo "Today's important insight" | reservoir ingest --partition conversations_2024 --instance $MONTH
+</code></pre>
+<h3 id="topic-based-partitioning"><a class="header" href="#topic-based-partitioning">Topic-Based Partitioning</a></h3>
+<p>Organize by subject matter:</p>
+<pre><code>machine_learning/
+├── theory/       # Theoretical discussions
+├── implementation/ # Code and implementation
+├── papers/       # Research papers
+└── experiments/  # Experimental results
+
+web_development/
+├── frontend/     # Frontend technologies
+├── backend/      # Backend systems
+├── databases/    # Database design
+└── devops/       # Operations and deployment
+</code></pre>
+<h3 id="environment-based-partitioning"><a class="header" href="#environment-based-partitioning">Environment-Based Partitioning</a></h3>
+<p>Separate by environment or context:</p>
+<pre><code>development/
+├── local/        # Local development
+├── testing/      # Testing environment
+├── staging/      # Staging discussions
+└── production/   # Production issues
+
+personal/
+├── learning/     # Educational content
+├── projects/     # Personal projects
+├── notes/        # General notes
+└── ideas/        # Ideas and brainstorming
+</code></pre>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<h3 id="naming-conventions"><a class="header" href="#naming-conventions">Naming Conventions</a></h3>
+<ol>
+<li><strong>Use Lowercase</strong>: Partition and instance names should be lowercase</li>
+<li><strong>Use Underscores</strong>: Separate words with underscores: <code>machine_learning</code></li>
+<li><strong>Be Descriptive</strong>: Choose clear, meaningful names</li>
+<li><strong>Keep Consistent</strong>: Maintain consistent naming across partitions</li>
+</ol>
+<pre><code class="language-bash"># Good naming
+reservoir ingest --partition web_development --instance frontend
+reservoir ingest --partition machine_learning --instance deep_learning
+
+# Avoid these patterns
+reservoir ingest --partition WebDev --instance FE  # Mixed case, abbreviated
+reservoir ingest --partition "web development" --instance "front end"  # Spaces
+</code></pre>
+<h3 id="partition-strategy"><a class="header" href="#partition-strategy">Partition Strategy</a></h3>
+<ol>
+<li><strong>Plan Your Structure</strong>: Design partition hierarchy before heavy usage</li>
+<li><strong>Balance Granularity</strong>: Too many partitions reduce context benefits</li>
+<li><strong>Consider Growth</strong>: Design for future expansion</li>
+<li><strong>Document Structure</strong>: Keep a record of partition purposes</li>
+</ol>
+<h3 id="migration-between-partitions"><a class="header" href="#migration-between-partitions">Migration Between Partitions</a></h3>
+<p>Currently, partition migration requires export/import workflow:</p>
+<pre><code class="language-bash"># Export messages from one partition
+reservoir export | jq '.[] | select(.partition=="old_partition")' &gt; old_partition.json
+
+# Edit JSON to change partition/instance names
+sed 's/"partition":"old_partition"/"partition":"new_partition"/g' old_partition.json &gt; new_partition.json
+
+# Import to new structure
+reservoir import new_partition.json
+
+# Verify migration
+reservoir view --partition new_partition 10
+</code></pre>
+<h2 id="integration-with-other-features"><a class="header" href="#integration-with-other-features">Integration with Other Features</a></h2>
+<h3 id="search-scoping"><a class="header" href="#search-scoping">Search Scoping</a></h3>
+<p>All search operations can be scoped to partitions:</p>
+<pre><code class="language-bash"># Search across all data
+reservoir search --semantic "error handling"
+
+# Search within partition  
+reservoir search --partition engineering --semantic "error handling"
+
+# Search within specific instance
+reservoir search --partition engineering --instance backend --semantic "error handling"
+</code></pre>
+<h3 id="data-export"><a class="header" href="#data-export">Data Export</a></h3>
+<p>Partitioning enables selective data export:</p>
+<pre><code class="language-bash"># Export everything
+reservoir export &gt; all_data.json
+
+# Export specific partition (requires jq processing)
+reservoir export | jq '.[] | select(.partition=="alice")' &gt; alice_data.json
+
+# Export specific instance
+reservoir export | jq '.[] | select(.partition=="alice" and .instance=="coding")' &gt; alice_coding.json
+</code></pre>
+<h3 id="context-enrichment"><a class="header" href="#context-enrichment">Context Enrichment</a></h3>
+<p>Partitioning directly affects how context is built:</p>
+<ul>
+<li><strong>Semantic Search</strong>: Limited to same partition/instance</li>
+<li><strong>Recent History</strong>: Limited to same partition/instance</li>
+<li><strong>Synapse Relationships</strong>: Respect partition boundaries</li>
+<li><strong>Token Limits</strong>: Applied per partition context</li>
+</ul>
+<p>This partitioning system makes Reservoir suitable for multi-user environments, project-based work, and any scenario where logical separation of conversation contexts is beneficial.</p>
 
                     </main>
 

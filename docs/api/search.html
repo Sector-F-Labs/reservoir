@@ -163,6 +163,201 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="search--retrieval"><a class="header" href="#search--retrieval">Search &amp; Retrieval</a></h1>
+<p>Reservoir provides powerful search capabilities for finding relevant conversations and messages across your entire conversation history. The search system supports both keyword-based and semantic similarity searches, enabling you to discover related discussions even when they use different terminology.</p>
+<h2 id="search-methods"><a class="header" href="#search-methods">Search Methods</a></h2>
+<h3 id="keyword-search"><a class="header" href="#keyword-search">Keyword Search</a></h3>
+<p>Traditional text-based search that finds exact matches or partial matches within message content.</p>
+<p><strong>CLI Usage:</strong></p>
+<pre><code class="language-bash"># Basic keyword search
+reservoir search "python programming"
+
+# Search in specific partition
+reservoir search --partition alice "machine learning"
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>Fast and precise for exact term matches</li>
+<li>Case-insensitive matching</li>
+<li>Supports partial word matching</li>
+<li>Best for finding specific technical terms or names</li>
+</ul>
+<h3 id="semantic-search"><a class="header" href="#semantic-search">Semantic Search</a></h3>
+<p>Vector-based similarity search that finds conceptually related messages even when they use different words.</p>
+<p><strong>CLI Usage:</strong></p>
+<pre><code class="language-bash"># Semantic search
+reservoir search --semantic "machine learning concepts"
+
+# Use RAG strategy (same as context enrichment)
+reservoir search --link --semantic "database design"
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>Finds conceptually similar content</li>
+<li>Works across different terminology</li>
+<li>Uses BGE-Large-EN-v1.5 embeddings</li>
+<li>Powers Reservoir's context enrichment system</li>
+</ul>
+<h2 id="search-options"><a class="header" href="#search-options">Search Options</a></h2>
+<h3 id="partitioning"><a class="header" href="#partitioning">Partitioning</a></h3>
+<p>Scope your search to specific organizational boundaries:</p>
+<pre><code class="language-bash"># Search in specific partition
+reservoir search --partition alice "neural networks"
+
+# Search in specific instance within partition
+reservoir search --partition alice --instance coding "API design"
+</code></pre>
+<h3 id="deduplication"><a class="header" href="#deduplication">Deduplication</a></h3>
+<p>Remove duplicate or highly similar results:</p>
+<pre><code class="language-bash"># Remove duplicate results
+reservoir search --deduplicate --semantic "error handling"
+</code></pre>
+<h3 id="rag-strategy"><a class="header" href="#rag-strategy">RAG Strategy</a></h3>
+<p>Use the same search strategy that powers context enrichment:</p>
+<pre><code class="language-bash"># Use advanced search with synapse expansion
+reservoir search --link --semantic "software architecture"
+</code></pre>
+<p>The <code>--link</code> option:</p>
+<ul>
+<li>Searches for semantically similar messages</li>
+<li>Expands results using synapse relationships</li>
+<li>Follows conversation threads</li>
+<li>Deduplicates automatically</li>
+<li>Limits results to most relevant matches</li>
+</ul>
+<h2 id="search-implementation"><a class="header" href="#search-implementation">Search Implementation</a></h2>
+<h3 id="vector-similarity"><a class="header" href="#vector-similarity">Vector Similarity</a></h3>
+<p>Reservoir uses cosine similarity to find related messages:</p>
+<ol>
+<li><strong>Query Embedding</strong>: Your search term is converted to a vector using BGE-Large-EN-v1.5</li>
+<li><strong>Index Search</strong>: Neo4j's vector index finds similar message embeddings</li>
+<li><strong>Scoring</strong>: Results are ranked by similarity score (0.0 to 1.0)</li>
+<li><strong>Filtering</strong>: Results are filtered by partition/instance boundaries</li>
+</ol>
+<h3 id="synapse-expansion"><a class="header" href="#synapse-expansion">Synapse Expansion</a></h3>
+<p>When using <code>--link</code>, the search expands beyond direct similarity:</p>
+<ol>
+<li><strong>Initial Search</strong>: Find semantically similar messages</li>
+<li><strong>Synapse Following</strong>: Explore connected messages via SYNAPSE relationships</li>
+<li><strong>Thread Discovery</strong>: Follow conversation threads and related discussions</li>
+<li><strong>Relevance Scoring</strong>: Combine similarity scores with relationship strength</li>
+<li><strong>Result Limiting</strong>: Return top matches within context limits</li>
+</ol>
+<h2 id="example-queries"><a class="header" href="#example-queries">Example Queries</a></h2>
+<h3 id="finding-programming-discussions"><a class="header" href="#finding-programming-discussions">Finding Programming Discussions</a></h3>
+<pre><code class="language-bash"># Find all Python-related conversations
+reservoir search --semantic "python programming"
+
+# Find specific error discussions
+reservoir search "TypeError" 
+
+# Find design pattern conversations
+reservoir search --link --semantic "software design patterns"
+</code></pre>
+<h3 id="research-and-analysis"><a class="header" href="#research-and-analysis">Research and Analysis</a></h3>
+<pre><code class="language-bash"># Find machine learning discussions
+reservoir search --semantic "neural networks deep learning"
+
+# Find database-related conversations
+reservoir search --partition research --semantic "database optimization"
+
+# Find recent discussions on a topic
+reservoir view 50 | grep -i "kubernetes"
+</code></pre>
+<h3 id="cross-conversation-discovery"><a class="header" href="#cross-conversation-discovery">Cross-Conversation Discovery</a></h3>
+<pre><code class="language-bash"># Find related discussions across all conversations
+reservoir search --link --semantic "microservices architecture"
+
+# Discover connections between topics
+reservoir search --deduplicate --semantic "testing strategies"
+</code></pre>
+<h2 id="search-results-format"><a class="header" href="#search-results-format">Search Results Format</a></h2>
+<h3 id="cli-output"><a class="header" href="#cli-output">CLI Output</a></h3>
+<p>Search results include:</p>
+<ul>
+<li><strong>Timestamp</strong>: When the message was created</li>
+<li><strong>Partition/Instance</strong>: Organizational context</li>
+<li><strong>Role</strong>: User or assistant message</li>
+<li><strong>Content</strong>: The actual message text</li>
+<li><strong>Score</strong>: Similarity score (for semantic search)</li>
+</ul>
+<h3 id="json-format"><a class="header" href="#json-format">JSON Format</a></h3>
+<p>When exported, search results follow the MessageNode structure:</p>
+<pre><code class="language-json">{
+  "trace_id": "abc123-def456",
+  "partition": "alice",
+  "instance": "coding",
+  "role": "user",
+  "content": "How do I implement error handling in async functions?",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "embedding": [0.1, -0.2, 0.3, ...],
+  "url": null
+}
+</code></pre>
+<h2 id="integration-with-context-enrichment"><a class="header" href="#integration-with-context-enrichment">Integration with Context Enrichment</a></h2>
+<p>The search system directly powers Reservoir's context enrichment:</p>
+<ol>
+<li><strong>Automatic Search</strong>: Every user message triggers a semantic search</li>
+<li><strong>Context Building</strong>: Search results become conversation context</li>
+<li><strong>Relevance Filtering</strong>: Only high-quality matches (&gt;0.85 similarity) are used</li>
+<li><strong>Token Management</strong>: Results are truncated to fit model token limits</li>
+</ol>
+<h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance Considerations</a></h2>
+<h3 id="vector-index"><a class="header" href="#vector-index">Vector Index</a></h3>
+<p>Reservoir maintains optimized vector indices for fast search:</p>
+<pre><code class="language-cypher">CREATE VECTOR INDEX embedding1536 
+FOR (n:Embedding1536) ON (n.embedding) 
+OPTIONS {
+  indexConfig: {
+    `vector.dimensions`: 1536,
+    `vector.similarity_function`: 'cosine'
+  }
+}
+</code></pre>
+<h3 id="search-strategies"><a class="header" href="#search-strategies">Search Strategies</a></h3>
+<ul>
+<li><strong>Keyword Search</strong>: Fastest for exact matches</li>
+<li><strong>Basic Semantic</strong>: Good balance of speed and relevance</li>
+<li><strong>RAG Strategy (<code>--link</code>)</strong>: Most comprehensive but slower</li>
+<li><strong>Deduplication</strong>: Adds processing time but improves result quality</li>
+</ul>
+<h3 id="optimization-tips"><a class="header" href="#optimization-tips">Optimization Tips</a></h3>
+<ol>
+<li><strong>Use Specific Partitions</strong>: Reduces search space</li>
+<li><strong>Keyword for Exact Terms</strong>: Faster than semantic for specific names</li>
+<li><strong>Semantic for Concepts</strong>: Better for finding related ideas</li>
+<li><strong>Limit Result Count</strong>: Implicit in CLI, configurable in API</li>
+</ol>
+<h2 id="advanced-usage"><a class="header" href="#advanced-usage">Advanced Usage</a></h2>
+<h3 id="combining-with-other-commands"><a class="header" href="#combining-with-other-commands">Combining with Other Commands</a></h3>
+<pre><code class="language-bash"># Search and then view context
+reservoir search --semantic "error handling" | head -5
+reservoir view 10
+
+# Search and ingest related information
+echo "Related to error handling discussion" | reservoir ingest
+
+# Export search results for analysis
+reservoir search --semantic "API design" &gt; api_discussions.txt
+</code></pre>
+<h3 id="scripting-and-automation"><a class="header" href="#scripting-and-automation">Scripting and Automation</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# Find and analyze topic discussions
+
+TOPIC="$1"
+echo "Searching for discussions about: $TOPIC"
+
+# Semantic search with RAG strategy
+reservoir search --link --semantic "$TOPIC" &gt; "search_results_$TOPIC.txt"
+
+# Count total discussions
+TOTAL=$(wc -l &lt; "search_results_$TOPIC.txt")
+echo "Found $TOTAL related messages"
+
+# Show recent activity
+echo "Recent activity:"
+reservoir view 20 | grep -i "$TOPIC" | head -3
+</code></pre>
+<p>The search system is designed to make your conversation history searchable and discoverable, turning your accumulated AI interactions into a valuable knowledge base that grows more useful over time.</p>
 
                     </main>
 

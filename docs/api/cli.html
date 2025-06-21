@@ -163,6 +163,261 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command Line Interface</a></h1>
+<p>Reservoir provides a comprehensive command-line interface for managing your conversation data, searching through message history, and configuring the system. This section covers all available commands and their usage.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Reservoir's CLI allows you to:</p>
+<ul>
+<li>Start the proxy server</li>
+<li>Search through conversations</li>
+<li>Import and export conversation data</li>
+<li>View recent messages</li>
+<li>Ingest new messages manually</li>
+<li>Configure system settings</li>
+<li>Replay embeddings for existing data</li>
+</ul>
+<h2 id="available-commands"><a class="header" href="#available-commands">Available Commands</a></h2>
+<h3 id="reservoir-start"><a class="header" href="#reservoir-start"><code>reservoir start</code></a></h3>
+<p>Start the Reservoir proxy server.</p>
+<pre><code class="language-bash">reservoir start [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-o, --ollama</code> - Ollama mode which sets up on same default port as ollama useful for using as a proxy for clients that don't support setting a url</li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Start in normal mode
+reservoir start
+
+# Start in Ollama mode (uses port 11434)
+reservoir start --ollama
+</code></pre>
+<h3 id="reservoir-search"><a class="header" href="#reservoir-search"><code>reservoir search</code></a></h3>
+<p>Search messages by keyword or semantic similarity.</p>
+<pre><code class="language-bash">reservoir search [OPTIONS] &lt;TERM&gt;
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;TERM&gt;</code> - The search term (keyword or semantic)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--semantic</code> - Use semantic search instead of keyword search</li>
+<li><code>-p, --partition &lt;PARTITION&gt;</code> - Partition to search (defaults to "default")</li>
+<li><code>-i, --instance &lt;INSTANCE&gt;</code> - Instance to search (defaults to partition)</li>
+<li><code>-l, --link</code> - Use the same search strategy as RAG does when injecting into the model</li>
+<li><code>-d, --deduplicate</code> - Deduplicate first similarity results</li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Keyword search
+reservoir search "python programming"
+
+# Semantic search
+reservoir search --semantic "machine learning concepts"
+
+# Search in specific partition/instance
+reservoir search --partition alice --instance coding "neural networks"
+
+# Use RAG search strategy
+reservoir search --link --semantic "database design"
+
+# Deduplicate results
+reservoir search --deduplicate --semantic "API design"
+</code></pre>
+<h3 id="reservoir-export"><a class="header" href="#reservoir-export"><code>reservoir export</code></a></h3>
+<p>Export all message nodes as JSON.</p>
+<pre><code class="language-bash">reservoir export
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-h, --help</code> - Print help</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Export all messages to stdout
+reservoir export &gt; my_conversations.json
+
+# Export and view
+reservoir export | jq '.[0]'
+</code></pre>
+<h3 id="reservoir-import"><a class="header" href="#reservoir-import"><code>reservoir import</code></a></h3>
+<p>Import message nodes from a JSON file.</p>
+<pre><code class="language-bash">reservoir import &lt;FILE&gt;
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;FILE&gt;</code> - Path to the JSON file to import</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Import from a file
+reservoir import my_conversations.json
+
+# Import from a backup
+reservoir import backup_2024_01_15.json
+</code></pre>
+<h3 id="reservoir-view"><a class="header" href="#reservoir-view"><code>reservoir view</code></a></h3>
+<p>View last x messages in the default partition/instance.</p>
+<pre><code class="language-bash">reservoir view [OPTIONS] &lt;COUNT&gt;
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;COUNT&gt;</code> - Number of messages to display</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-p, --partition &lt;PARTITION&gt;</code> - Partition to view (defaults to "default")</li>
+<li><code>-i, --instance &lt;INSTANCE&gt;</code> - Instance to view (defaults to partition)</li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># View last 10 messages
+reservoir view 10
+
+# View messages from specific partition
+reservoir view --partition alice 5
+
+# View messages from specific instance
+reservoir view --partition alice --instance coding 15
+</code></pre>
+<h3 id="reservoir-ingest"><a class="header" href="#reservoir-ingest"><code>reservoir ingest</code></a></h3>
+<p>Ingest a message from stdin as a user MessageNode.</p>
+<pre><code class="language-bash">reservoir ingest [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-p, --partition &lt;PARTITION&gt;</code> - Partition to save the message in (defaults to "default")</li>
+<li><code>-i, --instance &lt;INSTANCE&gt;</code> - Instance to save the message in (defaults to partition)</li>
+<li><code>--role &lt;ROLE&gt;</code> - Role to assign to the message (defaults to "user")</li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Ingest a user message
+echo "How do I implement a binary search tree?" | reservoir ingest
+
+# Ingest to specific partition/instance
+echo "What are design patterns?" | reservoir ingest --partition alice --instance coding
+
+# Ingest as assistant message
+echo "Here's how to implement a BST..." | reservoir ingest --role assistant
+
+# Ingest from file
+cat question.txt | reservoir ingest --partition research --instance ai
+</code></pre>
+<h3 id="reservoir-config"><a class="header" href="#reservoir-config"><code>reservoir config</code></a></h3>
+<p>Set or get default configuration values with your config.toml.</p>
+<pre><code class="language-bash">reservoir config [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-s, --set &lt;SET&gt;</code> - Set a configuration value. Use the format key=value. <code>reservoir config --set model=gpt-4-turbo</code></li>
+<li><code>-g, --get &lt;GET&gt;</code> - Get your current configuration value. <code>reservoir config --get model</code></li>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># View current configuration
+reservoir config --get semantic_context_size
+
+# Set configuration value
+reservoir config --set semantic_context_size=20
+
+# Set Neo4j connection
+reservoir config --set neo4j_uri=bolt://localhost:7687
+</code></pre>
+<h3 id="reservoir-replay"><a class="header" href="#reservoir-replay"><code>reservoir replay</code></a></h3>
+<p>Replay embeddings process.</p>
+<pre><code class="language-bash">reservoir replay [MODEL]
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>[MODEL]</code> - Partition to replay (defaults to "default")</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-h, --help</code> - Print help</li>
+<li><code>-V, --version</code> - Print version</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Replay embeddings for default model
+reservoir replay
+
+# Replay for specific model
+reservoir replay bge-large-en-v15
+</code></pre>
+<h2 id="common-workflows"><a class="header" href="#common-workflows">Common Workflows</a></h2>
+<h3 id="daily-usage"><a class="header" href="#daily-usage">Daily Usage</a></h3>
+<pre><code class="language-bash"># Start the server
+reservoir start
+
+# View recent conversations
+reservoir view 10
+
+# Search for specific topics
+reservoir search --semantic "machine learning"
+
+# Add a note or question
+echo "Remember to implement error handling" | reservoir ingest
+</code></pre>
+<h3 id="data-management"><a class="header" href="#data-management">Data Management</a></h3>
+<pre><code class="language-bash"># Export all data for backup
+reservoir export &gt; backup_$(date +%Y%m%d).json
+
+# Import previous backup
+reservoir import backup_20240115.json
+
+# View configuration
+reservoir config --get semantic_context_size
+</code></pre>
+<h3 id="development-and-testing"><a class="header" href="#development-and-testing">Development and Testing</a></h3>
+<pre><code class="language-bash"># Start in Ollama mode for local testing
+reservoir start --ollama
+
+# Search with debugging
+reservoir search --link --deduplicate --semantic "API design"
+
+# Replay embeddings after model changes
+reservoir replay bge-large-en-v15
+</code></pre>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<p>The CLI respects configuration from:</p>
+<ol>
+<li>Command-line arguments (highest priority)</li>
+<li>Configuration file (<code>~/.config/reservoir/reservoir.toml</code>)</li>
+<li>Environment variables</li>
+<li>Default values (lowest priority)</li>
+</ol>
+<p>See <a href="../deployment/environment.html">Environment Variables</a> for detailed configuration options.</p>
+<h2 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h2>
+<p>The CLI provides helpful error messages for common issues:</p>
+<ul>
+<li><strong>Connection errors</strong>: Check if Neo4j is running</li>
+<li><strong>Permission errors</strong>: Verify file permissions for import/export</li>
+<li><strong>Invalid arguments</strong>: Use <code>--help</code> for correct syntax</li>
+<li><strong>Configuration errors</strong>: Verify config file format</li>
+</ul>
+<h2 id="integration-with-scripts"><a class="header" href="#integration-with-scripts">Integration with Scripts</a></h2>
+<p>The CLI is designed to work well in scripts and automation:</p>
+<pre><code class="language-bash">#!/bin/bash
+# Backup and restart script
+
+# Export current data
+reservoir export &gt; "backup_$(date +%Y%m%d_%H%M%S).json"
+
+# Restart with fresh embeddings
+reservoir replay
+
+# Start the server
+reservoir start
+</code></pre>
 
                     </main>
 

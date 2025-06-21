@@ -284,24 +284,24 @@ The truncation algorithm preserves:
 
 After receiving the AI's response:
 
-```149:162:src/handler/completions.rs
-    let message_node = chat_response.choices.first().unwrap().message.clone();
-    let embedding =
-        get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
-    let message_node = MessageNode::from_message(
-        &message_node,
-        trace_id.as_str(),
-        partition,
-        instance,
-        embedding,
-    );
-    save_message_node(connect, &message_node, &embedding_info)
-        .await
-        .expect("Failed to save message node");
+```rs
+let message_node = chat_response.choices.first().unwrap().message.clone();
+let embedding =
+    get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
+let message_node = MessageNode::from_message(
+    &message_node,
+    trace_id.as_str(),
+    partition,
+    instance,
+    embedding,
+);
+save_message_node(connect, &message_node, &embedding_info)
+    .await
+    .expect("Failed to save message node");
 
-    connect_synapses(connect)
-        .await
-        .expect("Failed to connect synapses");
+connect_synapses(connect)
+    .await
+    .expect("Failed to connect synapses");
 ```
 
 1. The AI's response is stored with its own embedding
@@ -390,7 +390,7 @@ flowchart TD
 ## Key Configuration Parameters
 
 ### Context Size
-```116:118:src/repos/config.rs
+```rs
 pub fn get_context_size() -> usize {
     get_config().semantic_context_size.unwrap_or(15)
 }
@@ -399,25 +399,24 @@ pub fn get_context_size() -> usize {
 The semantic context size (default: 15) determines how many semantically similar messages are retrieved and potentially included in the context.
 
 ### Recent Messages Limit
-```25:25:src/handler/completions.rs
+```rs
 const LAST_MESSAGES_LIMIT: usize = 15;
 ```
 
 The system retrieves up to 15 most recent messages from the same partition/instance for chronological context.
 
 ### Embedding Model
-```95:95:src/handler/completions.rs
-    let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
+```rs
+let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
 ```
 
-Reservoir uses BGE-Large-EN-v1.5 for generating embeddings, providing high-quality semantic representations.
+Reservoir by default uses a local instace of BGE-Large-EN-v1.5 for generating embeddings, for providing high-quality semantic representations.
 
 ### Synapse Threshold
-```297:300:src/repos/message/neo4j_message.rs
-            MATCH (m1:MessageNode)-[r:SYNAPSE]->(m2:MessageNode)
-            WHERE r.score < 0.85
-            DELETE r
-        "#;
+```cypher
+MATCH (m1:MessageNode)-[r:SYNAPSE]->(m2:MessageNode)
+WHERE r.score < 0.85
+DELETE r
 ```
 
 Only relationships with cosine similarity scores above 0.85 are maintained as synapses, ensuring high-quality semantic connections.
@@ -445,7 +444,7 @@ Every request gets a unique trace ID that:
 - **Supports parallel processing** of multiple simultaneous requests
 
 ### System Context Compression
-```22:41:src/utils/mod.rs
+```rs
 pub fn compress_system_context(messages: &[Message]) -> Vec<Message> {
     let first_index = messages.iter().position(|m| m.role == "system");
     let last_index = messages.iter().rposition(|m| m.role == "system");

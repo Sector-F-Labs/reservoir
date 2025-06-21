@@ -413,23 +413,23 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 </ul>
 <h3 id="7-response-storage-and-synapse-building"><a class="header" href="#7-response-storage-and-synapse-building">7. Response Storage and Synapse Building</a></h3>
 <p>After receiving the AI's response:</p>
-<pre><code class="language-149:162:src/handler/completions.rs">    let message_node = chat_response.choices.first().unwrap().message.clone();
-    let embedding =
-        get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
-    let message_node = MessageNode::from_message(
-        &amp;message_node,
-        trace_id.as_str(),
-        partition,
-        instance,
-        embedding,
-    );
-    save_message_node(connect, &amp;message_node, &amp;embedding_info)
-        .await
-        .expect("Failed to save message node");
+<pre><code class="language-rs">let message_node = chat_response.choices.first().unwrap().message.clone();
+let embedding =
+    get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
+let message_node = MessageNode::from_message(
+    &amp;message_node,
+    trace_id.as_str(),
+    partition,
+    instance,
+    embedding,
+);
+save_message_node(connect, &amp;message_node, &amp;embedding_info)
+    .await
+    .expect("Failed to save message node");
 
-    connect_synapses(connect)
-        .await
-        .expect("Failed to connect synapses");
+connect_synapses(connect)
+    .await
+    .expect("Failed to connect synapses");
 </code></pre>
 <ol>
 <li>The AI's response is stored with its own embedding</li>
@@ -514,24 +514,23 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 </pre>
 <h2 id="key-configuration-parameters"><a class="header" href="#key-configuration-parameters">Key Configuration Parameters</a></h2>
 <h3 id="context-size"><a class="header" href="#context-size">Context Size</a></h3>
-<pre><code class="language-116:118:src/repos/config.rs">pub fn get_context_size() -&gt; usize {
+<pre><code class="language-rs">pub fn get_context_size() -&gt; usize {
     get_config().semantic_context_size.unwrap_or(15)
 }
 </code></pre>
 <p>The semantic context size (default: 15) determines how many semantically similar messages are retrieved and potentially included in the context.</p>
 <h3 id="recent-messages-limit"><a class="header" href="#recent-messages-limit">Recent Messages Limit</a></h3>
-<pre><code class="language-25:25:src/handler/completions.rs">const LAST_MESSAGES_LIMIT: usize = 15;
+<pre><code class="language-rs">const LAST_MESSAGES_LIMIT: usize = 15;
 </code></pre>
 <p>The system retrieves up to 15 most recent messages from the same partition/instance for chronological context.</p>
 <h3 id="embedding-model"><a class="header" href="#embedding-model">Embedding Model</a></h3>
-<pre><code class="language-95:95:src/handler/completions.rs">    let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
+<pre><code class="language-rs">let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
 </code></pre>
-<p>Reservoir uses BGE-Large-EN-v1.5 for generating embeddings, providing high-quality semantic representations.</p>
+<p>Reservoir by default uses a local instace of BGE-Large-EN-v1.5 for generating embeddings, for providing high-quality semantic representations.</p>
 <h3 id="synapse-threshold"><a class="header" href="#synapse-threshold">Synapse Threshold</a></h3>
-<pre><code class="language-297:300:src/repos/message/neo4j_message.rs">            MATCH (m1:MessageNode)-[r:SYNAPSE]-&gt;(m2:MessageNode)
-            WHERE r.score &lt; 0.85
-            DELETE r
-        "#;
+<pre><code class="language-cypher">MATCH (m1:MessageNode)-[r:SYNAPSE]-&gt;(m2:MessageNode)
+WHERE r.score &lt; 0.85
+DELETE r
 </code></pre>
 <p>Only relationships with cosine similarity scores above 0.85 are maintained as synapses, ensuring high-quality semantic connections.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key Concepts</a></h2>
@@ -559,7 +558,7 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 <li><strong>Supports parallel processing</strong> of multiple simultaneous requests</li>
 </ul>
 <h3 id="system-context-compression"><a class="header" href="#system-context-compression">System Context Compression</a></h3>
-<pre><code class="language-22:41:src/utils/mod.rs">pub fn compress_system_context(messages: &amp;[Message]) -&gt; Vec&lt;Message&gt; {
+<pre><code class="language-rs">pub fn compress_system_context(messages: &amp;[Message]) -&gt; Vec&lt;Message&gt; {
     let first_index = messages.iter().position(|m| m.role == "system");
     let last_index = messages.iter().rposition(|m| m.role == "system");
 
