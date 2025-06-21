@@ -1,64 +1,63 @@
 # Introduction
 
-Reservoir is your helpful memory for AI conversations. It sits between your app and any OpenAI-compatible Chat Completions API, making it easier to have rich, ongoing conversations with your favorite language models from multiple providers.
 
-## What is Reservoir?
+Reservoir is a stateful proxy server for OpenAI-compatible Chat Completions APIs. It maintains conversation history in a Neo4j graph database and automatically injects relevant context into requests based on semantic similarity and recency.
 
-When you use any [OpenAI-compatible Chat Completions API](https://platform.openai.com/docs/guides/chat), you need to send the full conversation history with every request. For example:
+![Reservoir](logo_256.png)
 
-```json
-[
-  {"role": "user", "content": "What is 1 + 1?"},
-  {"role": "assistant", "content": "2"},
-  {"role": "user", "content": "What is the answer times 3?"}
-]
-```
+## Problem Statement
 
-If you only send the last question, the model won't know what "the answer" refers to. You have to keep track of all previous messages and include them every time.
+OpenAI-compatible Chat Completions APIs are stateless. Each request must include the complete conversation history for the model to maintain context. This creates several technical challenges:
 
-**This can get tricky as conversations grow!**
+1. **Manual conversation state management**: Applications must implement their own conversation storage and retrieval systems
+2. **Token limit constraints**: As conversations grow, they exceed model token limits
+3. **Inability to reference semantically related conversations**: Previous relevant discussions cannot be automatically incorporated
+4. **No persistent storage**: Conversation data is lost when applications terminate
 
-Reservoir acts as a smart proxy: it automatically stores your chat history and inserts the right context into each request. You just talk to any OpenAI-compatible API as usual and Reservoir handles the memory, context, and even finds other relevant messages from your past conversations to help the model give better answers.
+## Technical Solution
 
-## Why Use Reservoir?
+Reservoir addresses these limitations by acting as an intermediary layer that:
 
-- **Own your AI history**: All your conversations are stored locally, never in the cloud.
-- **Search and recall**: Instantly find previous chats, ideas, or code snippets from your AI interactions.
-- **Enrich context**: Automatically inject relevant history into new prompts for more coherent, personalized responses.
-- **Visualize conversations**: See how your discussions branch and connect over time.
-- **Stay private**: Your data never leaves your device.
+- **Stores all messages** in a Neo4j graph database with full conversation history
+- **Computes embeddings** using BGE-Large-EN-v1.5 for semantic similarity calculation
+- **Creates semantic relationships** (synapses) between messages when cosine similarity exceeds 0.85
+- **Automatically injects relevant context** into new requests based on similarity and recency
+- **Manages token limits** through intelligent truncation while preserving system and user messages
+
+## Architecture Overview
+
+The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target LLM provider. All conversation data remains local to the deployment environment.
+
+## Data Model
+
+Conversations are stored as a graph structure:
+- **MessageNode**: Individual messages with metadata and embeddings
+- **EmbeddingNode**: Vector representations for semantic search operations
+- **SYNAPSE**: Relationships between semantically similar messages
+- **RESPONDED_WITH**: Sequential conversation flow relationships
+- **HAS_EMBEDDING**: Message-to-embedding associations
 
 ## Supported Providers
 
-**Supported Providers:**
-- OpenAI (GPT-4, GPT-4o, GPT-3.5-turbo, etc.)
-- Ollama (llama3.2, gemma3, and any local models)
-- Mistral AI (mistral-large-2402, etc.)
-- Google Gemini (gemini-2.0-flash, etc.)
-- Any OpenAI-compatible API endpoint
+The system supports multiple LLM providers through a unified interface:
+- OpenAI (gpt-4, gpt-4o, gpt-3.5-turbo)
+- Ollama (local model execution)
+- Mistral AI
+- Google Gemini
+- Any OpenAI-compatible endpoint
 
-## Key Benefits
+## Implementation Details
 
-- **No more manual history management**: Reservoir automatically tracks conversation context
-- **Automatic context enrichment**: Relevant past conversations are injected into new requests
-- **Your data stays private and local**: Everything is stored on your device
-- **Multi-app support**: Use one Reservoir instance across multiple applications
-- **Flexible organization**: Partition conversations by app, project, or any context you choose
-
-## How It Works
-
-Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual LLM service. Every interaction is stored on your device, building a personal knowledge base that never leaves your network.
-
-A single thread of conversation can span multiple models without losing context, allowing you to seamlessly switch between different AI providers while maintaining the flow of your discussion.
+The server initializes a vector index in Neo4j for efficient semantic search and listens on a configurable port (default: 3017). Conversations are organized using a partition/instance hierarchy enabling multi-tenant isolation.
 
 ![Conversation Graph View](./conversation_graph_view.png)
 
 ## Use Cases
 
-- **Chat Applications**: Add memory to any chat interface
-- **Development Tools**: Keep context across coding sessions
-- **Research**: Build a personal knowledge base from AI interactions
-- **Multi-Provider Workflows**: Switch between different AI models seamlessly
-- **Team Collaboration**: Share conversation contexts across team members
+- **Stateful chat applications**: Eliminate manual conversation state management
+- **Cross-session context**: Maintain context across application restarts
+- **Semantic search**: Retrieve relevant historical conversations
+- **Multi-provider workflows**: Maintain context when switching between LLM providers
+- **Research and development**: Build persistent knowledge bases from AI interactions
 
-Ready to get started? Check out the [Quick Start](./quick-start.md) guide!
+For implementation details, see the [Quick Start](./quick-start.md) guide.

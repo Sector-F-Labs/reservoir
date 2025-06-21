@@ -161,56 +161,57 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>Reservoir is your helpful memory for AI conversations. It sits between your app and any OpenAI-compatible Chat Completions API, making it easier to have rich, ongoing conversations with your favorite language models from multiple providers.</p>
-<h2 id="what-is-reservoir"><a class="header" href="#what-is-reservoir">What is Reservoir?</a></h2>
-<p>When you use any <a href="https://platform.openai.com/docs/guides/chat">OpenAI-compatible Chat Completions API</a>, you need to send the full conversation history with every request. For example:</p>
-<pre><code class="language-json">[
-  {"role": "user", "content": "What is 1 + 1?"},
-  {"role": "assistant", "content": "2"},
-  {"role": "user", "content": "What is the answer times 3?"}
-]
-</code></pre>
-<p>If you only send the last question, the model won't know what "the answer" refers to. You have to keep track of all previous messages and include them every time.</p>
-<p><strong>This can get tricky as conversations grow!</strong></p>
-<p>Reservoir acts as a smart proxy: it automatically stores your chat history and inserts the right context into each request. You just talk to any OpenAI-compatible API as usual and Reservoir handles the memory, context, and even finds other relevant messages from your past conversations to help the model give better answers.</p>
-<h2 id="why-use-reservoir"><a class="header" href="#why-use-reservoir">Why Use Reservoir?</a></h2>
+<p>Reservoir is a stateful proxy server for OpenAI-compatible Chat Completions APIs. It maintains conversation history in a Neo4j graph database and automatically injects relevant context into requests based on semantic similarity and recency.</p>
+<p><img src="logo_256.png" alt="Reservoir" /></p>
+<h2 id="problem-statement"><a class="header" href="#problem-statement">Problem Statement</a></h2>
+<p>OpenAI-compatible Chat Completions APIs are stateless. Each request must include the complete conversation history for the model to maintain context. This creates several technical challenges:</p>
+<ol>
+<li><strong>Manual conversation state management</strong>: Applications must implement their own conversation storage and retrieval systems</li>
+<li><strong>Token limit constraints</strong>: As conversations grow, they exceed model token limits</li>
+<li><strong>Inability to reference semantically related conversations</strong>: Previous relevant discussions cannot be automatically incorporated</li>
+<li><strong>No persistent storage</strong>: Conversation data is lost when applications terminate</li>
+</ol>
+<h2 id="technical-solution"><a class="header" href="#technical-solution">Technical Solution</a></h2>
+<p>Reservoir addresses these limitations by acting as an intermediary layer that:</p>
 <ul>
-<li><strong>Own your AI history</strong>: All your conversations are stored locally, never in the cloud.</li>
-<li><strong>Search and recall</strong>: Instantly find previous chats, ideas, or code snippets from your AI interactions.</li>
-<li><strong>Enrich context</strong>: Automatically inject relevant history into new prompts for more coherent, personalized responses.</li>
-<li><strong>Visualize conversations</strong>: See how your discussions branch and connect over time.</li>
-<li><strong>Stay private</strong>: Your data never leaves your device.</li>
+<li><strong>Stores all messages</strong> in a Neo4j graph database with full conversation history</li>
+<li><strong>Computes embeddings</strong> using BGE-Large-EN-v1.5 for semantic similarity calculation</li>
+<li><strong>Creates semantic relationships</strong> (synapses) between messages when cosine similarity exceeds 0.85</li>
+<li><strong>Automatically injects relevant context</strong> into new requests based on similarity and recency</li>
+<li><strong>Manages token limits</strong> through intelligent truncation while preserving system and user messages</li>
+</ul>
+<h2 id="architecture-overview"><a class="header" href="#architecture-overview">Architecture Overview</a></h2>
+<p>The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target LLM provider. All conversation data remains local to the deployment environment.</p>
+<h2 id="data-model"><a class="header" href="#data-model">Data Model</a></h2>
+<p>Conversations are stored as a graph structure:</p>
+<ul>
+<li><strong>MessageNode</strong>: Individual messages with metadata and embeddings</li>
+<li><strong>EmbeddingNode</strong>: Vector representations for semantic search operations</li>
+<li><strong>SYNAPSE</strong>: Relationships between semantically similar messages</li>
+<li><strong>RESPONDED_WITH</strong>: Sequential conversation flow relationships</li>
+<li><strong>HAS_EMBEDDING</strong>: Message-to-embedding associations</li>
 </ul>
 <h2 id="supported-providers"><a class="header" href="#supported-providers">Supported Providers</a></h2>
-<p><strong>Supported Providers:</strong></p>
+<p>The system supports multiple LLM providers through a unified interface:</p>
 <ul>
-<li>OpenAI (GPT-4, GPT-4o, GPT-3.5-turbo, etc.)</li>
-<li>Ollama (llama3.2, gemma3, and any local models)</li>
-<li>Mistral AI (mistral-large-2402, etc.)</li>
-<li>Google Gemini (gemini-2.0-flash, etc.)</li>
-<li>Any OpenAI-compatible API endpoint</li>
+<li>OpenAI (gpt-4, gpt-4o, gpt-3.5-turbo)</li>
+<li>Ollama (local model execution)</li>
+<li>Mistral AI</li>
+<li>Google Gemini</li>
+<li>Any OpenAI-compatible endpoint</li>
 </ul>
-<h2 id="key-benefits"><a class="header" href="#key-benefits">Key Benefits</a></h2>
-<ul>
-<li><strong>No more manual history management</strong>: Reservoir automatically tracks conversation context</li>
-<li><strong>Automatic context enrichment</strong>: Relevant past conversations are injected into new requests</li>
-<li><strong>Your data stays private and local</strong>: Everything is stored on your device</li>
-<li><strong>Multi-app support</strong>: Use one Reservoir instance across multiple applications</li>
-<li><strong>Flexible organization</strong>: Partition conversations by app, project, or any context you choose</li>
-</ul>
-<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
-<p>Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual LLM service. Every interaction is stored on your device, building a personal knowledge base that never leaves your network.</p>
-<p>A single thread of conversation can span multiple models without losing context, allowing you to seamlessly switch between different AI providers while maintaining the flow of your discussion.</p>
+<h2 id="implementation-details"><a class="header" href="#implementation-details">Implementation Details</a></h2>
+<p>The server initializes a vector index in Neo4j for efficient semantic search and listens on a configurable port (default: 3017). Conversations are organized using a partition/instance hierarchy enabling multi-tenant isolation.</p>
 <p><img src="./conversation_graph_view.png" alt="Conversation Graph View" /></p>
 <h2 id="use-cases"><a class="header" href="#use-cases">Use Cases</a></h2>
 <ul>
-<li><strong>Chat Applications</strong>: Add memory to any chat interface</li>
-<li><strong>Development Tools</strong>: Keep context across coding sessions</li>
-<li><strong>Research</strong>: Build a personal knowledge base from AI interactions</li>
-<li><strong>Multi-Provider Workflows</strong>: Switch between different AI models seamlessly</li>
-<li><strong>Team Collaboration</strong>: Share conversation contexts across team members</li>
+<li><strong>Stateful chat applications</strong>: Eliminate manual conversation state management</li>
+<li><strong>Cross-session context</strong>: Maintain context across application restarts</li>
+<li><strong>Semantic search</strong>: Retrieve relevant historical conversations</li>
+<li><strong>Multi-provider workflows</strong>: Maintain context when switching between LLM providers</li>
+<li><strong>Research and development</strong>: Build persistent knowledge bases from AI interactions</li>
 </ul>
-<p>Ready to get started? Check out the <a href="./quick-start.html">Quick Start</a> guide!</p>
+<p>For implementation details, see the <a href="./quick-start.html">Quick Start</a> guide.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
 <p>Welcome to Reservoir! This section will guide you through everything you need to get up and running with Reservoir quickly and efficiently.</p>
 <h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What You'll Learn</a></h2>
@@ -850,7 +851,7 @@ gpty "How do they relate to what we discussed about machine learning earlier?"
 gpty "Show me some advanced Rust patterns"
 # Reservoir will remember you're learning Rust and provide appropriate context
 </code></pre>
-<h2 id="how-it-works-1"><a class="header" href="#how-it-works-1">How It Works</a></h2>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
 <p>Here's what happens when you use the integrated function:</p>
 <ol>
 <li><strong>Query Ingestion</strong>: Your question is stored in Reservoir</li>
@@ -3051,7 +3052,7 @@ reservoir start
 <li><strong>Resource utilization</strong>: Memory and CPU monitoring</li>
 </ul>
 <p>This architecture provides a robust, scalable foundation for AI conversation management while maintaining transparency and compatibility with existing applications.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="data-model"><a class="header" href="#data-model">Data Model</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="data-model-1"><a class="header" href="#data-model-1">Data Model</a></h1>
 <p>Reservoir uses Neo4j as its graph database to store conversations and their relationships. This section provides a detailed overview of the data model, including nodes, relationships, and how they work together to enable intelligent conversation management.</p>
 <h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
 <p>The data model is designed around the concept of messages as nodes in a graph, with relationships that capture both the conversational flow and semantic similarities. This approach enables powerful querying capabilities for context enrichment and conversation analysis.</p>
@@ -5917,7 +5918,7 @@ NEO4J_PASSWORD="your-password"
 <div style="break-before: page; page-break-before: always;"></div><h1 id="frequently-asked-questions"><a class="header" href="#frequently-asked-questions">Frequently Asked Questions</a></h1>
 <p>This section addresses common questions and issues you might encounter while using Reservoir.</p>
 <h2 id="general-questions"><a class="header" href="#general-questions">General Questions</a></h2>
-<h3 id="what-is-reservoir-1"><a class="header" href="#what-is-reservoir-1">What is Reservoir?</a></h3>
+<h3 id="what-is-reservoir"><a class="header" href="#what-is-reservoir">What is Reservoir?</a></h3>
 <p>Reservoir is a memory system for AI conversations that acts as a smart proxy between your applications and OpenAI-compatible APIs. It automatically stores conversation history and enriches new requests with relevant context from past conversations.</p>
 <h3 id="does-reservoir-support-streaming-responses"><a class="header" href="#does-reservoir-support-streaming-responses">Does Reservoir support streaming responses?</a></h3>
 <p>No, streaming responses are not currently supported. All requests are handled in a non-streaming manner. The response is returned once the complete message is received from the AI provider.</p>
@@ -6427,7 +6428,7 @@ Brief description of changes
 </ul>
 <h2 id="code-of-conduct"><a class="header" href="#code-of-conduct">Code of Conduct</a></h2>
 <p>Please be respectful and constructive in all interactions. We're here to build something useful together!</p>
-<h2 id="architecture-overview"><a class="header" href="#architecture-overview">Architecture Overview</a></h2>
+<h2 id="architecture-overview-1"><a class="header" href="#architecture-overview-1">Architecture Overview</a></h2>
 <p>Before making significant changes, familiarize yourself with:</p>
 <ul>
 <li><a href="development/../architecture/overview.html">System Architecture</a></li>
