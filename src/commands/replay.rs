@@ -1,5 +1,5 @@
 use anyhow::Error;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use crate::{
     args::ReplaySubCommand,
@@ -33,7 +33,7 @@ pub async fn execute(model: &str) -> Result<(), Error> {
                             );
                         }
                         Err(e) => {
-                            error!(
+                            eprintln!(
                                 "Failed to attach embeddings to message with trace ID: {}. Error: {}",
                                 message.trace_id, e
                             );
