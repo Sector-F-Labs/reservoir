@@ -162,7 +162,178 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="python-with-openai-library"><a class="header" href="#python-with-openai-library">Python with OpenAI Library</a></h1>
+                        <h1 id="python-integration"><a class="header" href="#python-integration">Python Integration</a></h1>
+<p>Reservoir works seamlessly with the popular OpenAI Python library. You simply point the client to your Reservoir instance instead of directly to OpenAI, and Reservoir handles all the memory and context management automatically.</p>
+<h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
+<p>First, install the OpenAI Python library if you haven't already:</p>
+<pre><code class="language-bash">pip install openai
+</code></pre>
+<h2 id="basic-configuration"><a class="header" href="#basic-configuration">Basic Configuration</a></h2>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+INSTANCE = "my-application"
+PARTITION = os.getenv("USER")
+RESERVOIR_PORT = os.getenv('RESERVOIR_PORT', '3017')
+RESERVOIR_BASE_URL = f"http://localhost:{RESERVOIR_PORT}/v1/partition/{PARTITION}/instance/{INSTANCE}"
+</code></pre>
+<h2 id="openai-models"><a class="header" href="#openai-models">OpenAI Models</a></h2>
+<h3 id="basic-usage-with-openai"><a class="header" href="#basic-usage-with-openai">Basic Usage with OpenAI</a></h3>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+INSTANCE = "my-application"
+PARTITION = os.getenv("USER")
+RESERVOIR_PORT = os.getenv('RESERVOIR_PORT', '3017')
+RESERVOIR_BASE_URL = f"http://localhost:{RESERVOIR_PORT}/v1/partition/{PARTITION}/instance/{INSTANCE}"
+
+client = OpenAI(
+    base_url=RESERVOIR_BASE_URL,
+    api_key=os.environ.get("OPENAI_API_KEY")
+)
+
+completion = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {
+            "role": "user",
+            "content": "Write a one-sentence bedtime story about a curious robot."
+        }
+    ]
+)
+print(completion.choices[0].message.content)
+</code></pre>
+<h3 id="with-web-search-options"><a class="header" href="#with-web-search-options">With Web Search Options</a></h3>
+<p>For models that support web search (like <code>gpt-4o-search-preview</code>), you can enable web search capabilities:</p>
+<pre><code class="language-python">completion = client.chat.completions.create(
+    model="gpt-4o-search-preview",
+    messages=[
+        {
+            "role": "user",
+            "content": "What are the latest trends in machine learning?"
+        }
+    ],
+    extra_body={
+        "web_search_options": {
+            "enabled": True,
+            "max_results": 5
+        }
+    }
+)
+</code></pre>
+<h2 id="ollama-models-local"><a class="header" href="#ollama-models-local">Ollama Models (Local)</a></h2>
+<h3 id="using-ollama-no-api-key-required"><a class="header" href="#using-ollama-no-api-key-required">Using Ollama (No API Key Required)</a></h3>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+INSTANCE = "my-application"
+PARTITION = os.getenv("USER")
+RESERVOIR_PORT = os.getenv('RESERVOIR_PORT', '3017')
+RESERVOIR_BASE_URL = f"http://localhost:{RESERVOIR_PORT}/v1/partition/{PARTITION}/instance/{INSTANCE}"
+
+client = OpenAI(
+    base_url=RESERVOIR_BASE_URL,
+    api_key="not-needed-for-ollama"  # Ollama doesn't require API keys
+)
+
+completion = client.chat.completions.create(
+    model="llama3.2",  # or "gemma3", or any Ollama model
+    messages=[
+        {
+            "role": "user",
+            "content": "Explain the concept of recursion with a simple example."
+        }
+    ]
+)
+print(completion.choices[0].message.content)
+</code></pre>
+<h2 id="supported-models"><a class="header" href="#supported-models">Supported Models</a></h2>
+<p>Reservoir automatically routes requests to the appropriate provider based on the model name:</p>
+<div class="table-wrapper"><table><thead><tr><th>Model</th><th>Provider</th><th>API Key Required</th></tr></thead><tbody>
+<tr><td><code>gpt-4</code>, <code>gpt-4o</code>, <code>gpt-4o-mini</code>, <code>gpt-3.5-turbo</code></td><td>OpenAI</td><td>Yes (<code>OPENAI_API_KEY</code>)</td></tr>
+<tr><td><code>gpt-4o-search-preview</code></td><td>OpenAI</td><td>Yes (<code>OPENAI_API_KEY</code>)</td></tr>
+<tr><td><code>llama3.2</code>, <code>gemma3</code>, or any custom name</td><td>Ollama</td><td>No</td></tr>
+<tr><td><code>mistral-large-2402</code></td><td>Mistral</td><td>Yes (<code>MISTRAL_API_KEY</code>)</td></tr>
+<tr><td><code>gemini-2.0-flash</code>, <code>gemini-2.5-flash-preview-05-20</code></td><td>Google</td><td>Yes (<code>GEMINI_API_KEY</code>)</td></tr>
+</tbody></table>
+</div>
+<p><strong>Note:</strong> Any model name not explicitly configured will default to using Ollama.</p>
+<h2 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h2>
+<p>You can customize provider endpoints and set API keys using environment variables:</p>
+<pre><code class="language-python">import os
+
+# Set environment variables (or use .env file)
+os.environ['OPENAI_API_KEY'] = 'your-openai-key'
+os.environ['MISTRAL_API_KEY'] = 'your-mistral-key'
+os.environ['GEMINI_API_KEY'] = 'your-gemini-key'
+
+# Custom provider endpoints (optional)
+os.environ['RSV_OPENAI_BASE_URL'] = 'https://api.openai.com/v1/chat/completions'
+os.environ['RSV_OLLAMA_BASE_URL'] = 'http://localhost:11434/v1/chat/completions'
+os.environ['RSV_MISTRAL_BASE_URL'] = 'https://api.mistral.ai/v1/chat/completions'
+</code></pre>
+<h2 id="complete-example"><a class="header" href="#complete-example">Complete Example</a></h2>
+<p>Here's a complete example that demonstrates Reservoir's memory capabilities:</p>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+def setup_reservoir_client():
+    """Setup Reservoir client with proper configuration"""
+    instance = "chat-example"
+    partition = os.getenv("USER", "default")
+    port = os.getenv('RESERVOIR_PORT', '3017')
+    base_url = f"http://localhost:{port}/v1/partition/{partition}/instance/{instance}"
+    
+    return OpenAI(
+        base_url=base_url,
+        api_key=os.environ.get("OPENAI_API_KEY", "not-needed-for-ollama")
+    )
+
+def chat_with_memory(message, model="gpt-4"):
+    """Send a message through Reservoir with automatic memory"""
+    client = setup_reservoir_client()
+    
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "user",
+                "content": message
+            }
+        ]
+    )
+    
+    return completion.choices[0].message.content
+
+# Example conversation that builds context
+if __name__ == "__main__":
+    # First message
+    response1 = chat_with_memory("My name is Alice and I love Python programming.")
+    print("Assistant:", response1)
+    
+    # Second message - Reservoir will automatically include context
+    response2 = chat_with_memory("What programming language do I like?")
+    print("Assistant:", response2)  # Will know you like Python!
+    
+    # Third message - Even more context
+    response3 = chat_with_memory("Can you suggest a project for me?")
+    print("Assistant:", response3)  # Will suggest Python projects for Alice!
+</code></pre>
+<h2 id="benefits-of-using-reservoir"><a class="header" href="#benefits-of-using-reservoir">Benefits of Using Reservoir</a></h2>
+<p>When you use Reservoir with the OpenAI library, you get:</p>
+<ul>
+<li><strong>Automatic Context</strong>: Previous conversations are automatically included</li>
+<li><strong>Cross-Session Memory</strong>: Conversations persist across different Python sessions</li>
+<li><strong>Smart Token Management</strong>: Reservoir handles token limits automatically</li>
+<li><strong>Multi-Provider Support</strong>: Switch between different AI providers seamlessly</li>
+<li><strong>Local Storage</strong>: All your conversation data stays on your device</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ul>
+<li>Learn about <a href="./features/partitioning.html">Partitioning &amp; Organization</a> to organize your conversations</li>
+<li>Check out <a href="./features/token-management.html">Token Management</a> to understand how Reservoir handles context limits</li>
+<li>Explore the <a href="./api/overview.html">API Reference</a> for more advanced usage patterns</li>
+</ul>
 
                     </main>
 
@@ -210,7 +381,6 @@
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="theme/custom.js"></script>
 
 
     </div>

@@ -201,7 +201,7 @@
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
 <p>Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual LLM service. Every interaction is stored on your device, building a personal knowledge base that never leaves your network.</p>
 <p>A single thread of conversation can span multiple models without losing context, allowing you to seamlessly switch between different AI providers while maintaining the flow of your discussion.</p>
-<p><img src="../docs/conversation_graph_view.png" alt="Conversation Graph View" /></p>
+<p><img src="./conversation_graph_view.png" alt="Conversation Graph View" /></p>
 <h2 id="use-cases"><a class="header" href="#use-cases">Use Cases</a></h2>
 <ul>
 <li><strong>Chat Applications</strong>: Add memory to any chat interface</li>
@@ -211,9 +211,28 @@
 <li><strong>Team Collaboration</strong>: Share conversation contexts across team members</li>
 </ul>
 <p>Ready to get started? Check out the <a href="./quick-start.html">Quick Start</a> guide!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
+<p>Welcome to Reservoir! This section will guide you through everything you need to get up and running with Reservoir quickly and efficiently.</p>
+<h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What You'll Learn</a></h2>
+<p>In this section, you'll learn how to:</p>
+<ul>
+<li><strong><a href="./installation.html">Install Reservoir</a></strong> - Set up Reservoir on your system with all prerequisites</li>
+<li><strong><a href="./quick-start.html">Quick Start</a></strong> - Get Reservoir running in minutes with basic configuration</li>
+<li><strong><a href="./first-chat.html">Your First Chat</a></strong> - Send your first AI conversation through Reservoir</li>
+</ul>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before you begin, make sure you have:</p>
+<ul>
+<li>Neo4j database running (local or remote)</li>
+<li>Rust toolchain installed (for building from source)</li>
+<li>API keys for your preferred AI providers (OpenAI, Mistral, etc.)</li>
+</ul>
+<h2 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h2>
+<p>If you run into any issues during setup, check out our <a href="./troubleshooting/common-issues.html">Help &amp; Support</a> section for troubleshooting guides and frequently asked questions.</p>
+<p>Let's get started! 🚀</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
 <p>This guide will walk you through installing and setting up Reservoir on your system.</p>
-<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<h2 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h2>
 <p>Before installing Reservoir, make sure you have the following dependencies installed:</p>
 <h3 id="required-dependencies"><a class="header" href="#required-dependencies">Required Dependencies</a></h3>
 <ol>
@@ -387,7 +406,7 @@ hurl --variable USER="$USER" --variable OPENAI_API_KEY="$OPENAI_API_KEY" hurl/ch
 <li>Verify your API keys are set correctly: <code>echo $OPENAI_API_KEY</code></li>
 <li>Check for extra whitespace or quotes in environment variables</li>
 </ul>
-<h3 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h3>
+<h3 id="getting-help-1"><a class="header" href="#getting-help-1">Getting Help</a></h3>
 <p>If you encounter issues:</p>
 <ol>
 <li>Check the <a href="../troubleshooting/common-issues.html">Troubleshooting</a> section</li>
@@ -532,6 +551,222 @@ export MISTRAL_API_KEY=your-key-here         # Mistral API key
 </code></pre>
 <p>Ready to dive deeper? Check out the <a href="./python-integration.html">Usage Examples</a> or learn about <a href="./chat-gipitty.html">Chat Gipitty Integration</a>!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="your-first-chat"><a class="header" href="#your-first-chat">Your First Chat</a></h1>
+<p>This guide will walk you through sending your first message through Reservoir and demonstrate how its memory and context features work.</p>
+<h2 id="prerequisites-2"><a class="header" href="#prerequisites-2">Prerequisites</a></h2>
+<p>Before starting, make sure you have:</p>
+<ul>
+<li>✅ Reservoir server running (<code>cargo run -- start</code>)</li>
+<li>✅ Neo4j database accessible</li>
+<li>✅ API keys set up (if using cloud providers)</li>
+</ul>
+<h2 id="example-1-testing-with-ollama-local"><a class="header" href="#example-1-testing-with-ollama-local">Example 1: Testing with Ollama (Local)</a></h2>
+<p>Let's start with a local Ollama model since it doesn't require API keys:</p>
+<h3 id="step-1-send-your-first-message"><a class="header" href="#step-1-send-your-first-message">Step 1: Send your first message</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello! My name is Alice and I love programming in Python."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="step-2-ask-a-follow-up-question"><a class="header" href="#step-2-ask-a-follow-up-question">Step 2: Ask a follow-up question</a></h3>
+<p>Now ask something that requires memory of the previous conversation:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "What programming language do I like?"
+            }
+        ]
+    }'
+</code></pre>
+<p><strong>🎉 Magic!</strong> The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
+<h3 id="step-3-continue-the-conversation"><a class="header" href="#step-3-continue-the-conversation">Step 3: Continue the conversation</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Can you suggest a Python project for someone at my skill level?"
+            }
+        ]
+    }'
+</code></pre>
+<p>The AI will make suggestions based on knowing you're Alice who loves Python programming!</p>
+<h2 id="example-2-using-openai-models"><a class="header" href="#example-2-using-openai-models">Example 2: Using OpenAI Models</a></h2>
+<p>If you have an OpenAI API key set up:</p>
+<h3 id="step-1-introduction-with-gpt-4"><a class="header" href="#step-1-introduction-with-gpt-4">Step 1: Introduction with GPT-4</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/gpt-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hi! I am working on a machine learning project about image classification."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="step-2-ask-for-specific-help"><a class="header" href="#step-2-ask-for-specific-help">Step 2: Ask for specific help</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/gpt-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "What neural network architecture would you recommend for my project?"
+            }
+        ]
+    }'
+</code></pre>
+<p>GPT-4 will remember you're working on image classification and provide relevant recommendations!</p>
+<h2 id="example-3-cross-model-conversations"><a class="header" href="#example-3-cross-model-conversations">Example 3: Cross-Model Conversations</a></h2>
+<p>One of Reservoir's unique features is that conversation context can span multiple models:</p>
+<h3 id="step-1-start-with-ollama"><a class="header" href="#step-1-start-with-ollama">Step 1: Start with Ollama</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/cross-model/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "I am learning about quantum computing basics."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="step-2-switch-to-gpt-4"><a class="header" href="#step-2-switch-to-gpt-4">Step 2: Switch to GPT-4</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/cross-model/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Can you explain quantum superposition in more detail?"
+            }
+        ]
+    }'
+</code></pre>
+<p>GPT-4 will know you're learning quantum computing and provide an explanation appropriate to your level!</p>
+<h2 id="understanding-the-results"><a class="header" href="#understanding-the-results">Understanding the Results</a></h2>
+<h3 id="what-reservoir-does-behind-the-scenes"><a class="header" href="#what-reservoir-does-behind-the-scenes">What Reservoir Does Behind the Scenes</a></h3>
+<p>When you send a message, Reservoir:</p>
+<ol>
+<li><strong>Stores your message</strong> in Neo4j with embeddings</li>
+<li><strong>Searches for relevant context</strong> from previous conversations</li>
+<li><strong>Injects relevant history</strong> into your request automatically</li>
+<li><strong>Forwards the enriched request</strong> to the AI provider</li>
+<li><strong>Stores the AI's response</strong> for future context</li>
+</ol>
+<h3 id="viewing-your-conversation-history"><a class="header" href="#viewing-your-conversation-history">Viewing Your Conversation History</a></h3>
+<p>You can see your stored conversations using the CLI:</p>
+<pre><code class="language-bash"># View last 5 messages in the first-chat instance
+cargo run -- view 5 --partition $USER --instance first-chat
+</code></pre>
+<p>Sample output:</p>
+<pre><code>2025-06-21T09:10:01+00:00 [abc123] user: Hello! My name is Alice and I love programming in Python.
+2025-06-21T09:10:02+00:00 [abc123] assistant: Hello Alice! It's great to meet a fellow Python enthusiast...
+2025-06-21T09:11:10+00:00 [def456] user: What programming language do I like?
+2025-06-21T09:11:12+00:00 [def456] assistant: You mentioned that you love programming in Python!
+2025-06-21T09:12:00+00:00 [ghi789] user: Can you suggest a Python project for someone at my skill level?
+</code></pre>
+<h2 id="testing-different-scenarios"><a class="header" href="#testing-different-scenarios">Testing Different Scenarios</a></h2>
+<h3 id="scenario-1-different-partitions"><a class="header" href="#scenario-1-different-partitions">Scenario 1: Different Partitions</a></h3>
+<p>Try organizing conversations by topic using different partitions:</p>
+<pre><code class="language-bash"># Work-related conversations
+curl "http://127.0.0.1:3017/partition/work/instance/coding/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{"model": "gemma3", "messages": [{"role": "user", "content": "I need help debugging a React component."}]}'
+
+# Personal learning
+curl "http://127.0.0.1:3017/partition/personal/instance/learning/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{"model": "gemma3", "messages": [{"role": "user", "content": "I want to learn guitar playing."}]}'
+</code></pre>
+<p>Each partition maintains separate conversation history!</p>
+<h3 id="scenario-2-web-search-integration"><a class="header" href="#scenario-2-web-search-integration">Scenario 2: Web Search Integration</a></h3>
+<p>If using a model that supports web search:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/research/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4o-search-preview",
+        "messages": [{"role": "user", "content": "What are the latest trends in AI development?"}],
+        "web_search_options": {"enabled": true, "max_results": 5}
+    }'
+</code></pre>
+<h2 id="common-issues-and-solutions"><a class="header" href="#common-issues-and-solutions">Common Issues and Solutions</a></h2>
+<h3 id="server-not-responding"><a class="header" href="#server-not-responding">Server Not Responding</a></h3>
+<pre><code class="language-bash"># Check if Reservoir is running
+curl http://127.0.0.1:3017/health
+
+# If not running, start it
+cargo run -- start
+</code></pre>
+<h3 id="model-not-found-error"><a class="header" href="#model-not-found-error">"Model not found" Error</a></h3>
+<ul>
+<li>For Ollama models: Make sure Ollama is running and the model is installed</li>
+<li>For cloud models: Check your API keys are set correctly</li>
+</ul>
+<h3 id="empty-responses"><a class="header" href="#empty-responses">Empty Responses</a></h3>
+<ul>
+<li>Check your internet connection for cloud providers</li>
+<li>Verify the model name is spelled correctly</li>
+<li>Ensure your API key has sufficient credits</li>
+</ul>
+<h2 id="next-steps-2"><a class="header" href="#next-steps-2">Next Steps</a></h2>
+<p>Now that you've sent your first chat, explore these features:</p>
+<ul>
+<li><strong><a href="./python-integration.html">Python Integration</a></strong> - Use Reservoir from Python code</li>
+<li><strong><a href="./features/partitioning.html">Partitioning &amp; Organization</a></strong> - Organize your conversations</li>
+<li><strong><a href="./chat-gipitty.html">Chat Gipitty Integration</a></strong> - Add memory to your existing chat tools</li>
+<li><strong><a href="./api/overview.html">API Reference</a></strong> - Learn about advanced features</li>
+</ul>
+<p><strong>Congratulations!</strong> 🎉 You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="usage--integration"><a class="header" href="#usage--integration">Usage &amp; Integration</a></h1>
+<p>Reservoir is designed to work seamlessly with your existing AI workflows and tools. This section covers various ways to integrate and use Reservoir in your projects.</p>
+<h2 id="integration-options"><a class="header" href="#integration-options">Integration Options</a></h2>
+<h3 id="chat-applications"><a class="header" href="#chat-applications">Chat Applications</a></h3>
+<ul>
+<li><strong><a href="./chat-gipitty.html">Chat Gipitty Integration</a></strong> - Add persistent memory to your Chat Gipitty conversations</li>
+<li><strong><a href="./python-integration.html">Python with OpenAI Library</a></strong> - Use Reservoir with the popular OpenAI Python client</li>
+</ul>
+<h3 id="direct-api-usage"><a class="header" href="#direct-api-usage">Direct API Usage</a></h3>
+<ul>
+<li><strong><a href="./curl-examples.html">Curl Examples</a></strong> - Command-line examples for testing and scripting</li>
+<li><strong><a href="./ollama.html">Ollama Integration</a></strong> - Use Reservoir with local Ollama models</li>
+</ul>
+<h2 id="common-use-cases"><a class="header" href="#common-use-cases">Common Use Cases</a></h2>
+<ul>
+<li><strong>Multi-session conversations</strong> - Maintain context across different chat sessions</li>
+<li><strong>Cross-application memory</strong> - Share conversation history between different tools</li>
+<li><strong>Local AI workflows</strong> - Keep conversations private while using local models</li>
+<li><strong>Research and development</strong> - Build applications that learn from past interactions</li>
+</ul>
+<h2 id="choosing-your-integration"><a class="header" href="#choosing-your-integration">Choosing Your Integration</a></h2>
+<ul>
+<li><strong>New to AI development?</strong> Start with <a href="./chat-gipitty.html">Chat Gipitty Integration</a></li>
+<li><strong>Python developer?</strong> Check out <a href="./python-integration.html">Python with OpenAI Library</a></li>
+<li><strong>Command-line user?</strong> Try the <a href="./curl-examples.html">Curl Examples</a></li>
+<li><strong>Privacy-focused?</strong> Use <a href="./ollama.html">Ollama Integration</a> for fully local conversations</li>
+</ul>
+<p>Each integration method maintains the same core benefits: persistent memory, context enrichment, and seamless AI conversations.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="chat-gipitty-integration"><a class="header" href="#chat-gipitty-integration">Chat Gipitty Integration</a></h1>
 <p>Reservoir was originally designed as a memory system for <a href="https://github.com/divanvisagie/chat-gipitty">Chat Gipitty</a>. This integration gives your cgip conversations persistent memory, context awareness, and the ability to search through your AI interaction history.</p>
 <h2 id="what-you-get"><a class="header" href="#what-you-get">What You Get</a></h2>
@@ -543,7 +778,7 @@ export MISTRAL_API_KEY=your-key-here         # Mistral API key
 <li><strong>Multi-Model Support</strong>: Switch between different AI providers while maintaining context</li>
 </ul>
 <h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
-<h3 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h3>
+<h3 id="prerequisites-3"><a class="header" href="#prerequisites-3">Prerequisites</a></h3>
 <ul>
 <li><a href="https://github.com/divanvisagie/chat-gipitty">Chat Gipitty</a> installed and working</li>
 <li>Reservoir installed and running (see <a href="./installation.html">Installation</a>)</li>
@@ -757,7 +992,7 @@ echo "test" | reservoir ingest
 reservoir view 5
 reservoir search "test"
 </code></pre>
-<h2 id="next-steps-2"><a class="header" href="#next-steps-2">Next Steps</a></h2>
+<h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next Steps</a></h2>
 <ul>
 <li>Explore <a href="./api/overview.html">API Reference</a> to understand Reservoir's capabilities</li>
 <li>Learn about <a href="./features/partitioning.html">Partitioning</a> to organize conversations</li>
@@ -765,9 +1000,695 @@ reservoir search "test"
 <li>See <a href="./troubleshooting/common-issues.html">Troubleshooting</a> if you encounter issues</li>
 </ul>
 <p>The Chat Gipitty integration transforms your AI interactions from isolated conversations into a connected, searchable knowledge base that grows smarter with every interaction.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="python-with-openai-library"><a class="header" href="#python-with-openai-library">Python with OpenAI Library</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="python-integration"><a class="header" href="#python-integration">Python Integration</a></h1>
+<p>Reservoir works seamlessly with the popular OpenAI Python library. You simply point the client to your Reservoir instance instead of directly to OpenAI, and Reservoir handles all the memory and context management automatically.</p>
+<h2 id="setup-1"><a class="header" href="#setup-1">Setup</a></h2>
+<p>First, install the OpenAI Python library if you haven't already:</p>
+<pre><code class="language-bash">pip install openai
+</code></pre>
+<h2 id="basic-configuration"><a class="header" href="#basic-configuration">Basic Configuration</a></h2>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+INSTANCE = "my-application"
+PARTITION = os.getenv("USER")
+RESERVOIR_PORT = os.getenv('RESERVOIR_PORT', '3017')
+RESERVOIR_BASE_URL = f"http://localhost:{RESERVOIR_PORT}/v1/partition/{PARTITION}/instance/{INSTANCE}"
+</code></pre>
+<h2 id="openai-models"><a class="header" href="#openai-models">OpenAI Models</a></h2>
+<h3 id="basic-usage-with-openai"><a class="header" href="#basic-usage-with-openai">Basic Usage with OpenAI</a></h3>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+INSTANCE = "my-application"
+PARTITION = os.getenv("USER")
+RESERVOIR_PORT = os.getenv('RESERVOIR_PORT', '3017')
+RESERVOIR_BASE_URL = f"http://localhost:{RESERVOIR_PORT}/v1/partition/{PARTITION}/instance/{INSTANCE}"
+
+client = OpenAI(
+    base_url=RESERVOIR_BASE_URL,
+    api_key=os.environ.get("OPENAI_API_KEY")
+)
+
+completion = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {
+            "role": "user",
+            "content": "Write a one-sentence bedtime story about a curious robot."
+        }
+    ]
+)
+print(completion.choices[0].message.content)
+</code></pre>
+<h3 id="with-web-search-options"><a class="header" href="#with-web-search-options">With Web Search Options</a></h3>
+<p>For models that support web search (like <code>gpt-4o-search-preview</code>), you can enable web search capabilities:</p>
+<pre><code class="language-python">completion = client.chat.completions.create(
+    model="gpt-4o-search-preview",
+    messages=[
+        {
+            "role": "user",
+            "content": "What are the latest trends in machine learning?"
+        }
+    ],
+    extra_body={
+        "web_search_options": {
+            "enabled": True,
+            "max_results": 5
+        }
+    }
+)
+</code></pre>
+<h2 id="ollama-models-local"><a class="header" href="#ollama-models-local">Ollama Models (Local)</a></h2>
+<h3 id="using-ollama-no-api-key-required"><a class="header" href="#using-ollama-no-api-key-required">Using Ollama (No API Key Required)</a></h3>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+INSTANCE = "my-application"
+PARTITION = os.getenv("USER")
+RESERVOIR_PORT = os.getenv('RESERVOIR_PORT', '3017')
+RESERVOIR_BASE_URL = f"http://localhost:{RESERVOIR_PORT}/v1/partition/{PARTITION}/instance/{INSTANCE}"
+
+client = OpenAI(
+    base_url=RESERVOIR_BASE_URL,
+    api_key="not-needed-for-ollama"  # Ollama doesn't require API keys
+)
+
+completion = client.chat.completions.create(
+    model="llama3.2",  # or "gemma3", or any Ollama model
+    messages=[
+        {
+            "role": "user",
+            "content": "Explain the concept of recursion with a simple example."
+        }
+    ]
+)
+print(completion.choices[0].message.content)
+</code></pre>
+<h2 id="supported-models"><a class="header" href="#supported-models">Supported Models</a></h2>
+<p>Reservoir automatically routes requests to the appropriate provider based on the model name:</p>
+<div class="table-wrapper"><table><thead><tr><th>Model</th><th>Provider</th><th>API Key Required</th></tr></thead><tbody>
+<tr><td><code>gpt-4</code>, <code>gpt-4o</code>, <code>gpt-4o-mini</code>, <code>gpt-3.5-turbo</code></td><td>OpenAI</td><td>Yes (<code>OPENAI_API_KEY</code>)</td></tr>
+<tr><td><code>gpt-4o-search-preview</code></td><td>OpenAI</td><td>Yes (<code>OPENAI_API_KEY</code>)</td></tr>
+<tr><td><code>llama3.2</code>, <code>gemma3</code>, or any custom name</td><td>Ollama</td><td>No</td></tr>
+<tr><td><code>mistral-large-2402</code></td><td>Mistral</td><td>Yes (<code>MISTRAL_API_KEY</code>)</td></tr>
+<tr><td><code>gemini-2.0-flash</code>, <code>gemini-2.5-flash-preview-05-20</code></td><td>Google</td><td>Yes (<code>GEMINI_API_KEY</code>)</td></tr>
+</tbody></table>
+</div>
+<p><strong>Note:</strong> Any model name not explicitly configured will default to using Ollama.</p>
+<h2 id="environment-variables-2"><a class="header" href="#environment-variables-2">Environment Variables</a></h2>
+<p>You can customize provider endpoints and set API keys using environment variables:</p>
+<pre><code class="language-python">import os
+
+# Set environment variables (or use .env file)
+os.environ['OPENAI_API_KEY'] = 'your-openai-key'
+os.environ['MISTRAL_API_KEY'] = 'your-mistral-key'
+os.environ['GEMINI_API_KEY'] = 'your-gemini-key'
+
+# Custom provider endpoints (optional)
+os.environ['RSV_OPENAI_BASE_URL'] = 'https://api.openai.com/v1/chat/completions'
+os.environ['RSV_OLLAMA_BASE_URL'] = 'http://localhost:11434/v1/chat/completions'
+os.environ['RSV_MISTRAL_BASE_URL'] = 'https://api.mistral.ai/v1/chat/completions'
+</code></pre>
+<h2 id="complete-example"><a class="header" href="#complete-example">Complete Example</a></h2>
+<p>Here's a complete example that demonstrates Reservoir's memory capabilities:</p>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+def setup_reservoir_client():
+    """Setup Reservoir client with proper configuration"""
+    instance = "chat-example"
+    partition = os.getenv("USER", "default")
+    port = os.getenv('RESERVOIR_PORT', '3017')
+    base_url = f"http://localhost:{port}/v1/partition/{partition}/instance/{instance}"
+    
+    return OpenAI(
+        base_url=base_url,
+        api_key=os.environ.get("OPENAI_API_KEY", "not-needed-for-ollama")
+    )
+
+def chat_with_memory(message, model="gpt-4"):
+    """Send a message through Reservoir with automatic memory"""
+    client = setup_reservoir_client()
+    
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "user",
+                "content": message
+            }
+        ]
+    )
+    
+    return completion.choices[0].message.content
+
+# Example conversation that builds context
+if __name__ == "__main__":
+    # First message
+    response1 = chat_with_memory("My name is Alice and I love Python programming.")
+    print("Assistant:", response1)
+    
+    # Second message - Reservoir will automatically include context
+    response2 = chat_with_memory("What programming language do I like?")
+    print("Assistant:", response2)  # Will know you like Python!
+    
+    # Third message - Even more context
+    response3 = chat_with_memory("Can you suggest a project for me?")
+    print("Assistant:", response3)  # Will suggest Python projects for Alice!
+</code></pre>
+<h2 id="benefits-of-using-reservoir"><a class="header" href="#benefits-of-using-reservoir">Benefits of Using Reservoir</a></h2>
+<p>When you use Reservoir with the OpenAI library, you get:</p>
+<ul>
+<li><strong>Automatic Context</strong>: Previous conversations are automatically included</li>
+<li><strong>Cross-Session Memory</strong>: Conversations persist across different Python sessions</li>
+<li><strong>Smart Token Management</strong>: Reservoir handles token limits automatically</li>
+<li><strong>Multi-Provider Support</strong>: Switch between different AI providers seamlessly</li>
+<li><strong>Local Storage</strong>: All your conversation data stays on your device</li>
+</ul>
+<h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next Steps</a></h2>
+<ul>
+<li>Learn about <a href="./features/partitioning.html">Partitioning &amp; Organization</a> to organize your conversations</li>
+<li>Check out <a href="./features/token-management.html">Token Management</a> to understand how Reservoir handles context limits</li>
+<li>Explore the <a href="./api/overview.html">API Reference</a> for more advanced usage patterns</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="curl-examples"><a class="header" href="#curl-examples">Curl Examples</a></h1>
+<p>This page provides comprehensive examples of using Reservoir with curl commands. These examples are perfect for testing, scripting, or understanding the API structure.</p>
+<h2 id="basic-url-structure"><a class="header" href="#basic-url-structure">Basic URL Structure</a></h2>
+<p>Instead of calling the provider directly, you call Reservoir with this URL pattern:</p>
+<ul>
+<li><strong>Direct Provider:</strong> <code>https://api.openai.com/v1/chat/completions</code></li>
+<li><strong>Through Reservoir:</strong> <code>http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions</code></li>
+</ul>
+<p>Where:</p>
+<ul>
+<li><code>$USER</code> is your system username (acts as the partition)</li>
+<li><code>reservoir</code> is the instance name (you can use any name)</li>
+</ul>
+<h2 id="openai-models-1"><a class="header" href="#openai-models-1">OpenAI Models</a></h2>
+<h3 id="basic-gpt-4-example"><a class="header" href="#basic-gpt-4-example">Basic GPT-4 Example</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Write a one-sentence bedtime story about a brave little toaster."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="gpt-4-with-system-message"><a class="header" href="#gpt-4-with-system-message">GPT-4 with System Message</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are a helpful assistant that explains complex topics in simple terms."
+            },
+            {
+                "role": "user",
+                "content": "Explain quantum computing to a 10-year-old."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="web-search-integration"><a class="header" href="#web-search-integration">Web Search Integration</a></h3>
+<p>For models that support web search (like <code>gpt-4o-search-preview</code>):</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4o-search-preview",
+        "messages": [
+            {
+                "role": "user",
+                "content": "What are the latest developments in AI?"
+            }
+        ],
+        "web_search_options": {
+            "enabled": true,
+            "max_results": 5
+        }
+    }'
+</code></pre>
+<h2 id="ollama-models-local-1"><a class="header" href="#ollama-models-local-1">Ollama Models (Local)</a></h2>
+<h3 id="basic-ollama-example"><a class="header" href="#basic-ollama-example">Basic Ollama Example</a></h3>
+<p>No API key needed for Ollama models:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Explain quantum computing in simple terms."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="using-llama-models"><a class="header" href="#using-llama-models">Using Llama Models</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "llama3.2",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Write a Python function to calculate fibonacci numbers."
+            }
+        ]
+    }'
+</code></pre>
+<h2 id="other-providers"><a class="header" href="#other-providers">Other Providers</a></h2>
+<h3 id="mistral-ai"><a class="header" href="#mistral-ai">Mistral AI</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $MISTRAL_API_KEY" \
+    -d '{
+        "model": "mistral-large-2402",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Explain the differences between functional and object-oriented programming."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="google-gemini"><a class="header" href="#google-gemini">Google Gemini</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $GEMINI_API_KEY" \
+    -d '{
+        "model": "gemini-2.0-flash",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Compare different sorting algorithms and their time complexities."
+            }
+        ]
+    }'
+</code></pre>
+<h2 id="partitioning-examples"><a class="header" href="#partitioning-examples">Partitioning Examples</a></h2>
+<h3 id="using-different-partitions"><a class="header" href="#using-different-partitions">Using Different Partitions</a></h3>
+<p>You can organize conversations by using different partition names:</p>
+<pre><code class="language-bash"># Work conversations
+curl "http://127.0.0.1:3017/partition/work/instance/coding/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": "Review this code for security issues"}]
+    }'
+
+# Personal conversations
+curl "http://127.0.0.1:3017/partition/personal/instance/creative/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": "Help me write a short story"}]
+    }'
+</code></pre>
+<h3 id="using-different-instances"><a class="header" href="#using-different-instances">Using Different Instances</a></h3>
+<p>Different instances within the same partition:</p>
+<pre><code class="language-bash"># Development instance
+curl "http://127.0.0.1:3017/partition/$USER/instance/development/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": "Debug this Python error"}]
+    }'
+
+# Research instance
+curl "http://127.0.0.1:3017/partition/$USER/instance/research/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": "Explain machine learning concepts"}]
+    }'
+</code></pre>
+<h2 id="testing-scenarios"><a class="header" href="#testing-scenarios">Testing Scenarios</a></h2>
+<h3 id="test-basic-connectivity"><a class="header" href="#test-basic-connectivity">Test Basic Connectivity</a></h3>
+<pre><code class="language-bash"># Simple test with Ollama (no API key needed)
+curl "http://127.0.0.1:3017/partition/test/instance/basic/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [{"role": "user", "content": "Hello, can you hear me?"}]
+    }'
+</code></pre>
+<h3 id="test-memory-functionality"><a class="header" href="#test-memory-functionality">Test Memory Functionality</a></h3>
+<p>Send multiple requests to see memory in action:</p>
+<pre><code class="language-bash"># First message
+curl "http://127.0.0.1:3017/partition/test/instance/memory/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [{"role": "user", "content": "My favorite color is blue."}]
+    }'
+
+# Second message - should remember the color
+curl "http://127.0.0.1:3017/partition/test/instance/memory/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3", 
+        "messages": [{"role": "user", "content": "What is my favorite color?"}]
+    }'
+</code></pre>
+<h2 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h2>
+<h3 id="invalid-model"><a class="header" href="#invalid-model">Invalid Model</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "nonexistent-model",
+        "messages": [{"role": "user", "content": "Hello"}]
+    }'
+</code></pre>
+<h3 id="missing-api-key"><a class="header" href="#missing-api-key">Missing API Key</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": "Hello"}]
+    }'
+# Will return error because OPENAI_API_KEY is required for GPT-4
+</code></pre>
+<h2 id="environment-variables-3"><a class="header" href="#environment-variables-3">Environment Variables</a></h2>
+<p>Set up your environment for easier testing:</p>
+<pre><code class="language-bash">export OPENAI_API_KEY="your-openai-key"
+export MISTRAL_API_KEY="your-mistral-key"
+export GEMINI_API_KEY="your-gemini-key"
+export RESERVOIR_URL="http://127.0.0.1:3017"
+export USER_PARTITION="$USER"
+</code></pre>
+<p>Then use in requests:</p>
+<pre><code class="language-bash">curl "$RESERVOIR_URL/partition/$USER_PARTITION/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": "Hello from the environment!"}]
+    }'
+</code></pre>
+<h2 id="debugging-tips"><a class="header" href="#debugging-tips">Debugging Tips</a></h2>
+<h3 id="pretty-print-json-response"><a class="header" href="#pretty-print-json-response">Pretty Print JSON Response</a></h3>
+<p>Add <code>| jq</code> to format the JSON response:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [{"role": "user", "content": "Hello"}]
+    }' | jq
+</code></pre>
+<h3 id="verbose-output"><a class="header" href="#verbose-output">Verbose Output</a></h3>
+<p>Use <code>-v</code> flag to see request/response headers:</p>
+<pre><code class="language-bash">curl -v "http://127.0.0.1:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [{"role": "user", "content": "Hello"}]
+    }'
+</code></pre>
+<h3 id="save-response"><a class="header" href="#save-response">Save Response</a></h3>
+<p>Save the response to a file:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [{"role": "user", "content": "Hello"}]
+    }' -o response.json
+</code></pre>
+<h2 id="next-steps-5"><a class="header" href="#next-steps-5">Next Steps</a></h2>
+<ul>
+<li>Learn about <a href="./api/overview.html">API Reference</a> for more endpoint details</li>
+<li>Check out <a href="./python-integration.html">Python Integration</a> for programmatic usage</li>
+<li>Explore <a href="./features/partitioning.html">Partitioning &amp; Organization</a> to organize your conversations</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="ollama-integration"><a class="header" href="#ollama-integration">Ollama Integration</a></h1>
+<p>Reservoir works seamlessly with <a href="https://ollama.ai/">Ollama</a>, allowing you to use local AI models with persistent memory and context enrichment. This is perfect for privacy-focused workflows where you want to keep all your conversations completely local.</p>
+<h2 id="what-is-ollama"><a class="header" href="#what-is-ollama">What is Ollama?</a></h2>
+<p>Ollama is a tool that makes it easy to run large language models locally on your machine. It supports popular models like Llama, Gemma, and many others, all running entirely on your hardware.</p>
+<h2 id="benefits-of-using-ollama-with-reservoir"><a class="header" href="#benefits-of-using-ollama-with-reservoir">Benefits of Using Ollama with Reservoir</a></h2>
+<ul>
+<li><strong>Complete Privacy</strong>: All conversations stay on your device</li>
+<li><strong>No API Keys</strong>: No need for cloud service API keys</li>
+<li><strong>Offline Capable</strong>: Works without internet connection</li>
+<li><strong>Cost Effective</strong>: No usage-based charges</li>
+<li><strong>Full Control</strong>: Choose exactly which models to use</li>
+</ul>
+<h2 id="setting-up-ollama"><a class="header" href="#setting-up-ollama">Setting Up Ollama</a></h2>
+<h3 id="step-1-install-ollama"><a class="header" href="#step-1-install-ollama">Step 1: Install Ollama</a></h3>
+<p>First, install Ollama from <a href="https://ollama.ai/">ollama.ai</a>:</p>
+<pre><code class="language-bash"># On macOS
+brew install ollama
+
+# On Linux
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Or download from https://ollama.ai/download
+</code></pre>
+<h3 id="step-2-start-ollama-service"><a class="header" href="#step-2-start-ollama-service">Step 2: Start Ollama Service</a></h3>
+<pre><code class="language-bash">ollama serve
+</code></pre>
+<p>This starts the Ollama service on <code>http://localhost:11434</code>.</p>
+<h3 id="step-3-download-models"><a class="header" href="#step-3-download-models">Step 3: Download Models</a></h3>
+<p>Download the models you want to use:</p>
+<pre><code class="language-bash"># Download Gemma 3 (Google's model)
+ollama pull gemma3
+
+# Download Llama 3.2 (Meta's model)
+ollama pull llama3.2
+
+# Download Mistral (Mistral AI's model)
+ollama pull mistral
+
+# See all available models
+ollama list
+</code></pre>
+<h2 id="using-ollama-with-reservoir"><a class="header" href="#using-ollama-with-reservoir">Using Ollama with Reservoir</a></h2>
+<h3 id="regular-mode"><a class="header" href="#regular-mode">Regular Mode</a></h3>
+<p>By default, Reservoir routes any unrecognized model names to Ollama:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/ollama-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Explain machine learning in simple terms."
+            }
+        ]
+    }'
+</code></pre>
+<p>No API key required! 🎉</p>
+<h3 id="ollama-mode"><a class="header" href="#ollama-mode">Ollama Mode</a></h3>
+<p>Reservoir also provides a special "Ollama mode" that makes it a drop-in replacement for Ollama's API:</p>
+<pre><code class="language-bash"># Start Reservoir in Ollama mode
+cargo run -- start --ollama
+</code></pre>
+<p>In Ollama mode, Reservoir:</p>
+<ul>
+<li>Uses the same API endpoints as Ollama</li>
+<li>Provides the same response format</li>
+<li>Adds memory and context enrichment automatically</li>
+<li>Makes existing Ollama clients work with persistent memory</li>
+</ul>
+<h4 id="testing-ollama-mode"><a class="header" href="#testing-ollama-mode">Testing Ollama Mode</a></h4>
+<pre><code class="language-bash"># Test with the standard Ollama endpoint format
+curl "http://127.0.0.1:3017/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello, can you remember our previous conversations?"
+            }
+        ]
+    }'
+</code></pre>
+<h2 id="popular-ollama-models"><a class="header" href="#popular-ollama-models">Popular Ollama Models</a></h2>
+<h3 id="gemma-3-google"><a class="header" href="#gemma-3-google">Gemma 3 (Google)</a></h3>
+<p>Excellent for general conversation and coding:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/coding/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Write a Python function to sort a list of dictionaries by a specific key."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="llama-32-meta"><a class="header" href="#llama-32-meta">Llama 3.2 (Meta)</a></h3>
+<p>Great for reasoning and complex tasks:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/reasoning/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "llama3.2",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Solve this logic puzzle: If all roses are flowers, and some flowers are red, can we conclude that some roses are red?"
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="mistral-7b"><a class="header" href="#mistral-7b">Mistral 7B</a></h3>
+<p>Efficient and good for general tasks:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/general/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "mistral",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Summarize the key points of quantum computing for a beginner."
+            }
+        ]
+    }'
+</code></pre>
+<h2 id="python-integration-with-ollama"><a class="header" href="#python-integration-with-ollama">Python Integration with Ollama</a></h2>
+<p>Using the OpenAI library with local Ollama models:</p>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+# Setup for Ollama through Reservoir
+INSTANCE = "ollama-python"
+PARTITION = os.getenv("USER", "default")
+RESERVOIR_PORT = os.getenv('RESERVOIR_PORT', '3017')
+RESERVOIR_BASE_URL = f"http://localhost:{RESERVOIR_PORT}/v1/partition/{PARTITION}/instance/{INSTANCE}"
+
+client = OpenAI(
+    base_url=RESERVOIR_BASE_URL,
+    api_key="not-needed-for-ollama"  # Ollama doesn't require API keys
+)
+
+# Chat with memory using local model
+completion = client.chat.completions.create(
+    model="gemma3",
+    messages=[
+        {
+            "role": "user",
+            "content": "My favorite hobby is gardening. What plants would you recommend for a beginner?"
+        }
+    ]
+)
+
+print(completion.choices[0].message.content)
+
+# Ask a follow-up that requires memory
+follow_up = client.chat.completions.create(
+    model="gemma3",
+    messages=[
+        {
+            "role": "user", 
+            "content": "What tools do I need to get started with my hobby?"
+        }
+    ]
+)
+
+print(follow_up.choices[0].message.content)
+# Will remember you're interested in gardening!
+</code></pre>
+<h2 id="environment-configuration"><a class="header" href="#environment-configuration">Environment Configuration</a></h2>
+<p>You can customize the Ollama endpoint if needed:</p>
+<pre><code class="language-bash"># Default Ollama endpoint
+export RSV_OLLAMA_BASE_URL="http://localhost:11434/v1/chat/completions"
+
+# Custom endpoint (if running Ollama on different port/host)
+export RSV_OLLAMA_BASE_URL="http://192.168.1.100:11434/v1/chat/completions"
+</code></pre>
+<h2 id="performance-tips"><a class="header" href="#performance-tips">Performance Tips</a></h2>
+<h3 id="model-selection-1"><a class="header" href="#model-selection-1">Model Selection</a></h3>
+<ul>
+<li><strong>gemma3</strong>: Good balance of speed and quality</li>
+<li><strong>llama3.2</strong>: Higher quality but slower</li>
+<li><strong>mistral</strong>: Fast and efficient</li>
+<li><strong>smaller models</strong> (7B parameters): Faster on limited hardware</li>
+<li><strong>larger models</strong> (13B+): Better quality but require more resources</li>
+</ul>
+<h3 id="hardware-considerations"><a class="header" href="#hardware-considerations">Hardware Considerations</a></h3>
+<ul>
+<li><strong>RAM</strong>: 8GB minimum, 16GB+ recommended for larger models</li>
+<li><strong>GPU</strong>: Optional but significantly speeds up inference</li>
+<li><strong>Storage</strong>: Models range from 4GB to 40GB+ each</li>
+</ul>
+<h3 id="optimizing-performance"><a class="header" href="#optimizing-performance">Optimizing Performance</a></h3>
+<pre><code class="language-bash"># Use GPU acceleration if available
+ollama run gemma3 --gpu
+
+# Monitor resource usage
+ollama ps
+</code></pre>
+<h2 id="troubleshooting-ollama"><a class="header" href="#troubleshooting-ollama">Troubleshooting Ollama</a></h2>
+<h3 id="common-issues-1"><a class="header" href="#common-issues-1">Common Issues</a></h3>
+<h4 id="ollama-not-found"><a class="header" href="#ollama-not-found">Ollama Not Found</a></h4>
+<pre><code class="language-bash"># Check if Ollama is running
+curl http://localhost:11434/api/tags
+
+# If not running, start it
+ollama serve
+</code></pre>
+<h4 id="model-not-available"><a class="header" href="#model-not-available">Model Not Available</a></h4>
+<pre><code class="language-bash"># List installed models
+ollama list
+
+# Pull missing model
+ollama pull gemma3
+</code></pre>
+<h4 id="performance-issues"><a class="header" href="#performance-issues">Performance Issues</a></h4>
+<pre><code class="language-bash"># Check system resources
+ollama ps
+
+# Try a smaller model
+ollama pull gemma3:2b  # 2B parameter version
+</code></pre>
+<h3 id="error-messages"><a class="header" href="#error-messages">Error Messages</a></h3>
+<ul>
+<li><strong>"connection refused"</strong>: Ollama service isn't running</li>
+<li><strong>"model not found"</strong>: Model needs to be pulled with <code>ollama pull</code></li>
+<li><strong>"out of memory"</strong>: Try a smaller model or close other applications</li>
+</ul>
+<h2 id="combining-local-and-cloud-models"><a class="header" href="#combining-local-and-cloud-models">Combining Local and Cloud Models</a></h2>
+<p>One of Reservoir's strengths is seamlessly switching between local and cloud models:</p>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+# Same client setup
+client = OpenAI(base_url=RESERVOIR_BASE_URL, api_key=os.environ.get("OPENAI_API_KEY", ""))
+
+# Start with local model for initial draft
+local_response = client.chat.completions.create(
+    model="gemma3",  # Local Ollama model
+    messages=[{"role": "user", "content": "Write a draft email about project updates"}]
+)
+
+# Refine with cloud model for better quality
+cloud_response = client.chat.completions.create(
+    model="gpt-4",  # Cloud OpenAI model
+    messages=[{"role": "user", "content": "Please improve the writing quality and make it more professional"}]
+)
+</code></pre>
+<p>Both responses will have access to the same conversation context!</p>
+<h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
+<ul>
+<li><strong><a href="./python-integration.html">Python Integration</a></strong> - Use Ollama models from Python</li>
+<li><strong><a href="./features/providers.html">Features - Multi-Provider Support</a></strong> - Learn about mixing different providers</li>
+<li><strong><a href="./features/partitioning.html">Partitioning &amp; Organization</a></strong> - Organize your local conversations</li>
+<li><strong><a href="./architecture/data-model.html">Architecture - Data Model</a></strong> - Understand how conversations are stored</li>
+</ul>
+<p><strong>Ready to go private?</strong> 🔒 With Ollama and Reservoir, you have a completely local AI assistant with persistent memory!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="api-overview"><a class="header" href="#api-overview">API Overview</a></h1>
 <p>Reservoir provides an OpenAI-compatible API endpoint that acts as a smart proxy between your application and AI language models. This section covers the core API structure and basic usage patterns.</p>
 <h2 id="url-structure"><a class="header" href="#url-structure">URL Structure</a></h2>
@@ -821,7 +1742,7 @@ Authorization: Bearer YOUR_API_KEY
 </ol>
 <h2 id="response-format"><a class="header" href="#response-format">Response Format</a></h2>
 <p>Responses maintain the same format as the underlying AI provider (OpenAI, Ollama, etc.), so your existing code will work without modification.</p>
-<h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next Steps</a></h2>
+<h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next Steps</a></h2>
 <ul>
 <li><a href="api/./chat-completions.html">Chat Completions Endpoint</a> - Detailed endpoint documentation</li>
 <li><a href="api/./search.html">Search &amp; Retrieval</a> - Finding past conversations</li>
@@ -1275,14 +2196,14 @@ ORDER BY connectionCount DESC, avgScore DESC
 <li><strong>Endpoint</strong>: <code>http://localhost:11434/v1/chat/completions</code></li>
 <li><strong>Features</strong>: Local inference, privacy-focused, custom model support</li>
 </ul>
-<h3 id="mistral-ai"><a class="header" href="#mistral-ai">Mistral AI</a></h3>
+<h3 id="mistral-ai-1"><a class="header" href="#mistral-ai-1">Mistral AI</a></h3>
 <ul>
 <li><strong>Models</strong>: mistral-large-2402, mistral-medium, mistral-small</li>
 <li><strong>API Key Required</strong>: Yes (<code>MISTRAL_API_KEY</code>)</li>
 <li><strong>Endpoint</strong>: <code>https://api.mistral.ai/v1/chat/completions</code></li>
 <li><strong>Features</strong>: European AI provider, competitive performance</li>
 </ul>
-<h3 id="google-gemini"><a class="header" href="#google-gemini">Google Gemini</a></h3>
+<h3 id="google-gemini-1"><a class="header" href="#google-gemini-1">Google Gemini</a></h3>
 <ul>
 <li><strong>Models</strong>: gemini-2.0-flash, gemini-2.5-flash-preview-05-20</li>
 <li><strong>API Key Required</strong>: Yes (<code>GEMINI_API_KEY</code>)</li>
@@ -1305,7 +2226,7 @@ ORDER BY connectionCount DESC, avgScore DESC
 }
 </code></pre>
 <h2 id="configuration-1"><a class="header" href="#configuration-1">Configuration</a></h2>
-<h3 id="environment-variables-2"><a class="header" href="#environment-variables-2">Environment Variables</a></h3>
+<h3 id="environment-variables-4"><a class="header" href="#environment-variables-4">Environment Variables</a></h3>
 <p>Set provider endpoints and API keys:</p>
 <pre><code class="language-bash"># API Keys
 export OPENAI_API_KEY="sk-your-openai-key"
@@ -1393,7 +2314,7 @@ curl -d '{"model": "gpt-4", "messages": [...]}' localhost:3017/...
 # Use Mistral for European compliance
 curl -d '{"model": "mistral-large", "messages": [...]}' localhost:3017/...
 </code></pre>
-<h2 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h2>
+<h2 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h2>
 <p>Reservoir provides consistent error handling across all providers:</p>
 <h3 id="common-error-responses"><a class="header" href="#common-error-responses">Common Error Responses</a></h3>
 <pre><code class="language-json">{
@@ -1486,11 +2407,11 @@ curl https://api.mistral.ai/v1/models -H "Authorization: Bearer $MISTRAL_API_KEY
 <p>Multi-provider support makes Reservoir a flexible foundation for AI applications, allowing you to choose the best provider for each use case while maintaining conversation continuity.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="token-management-1"><a class="header" href="#token-management-1">Token Management</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="partitioning--organization"><a class="header" href="#partitioning--organization">Partitioning &amp; Organization</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="web-search-integration"><a class="header" href="#web-search-integration">Web Search Integration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="web-search-integration-1"><a class="header" href="#web-search-integration-1">Web Search Integration</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="importexport"><a class="header" href="#importexport">Import/Export</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="local-deployment"><a class="header" href="#local-deployment">Local Deployment</a></h1>
 <p>This guide covers setting up Reservoir for local development and production use on your local machine.</p>
-<h2 id="prerequisites-2"><a class="header" href="#prerequisites-2">Prerequisites</a></h2>
+<h2 id="prerequisites-4"><a class="header" href="#prerequisites-4">Prerequisites</a></h2>
 <p>Before deploying Reservoir locally, ensure you have the following installed:</p>
 <ul>
 <li><strong>Rust</strong> (latest stable version)</li>
@@ -1659,7 +2580,7 @@ curl -u neo4j:password http://localhost:7474/db/data/
 </tbody></table>
 </div>
 <h2 id="troubleshooting-2"><a class="header" href="#troubleshooting-2">Troubleshooting</a></h2>
-<h3 id="common-issues-1"><a class="header" href="#common-issues-1">Common Issues</a></h3>
+<h3 id="common-issues-2"><a class="header" href="#common-issues-2">Common Issues</a></h3>
 <p><strong>Port Already in Use:</strong></p>
 <pre><code class="language-bash"># Check what's using port 3017
 lsof -i :3017
@@ -1712,7 +2633,7 @@ NEO4J_CONNECTION_TIMEOUT=30s
 </code></pre>
 </li>
 </ol>
-<h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next Steps</a></h2>
+<h2 id="next-steps-8"><a class="header" href="#next-steps-8">Next Steps</a></h2>
 <p>After successful local deployment:</p>
 <ul>
 <li><a href="deployment/./environment.html">Configure Environment Variables</a></li>
@@ -1722,8 +2643,8 @@ NEO4J_CONNECTION_TIMEOUT=30s
 </ul>
 <p>Your Reservoir instance is now ready for local development and testing!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="production-setup"><a class="header" href="#production-setup">Production Setup</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="environment-variables-3"><a class="header" href="#environment-variables-3">Environment Variables</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="common-issues-2"><a class="header" href="#common-issues-2">Common Issues</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="environment-variables-5"><a class="header" href="#environment-variables-5">Environment Variables</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="common-issues-3"><a class="header" href="#common-issues-3">Common Issues</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="frequently-asked-questions"><a class="header" href="#frequently-asked-questions">Frequently Asked Questions</a></h1>
 <p>This section addresses common questions and issues you might encounter while using Reservoir.</p>
 <h2 id="general-questions"><a class="header" href="#general-questions">General Questions</a></h2>
@@ -1942,7 +2863,7 @@ reservoir import conversations.json
 <li>Configuring appropriate firewall rules</li>
 <li>Using HTTPS for external access</li>
 </ul>
-<h2 id="getting-help-1"><a class="header" href="#getting-help-1">Getting Help</a></h2>
+<h2 id="getting-help-2"><a class="header" href="#getting-help-2">Getting Help</a></h2>
 <p>If your question isn't answered here:</p>
 <ol>
 <li>Check the <a href="troubleshooting/./common-issues.html">Common Issues</a> section</li>
@@ -1962,7 +2883,7 @@ reservoir import conversations.json
 <div style="break-before: page; page-break-before: always;"></div><h1 id="contributing-to-reservoir"><a class="header" href="#contributing-to-reservoir">Contributing to Reservoir</a></h1>
 <p>Thank you for your interest in contributing to Reservoir! This guide will help you get started with development and contributing to the project.</p>
 <h2 id="development-setup"><a class="header" href="#development-setup">Development Setup</a></h2>
-<h3 id="prerequisites-3"><a class="header" href="#prerequisites-3">Prerequisites</a></h3>
+<h3 id="prerequisites-5"><a class="header" href="#prerequisites-5">Prerequisites</a></h3>
 <p>Before you begin, ensure you have the following installed:</p>
 <ul>
 <li>
@@ -2230,7 +3151,7 @@ Brief description of changes
 <li><strong>Build Documentation</strong>: Ensure docs are up to date</li>
 <li><strong>Publish</strong>: Publish to crates.io if applicable</li>
 </ol>
-<h2 id="getting-help-2"><a class="header" href="#getting-help-2">Getting Help</a></h2>
+<h2 id="getting-help-3"><a class="header" href="#getting-help-3">Getting Help</a></h2>
 <ul>
 <li><strong>Issues</strong>: Check existing issues or create a new one</li>
 <li><strong>Discussions</strong>: Use GitHub Discussions for questions</li>
@@ -2307,7 +3228,6 @@ Brief description of changes
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="theme/custom.js"></script>
 
         <script>
         window.addEventListener('load', function() {

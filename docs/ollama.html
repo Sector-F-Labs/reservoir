@@ -163,6 +163,262 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="ollama-integration"><a class="header" href="#ollama-integration">Ollama Integration</a></h1>
+<p>Reservoir works seamlessly with <a href="https://ollama.ai/">Ollama</a>, allowing you to use local AI models with persistent memory and context enrichment. This is perfect for privacy-focused workflows where you want to keep all your conversations completely local.</p>
+<h2 id="what-is-ollama"><a class="header" href="#what-is-ollama">What is Ollama?</a></h2>
+<p>Ollama is a tool that makes it easy to run large language models locally on your machine. It supports popular models like Llama, Gemma, and many others, all running entirely on your hardware.</p>
+<h2 id="benefits-of-using-ollama-with-reservoir"><a class="header" href="#benefits-of-using-ollama-with-reservoir">Benefits of Using Ollama with Reservoir</a></h2>
+<ul>
+<li><strong>Complete Privacy</strong>: All conversations stay on your device</li>
+<li><strong>No API Keys</strong>: No need for cloud service API keys</li>
+<li><strong>Offline Capable</strong>: Works without internet connection</li>
+<li><strong>Cost Effective</strong>: No usage-based charges</li>
+<li><strong>Full Control</strong>: Choose exactly which models to use</li>
+</ul>
+<h2 id="setting-up-ollama"><a class="header" href="#setting-up-ollama">Setting Up Ollama</a></h2>
+<h3 id="step-1-install-ollama"><a class="header" href="#step-1-install-ollama">Step 1: Install Ollama</a></h3>
+<p>First, install Ollama from <a href="https://ollama.ai/">ollama.ai</a>:</p>
+<pre><code class="language-bash"># On macOS
+brew install ollama
+
+# On Linux
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Or download from https://ollama.ai/download
+</code></pre>
+<h3 id="step-2-start-ollama-service"><a class="header" href="#step-2-start-ollama-service">Step 2: Start Ollama Service</a></h3>
+<pre><code class="language-bash">ollama serve
+</code></pre>
+<p>This starts the Ollama service on <code>http://localhost:11434</code>.</p>
+<h3 id="step-3-download-models"><a class="header" href="#step-3-download-models">Step 3: Download Models</a></h3>
+<p>Download the models you want to use:</p>
+<pre><code class="language-bash"># Download Gemma 3 (Google's model)
+ollama pull gemma3
+
+# Download Llama 3.2 (Meta's model)
+ollama pull llama3.2
+
+# Download Mistral (Mistral AI's model)
+ollama pull mistral
+
+# See all available models
+ollama list
+</code></pre>
+<h2 id="using-ollama-with-reservoir"><a class="header" href="#using-ollama-with-reservoir">Using Ollama with Reservoir</a></h2>
+<h3 id="regular-mode"><a class="header" href="#regular-mode">Regular Mode</a></h3>
+<p>By default, Reservoir routes any unrecognized model names to Ollama:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/ollama-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Explain machine learning in simple terms."
+            }
+        ]
+    }'
+</code></pre>
+<p>No API key required! 🎉</p>
+<h3 id="ollama-mode"><a class="header" href="#ollama-mode">Ollama Mode</a></h3>
+<p>Reservoir also provides a special "Ollama mode" that makes it a drop-in replacement for Ollama's API:</p>
+<pre><code class="language-bash"># Start Reservoir in Ollama mode
+cargo run -- start --ollama
+</code></pre>
+<p>In Ollama mode, Reservoir:</p>
+<ul>
+<li>Uses the same API endpoints as Ollama</li>
+<li>Provides the same response format</li>
+<li>Adds memory and context enrichment automatically</li>
+<li>Makes existing Ollama clients work with persistent memory</li>
+</ul>
+<h4 id="testing-ollama-mode"><a class="header" href="#testing-ollama-mode">Testing Ollama Mode</a></h4>
+<pre><code class="language-bash"># Test with the standard Ollama endpoint format
+curl "http://127.0.0.1:3017/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello, can you remember our previous conversations?"
+            }
+        ]
+    }'
+</code></pre>
+<h2 id="popular-ollama-models"><a class="header" href="#popular-ollama-models">Popular Ollama Models</a></h2>
+<h3 id="gemma-3-google"><a class="header" href="#gemma-3-google">Gemma 3 (Google)</a></h3>
+<p>Excellent for general conversation and coding:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/coding/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Write a Python function to sort a list of dictionaries by a specific key."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="llama-32-meta"><a class="header" href="#llama-32-meta">Llama 3.2 (Meta)</a></h3>
+<p>Great for reasoning and complex tasks:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/reasoning/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "llama3.2",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Solve this logic puzzle: If all roses are flowers, and some flowers are red, can we conclude that some roses are red?"
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="mistral-7b"><a class="header" href="#mistral-7b">Mistral 7B</a></h3>
+<p>Efficient and good for general tasks:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/general/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "mistral",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Summarize the key points of quantum computing for a beginner."
+            }
+        ]
+    }'
+</code></pre>
+<h2 id="python-integration-with-ollama"><a class="header" href="#python-integration-with-ollama">Python Integration with Ollama</a></h2>
+<p>Using the OpenAI library with local Ollama models:</p>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+# Setup for Ollama through Reservoir
+INSTANCE = "ollama-python"
+PARTITION = os.getenv("USER", "default")
+RESERVOIR_PORT = os.getenv('RESERVOIR_PORT', '3017')
+RESERVOIR_BASE_URL = f"http://localhost:{RESERVOIR_PORT}/v1/partition/{PARTITION}/instance/{INSTANCE}"
+
+client = OpenAI(
+    base_url=RESERVOIR_BASE_URL,
+    api_key="not-needed-for-ollama"  # Ollama doesn't require API keys
+)
+
+# Chat with memory using local model
+completion = client.chat.completions.create(
+    model="gemma3",
+    messages=[
+        {
+            "role": "user",
+            "content": "My favorite hobby is gardening. What plants would you recommend for a beginner?"
+        }
+    ]
+)
+
+print(completion.choices[0].message.content)
+
+# Ask a follow-up that requires memory
+follow_up = client.chat.completions.create(
+    model="gemma3",
+    messages=[
+        {
+            "role": "user", 
+            "content": "What tools do I need to get started with my hobby?"
+        }
+    ]
+)
+
+print(follow_up.choices[0].message.content)
+# Will remember you're interested in gardening!
+</code></pre>
+<h2 id="environment-configuration"><a class="header" href="#environment-configuration">Environment Configuration</a></h2>
+<p>You can customize the Ollama endpoint if needed:</p>
+<pre><code class="language-bash"># Default Ollama endpoint
+export RSV_OLLAMA_BASE_URL="http://localhost:11434/v1/chat/completions"
+
+# Custom endpoint (if running Ollama on different port/host)
+export RSV_OLLAMA_BASE_URL="http://192.168.1.100:11434/v1/chat/completions"
+</code></pre>
+<h2 id="performance-tips"><a class="header" href="#performance-tips">Performance Tips</a></h2>
+<h3 id="model-selection"><a class="header" href="#model-selection">Model Selection</a></h3>
+<ul>
+<li><strong>gemma3</strong>: Good balance of speed and quality</li>
+<li><strong>llama3.2</strong>: Higher quality but slower</li>
+<li><strong>mistral</strong>: Fast and efficient</li>
+<li><strong>smaller models</strong> (7B parameters): Faster on limited hardware</li>
+<li><strong>larger models</strong> (13B+): Better quality but require more resources</li>
+</ul>
+<h3 id="hardware-considerations"><a class="header" href="#hardware-considerations">Hardware Considerations</a></h3>
+<ul>
+<li><strong>RAM</strong>: 8GB minimum, 16GB+ recommended for larger models</li>
+<li><strong>GPU</strong>: Optional but significantly speeds up inference</li>
+<li><strong>Storage</strong>: Models range from 4GB to 40GB+ each</li>
+</ul>
+<h3 id="optimizing-performance"><a class="header" href="#optimizing-performance">Optimizing Performance</a></h3>
+<pre><code class="language-bash"># Use GPU acceleration if available
+ollama run gemma3 --gpu
+
+# Monitor resource usage
+ollama ps
+</code></pre>
+<h2 id="troubleshooting-ollama"><a class="header" href="#troubleshooting-ollama">Troubleshooting Ollama</a></h2>
+<h3 id="common-issues"><a class="header" href="#common-issues">Common Issues</a></h3>
+<h4 id="ollama-not-found"><a class="header" href="#ollama-not-found">Ollama Not Found</a></h4>
+<pre><code class="language-bash"># Check if Ollama is running
+curl http://localhost:11434/api/tags
+
+# If not running, start it
+ollama serve
+</code></pre>
+<h4 id="model-not-available"><a class="header" href="#model-not-available">Model Not Available</a></h4>
+<pre><code class="language-bash"># List installed models
+ollama list
+
+# Pull missing model
+ollama pull gemma3
+</code></pre>
+<h4 id="performance-issues"><a class="header" href="#performance-issues">Performance Issues</a></h4>
+<pre><code class="language-bash"># Check system resources
+ollama ps
+
+# Try a smaller model
+ollama pull gemma3:2b  # 2B parameter version
+</code></pre>
+<h3 id="error-messages"><a class="header" href="#error-messages">Error Messages</a></h3>
+<ul>
+<li><strong>"connection refused"</strong>: Ollama service isn't running</li>
+<li><strong>"model not found"</strong>: Model needs to be pulled with <code>ollama pull</code></li>
+<li><strong>"out of memory"</strong>: Try a smaller model or close other applications</li>
+</ul>
+<h2 id="combining-local-and-cloud-models"><a class="header" href="#combining-local-and-cloud-models">Combining Local and Cloud Models</a></h2>
+<p>One of Reservoir's strengths is seamlessly switching between local and cloud models:</p>
+<pre><code class="language-python">import os
+from openai import OpenAI
+
+# Same client setup
+client = OpenAI(base_url=RESERVOIR_BASE_URL, api_key=os.environ.get("OPENAI_API_KEY", ""))
+
+# Start with local model for initial draft
+local_response = client.chat.completions.create(
+    model="gemma3",  # Local Ollama model
+    messages=[{"role": "user", "content": "Write a draft email about project updates"}]
+)
+
+# Refine with cloud model for better quality
+cloud_response = client.chat.completions.create(
+    model="gpt-4",  # Cloud OpenAI model
+    messages=[{"role": "user", "content": "Please improve the writing quality and make it more professional"}]
+)
+</code></pre>
+<p>Both responses will have access to the same conversation context!</p>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ul>
+<li><strong><a href="./python-integration.html">Python Integration</a></strong> - Use Ollama models from Python</li>
+<li><strong><a href="./features/providers.html">Features - Multi-Provider Support</a></strong> - Learn about mixing different providers</li>
+<li><strong><a href="./features/partitioning.html">Partitioning &amp; Organization</a></strong> - Organize your local conversations</li>
+<li><strong><a href="./architecture/data-model.html">Architecture - Data Model</a></strong> - Understand how conversations are stored</li>
+</ul>
+<p><strong>Ready to go private?</strong> 🔒 With Ollama and Reservoir, you have a completely local AI assistant with persistent memory!</p>
 
                     </main>
 
@@ -210,7 +466,6 @@
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="theme/custom.js"></script>
 
 
     </div>

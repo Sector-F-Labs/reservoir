@@ -163,6 +163,194 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="your-first-chat"><a class="header" href="#your-first-chat">Your First Chat</a></h1>
+<p>This guide will walk you through sending your first message through Reservoir and demonstrate how its memory and context features work.</p>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before starting, make sure you have:</p>
+<ul>
+<li>✅ Reservoir server running (<code>cargo run -- start</code>)</li>
+<li>✅ Neo4j database accessible</li>
+<li>✅ API keys set up (if using cloud providers)</li>
+</ul>
+<h2 id="example-1-testing-with-ollama-local"><a class="header" href="#example-1-testing-with-ollama-local">Example 1: Testing with Ollama (Local)</a></h2>
+<p>Let's start with a local Ollama model since it doesn't require API keys:</p>
+<h3 id="step-1-send-your-first-message"><a class="header" href="#step-1-send-your-first-message">Step 1: Send your first message</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello! My name is Alice and I love programming in Python."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="step-2-ask-a-follow-up-question"><a class="header" href="#step-2-ask-a-follow-up-question">Step 2: Ask a follow-up question</a></h3>
+<p>Now ask something that requires memory of the previous conversation:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "What programming language do I like?"
+            }
+        ]
+    }'
+</code></pre>
+<p><strong>🎉 Magic!</strong> The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
+<h3 id="step-3-continue-the-conversation"><a class="header" href="#step-3-continue-the-conversation">Step 3: Continue the conversation</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Can you suggest a Python project for someone at my skill level?"
+            }
+        ]
+    }'
+</code></pre>
+<p>The AI will make suggestions based on knowing you're Alice who loves Python programming!</p>
+<h2 id="example-2-using-openai-models"><a class="header" href="#example-2-using-openai-models">Example 2: Using OpenAI Models</a></h2>
+<p>If you have an OpenAI API key set up:</p>
+<h3 id="step-1-introduction-with-gpt-4"><a class="header" href="#step-1-introduction-with-gpt-4">Step 1: Introduction with GPT-4</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/gpt-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hi! I am working on a machine learning project about image classification."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="step-2-ask-for-specific-help"><a class="header" href="#step-2-ask-for-specific-help">Step 2: Ask for specific help</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/gpt-chat/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "What neural network architecture would you recommend for my project?"
+            }
+        ]
+    }'
+</code></pre>
+<p>GPT-4 will remember you're working on image classification and provide relevant recommendations!</p>
+<h2 id="example-3-cross-model-conversations"><a class="header" href="#example-3-cross-model-conversations">Example 3: Cross-Model Conversations</a></h2>
+<p>One of Reservoir's unique features is that conversation context can span multiple models:</p>
+<h3 id="step-1-start-with-ollama"><a class="header" href="#step-1-start-with-ollama">Step 1: Start with Ollama</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/cross-model/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "I am learning about quantum computing basics."
+            }
+        ]
+    }'
+</code></pre>
+<h3 id="step-2-switch-to-gpt-4"><a class="header" href="#step-2-switch-to-gpt-4">Step 2: Switch to GPT-4</a></h3>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/cross-model/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Can you explain quantum superposition in more detail?"
+            }
+        ]
+    }'
+</code></pre>
+<p>GPT-4 will know you're learning quantum computing and provide an explanation appropriate to your level!</p>
+<h2 id="understanding-the-results"><a class="header" href="#understanding-the-results">Understanding the Results</a></h2>
+<h3 id="what-reservoir-does-behind-the-scenes"><a class="header" href="#what-reservoir-does-behind-the-scenes">What Reservoir Does Behind the Scenes</a></h3>
+<p>When you send a message, Reservoir:</p>
+<ol>
+<li><strong>Stores your message</strong> in Neo4j with embeddings</li>
+<li><strong>Searches for relevant context</strong> from previous conversations</li>
+<li><strong>Injects relevant history</strong> into your request automatically</li>
+<li><strong>Forwards the enriched request</strong> to the AI provider</li>
+<li><strong>Stores the AI's response</strong> for future context</li>
+</ol>
+<h3 id="viewing-your-conversation-history"><a class="header" href="#viewing-your-conversation-history">Viewing Your Conversation History</a></h3>
+<p>You can see your stored conversations using the CLI:</p>
+<pre><code class="language-bash"># View last 5 messages in the first-chat instance
+cargo run -- view 5 --partition $USER --instance first-chat
+</code></pre>
+<p>Sample output:</p>
+<pre><code>2025-06-21T09:10:01+00:00 [abc123] user: Hello! My name is Alice and I love programming in Python.
+2025-06-21T09:10:02+00:00 [abc123] assistant: Hello Alice! It's great to meet a fellow Python enthusiast...
+2025-06-21T09:11:10+00:00 [def456] user: What programming language do I like?
+2025-06-21T09:11:12+00:00 [def456] assistant: You mentioned that you love programming in Python!
+2025-06-21T09:12:00+00:00 [ghi789] user: Can you suggest a Python project for someone at my skill level?
+</code></pre>
+<h2 id="testing-different-scenarios"><a class="header" href="#testing-different-scenarios">Testing Different Scenarios</a></h2>
+<h3 id="scenario-1-different-partitions"><a class="header" href="#scenario-1-different-partitions">Scenario 1: Different Partitions</a></h3>
+<p>Try organizing conversations by topic using different partitions:</p>
+<pre><code class="language-bash"># Work-related conversations
+curl "http://127.0.0.1:3017/partition/work/instance/coding/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{"model": "gemma3", "messages": [{"role": "user", "content": "I need help debugging a React component."}]}'
+
+# Personal learning
+curl "http://127.0.0.1:3017/partition/personal/instance/learning/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{"model": "gemma3", "messages": [{"role": "user", "content": "I want to learn guitar playing."}]}'
+</code></pre>
+<p>Each partition maintains separate conversation history!</p>
+<h3 id="scenario-2-web-search-integration"><a class="header" href="#scenario-2-web-search-integration">Scenario 2: Web Search Integration</a></h3>
+<p>If using a model that supports web search:</p>
+<pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/research/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{
+        "model": "gpt-4o-search-preview",
+        "messages": [{"role": "user", "content": "What are the latest trends in AI development?"}],
+        "web_search_options": {"enabled": true, "max_results": 5}
+    }'
+</code></pre>
+<h2 id="common-issues-and-solutions"><a class="header" href="#common-issues-and-solutions">Common Issues and Solutions</a></h2>
+<h3 id="server-not-responding"><a class="header" href="#server-not-responding">Server Not Responding</a></h3>
+<pre><code class="language-bash"># Check if Reservoir is running
+curl http://127.0.0.1:3017/health
+
+# If not running, start it
+cargo run -- start
+</code></pre>
+<h3 id="model-not-found-error"><a class="header" href="#model-not-found-error">"Model not found" Error</a></h3>
+<ul>
+<li>For Ollama models: Make sure Ollama is running and the model is installed</li>
+<li>For cloud models: Check your API keys are set correctly</li>
+</ul>
+<h3 id="empty-responses"><a class="header" href="#empty-responses">Empty Responses</a></h3>
+<ul>
+<li>Check your internet connection for cloud providers</li>
+<li>Verify the model name is spelled correctly</li>
+<li>Ensure your API key has sufficient credits</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Now that you've sent your first chat, explore these features:</p>
+<ul>
+<li><strong><a href="./python-integration.html">Python Integration</a></strong> - Use Reservoir from Python code</li>
+<li><strong><a href="./features/partitioning.html">Partitioning &amp; Organization</a></strong> - Organize your conversations</li>
+<li><strong><a href="./chat-gipitty.html">Chat Gipitty Integration</a></strong> - Add memory to your existing chat tools</li>
+<li><strong><a href="./api/overview.html">API Reference</a></strong> - Learn about advanced features</li>
+</ul>
+<p><strong>Congratulations!</strong> 🎉 You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!</p>
 
                     </main>
 
@@ -172,7 +360,7 @@
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="chat-gipitty.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="usage-integration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -186,7 +374,7 @@
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="chat-gipitty.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="usage-integration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -210,7 +398,6 @@
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="theme/custom.js"></script>
 
 
     </div>
