@@ -31,13 +31,8 @@
   - [Import/Export](./features/import-export.md)
 
 - [Deployment & Operations](./deployment/local.md)
-  - [Production Setup](./deployment/production.md)
-  - [Environment Variables](./deployment/environment.md)
 
 - [Help & Support](./troubleshooting/common-issues.md)
   - [FAQ](./troubleshooting/faq.md)
-  - [Debugging](./troubleshooting/debugging.md)
 
 - [Contributing](./development/contributing.md)
-  - [Building from Source](./development/building.md)
-  - [Testing](./development/testing.md)
