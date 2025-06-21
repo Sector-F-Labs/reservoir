@@ -6,7 +6,7 @@ use crate::repos::message::neo4j_message::save_message_node;
 use crate::utils::connector::connect;
 use anyhow::Error;
 use std::io::{self, Read};
-use tracing::info;
+use tracing::{debug, info};
 use uuid::Uuid;
 
 pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
@@ -42,6 +42,6 @@ pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
 
     let node = MessageNode::from_message(&message, &trace_id, &partition, &instance, embedding);
     save_message_node(connect, &node, &embedding_info).await?;
-    println!("Saved message with trace_id: {}", trace_id);
+    debug!("Saved message with trace_id: {}", trace_id);
     Ok(())
 }
