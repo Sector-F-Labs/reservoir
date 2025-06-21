@@ -1,6 +1,6 @@
 # Context Enrichment
 
-Context enrichment is Reservoir's core mechanism for providing intelligent, memory-aware AI conversations. By automatically injecting relevant historical context and recent conversation history into each request, Reservoir gives AI models a persistent memory that improves response quality and maintains conversational continuity across sessions.
+Context enrichment is Reservoir's core mechanism for providing intelligent, memory-aware LLM conversations. By automatically injecting relevant historical context and recent conversation history into each request, Reservoir gives LLM models a persistent memory that improves response quality and maintains conversational continuity across sessions.
 
 ## Overview
 
@@ -9,7 +9,7 @@ When you send a message to Reservoir, the system automatically enhances your req
 - **Recent conversation history** from the same partition/instance
 - **Connected conversation threads** through synapse relationships
 
-This enriched context is injected into your request before forwarding it to the AI provider, making the AI aware of relevant past discussions.
+This enriched context is injected into your request before forwarding it to the LLM provider, making the LLM aware of relevant past discussions.
 
 ## Context Enrichment Process
 
@@ -282,7 +282,7 @@ The truncation algorithm preserves:
 
 ### 7. Response Storage and Synapse Building
 
-After receiving the AI's response:
+After receiving the LLM's response:
 
 ```rs
 let message_node = chat_response.choices.first().unwrap().message.clone();
@@ -304,7 +304,7 @@ connect_synapses(connect)
     .expect("Failed to connect synapses");
 ```
 
-1. The AI's response is stored with its own embedding
+1. The LLM's response is stored with its own embedding
 2. Synapses (semantic connections) are built between messages
 3. The system continuously builds a knowledge graph of related conversations
 
@@ -438,7 +438,7 @@ Synapses are semantic relationships between messages that:
 
 ### Trace IDs
 Every request gets a unique trace ID that:
-- **Links user messages to AI responses** within the same conversation turn
+- **Links user messages to LLM responses** within the same conversation turn
 - **Enables conversation threading** and relationship building
 - **Provides audit trails** for debugging and analysis
 - **Supports parallel processing** of multiple simultaneous requests
@@ -472,10 +472,10 @@ Multiple system messages (including enrichment context) are compressed into a si
 
 ## Benefits of Context Enrichment
 
-1. **Conversational Continuity**: AI maintains awareness of past discussions across sessions
+1. **Conversational Continuity**: LLM maintains awareness of past discussions across sessions
 2. **Semantic Understanding**: Related topics are automatically surfaced even when not explicitly mentioned
 3. **Multi-Session Learning**: Knowledge accumulates over time, improving response quality
-4. **Cross-Model Memory**: Context persists when switching between different AI providers
+4. **Cross-Model Memory**: Context persists when switching between different LLM providers
 5. **Intelligent Prioritization**: Most relevant historical context is prioritized while respecting token limits
 6. **Automatic Organization**: The system builds its own knowledge graph without manual intervention
 

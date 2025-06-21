@@ -4,7 +4,7 @@ Reservoir is designed as a transparent proxy for OpenAI-compatible APIs, with a 
 
 ## Request Processing Sequence
 
-Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual LLM service. Here's the detailed sequence:
+Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual Language Model service. Here's the detailed sequence:
 
 ```mermaid
 sequenceDiagram

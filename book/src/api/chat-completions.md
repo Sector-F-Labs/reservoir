@@ -78,7 +78,7 @@ Reservoir accepts the standard OpenAI Chat Completions request format:
 | Role | Description | Usage |
 |------|-------------|-------|
 | `user` | User input messages | Questions, requests, instructions |
-| `assistant` | AI responses | Previous AI responses in conversation |
+| `assistant` | LLM responses | Previous LLM responses in conversation |
 | `system` | System instructions | Behavior modification, context setting |
 
 ## Context Enrichment Process
@@ -108,7 +108,7 @@ Reservoir finds relevant context through:
 
 ### 3. Context Injection
 ```json
-// Enriched request sent to AI model
+// Enriched request sent to the Language Model
 {
   "model": "gpt-4", 
   "messages": [
@@ -176,7 +176,7 @@ Reservoir returns responses in the standard OpenAI Chat Completions format:
 
 ### Environment Variables
 
-Configure different AI providers:
+Configure different LLM providers:
 
 ```bash
 # OpenAI (default)
@@ -421,4 +421,4 @@ reservoir config --get semantic_context_size
 - Parallel processing of semantic search and recent history
 - Optimized Neo4j queries for fast retrieval
 
-The Chat Completions endpoint provides the full power of Reservoir's context enrichment while maintaining complete compatibility with existing OpenAI-based applications, making it easy to add conversational memory to any AI application.
+The Chat Completions endpoint provides the full power of Reservoir's context enrichment while maintaining complete compatibility with existing OpenAI-based applications, making it easy to add conversational memory to any LLM application.

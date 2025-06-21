@@ -10,7 +10,7 @@ The data model is designed around the concept of messages as nodes in a graph, w
 
 ### MessageNode
 
-Represents a single message in a conversation, whether from a user or an AI assistant.
+Represents a single message in a conversation, whether from a user or an LLM assistant.
 
 | Property     | Type      | Description                                                                 |
 |--------------|-----------|-----------------------------------------------------------------------------|

@@ -45,7 +45,7 @@ curl "http://127.0.0.1:3017/partition/$USER/instance/quickstart/v1/chat/completi
 ```
 
 The response will look like a standard OpenAI API response, but Reservoir has:
-- Stored your message and the AI's response
+- Stored your message and the LLM's response
 - Tagged them with your username and "quickstart" instance
 - Made them available for future context enrichment
 
@@ -68,7 +68,7 @@ curl "http://127.0.0.1:3017/partition/$USER/instance/quickstart/v1/chat/completi
     }'
 ```
 
-Notice how the AI understands "what you just told me" - that's Reservoir automatically injecting the previous conversation context!
+Notice how the LLM understands "what you just told me" - that's Reservoir automatically injecting the previous conversation context!
 
 ## Step 4: View Your Conversation History
 
@@ -120,7 +120,7 @@ http://localhost:3017/partition/{partition}/instance/{instance}/v1/chat/completi
 
 ## What Just Happened?
 
-1. **Storage**: Every message (yours and the AI's) was stored in Neo4j
+1. **Storage**: Every message (yours and the LLM's) was stored in Neo4j
 2. **Context Enrichment**: Reservoir automatically found relevant past messages and included them in requests
 3. **Multi-Provider**: You used both OpenAI and Ollama with the same conversation history
 4. **Organization**: Your conversations were organized by partition and instance

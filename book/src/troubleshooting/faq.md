@@ -5,10 +5,10 @@ This section addresses common questions and issues you might encounter while usi
 ## General Questions
 
 ### What is Reservoir?
-Reservoir is a memory system for AI conversations that acts as a smart proxy between your applications and OpenAI-compatible APIs. It automatically stores conversation history and enriches new requests with relevant context from past conversations.
+Reservoir is a memory system for LLM conversations that acts as a smart proxy between your applications and OpenAI-compatible APIs. It automatically stores conversation history and enriches new requests with relevant context from past conversations.
 
 ### Does Reservoir support streaming responses?
-No, streaming responses are not currently supported. All requests are handled in a non-streaming manner. The response is returned once the complete message is received from the AI provider.
+No, streaming responses are not currently supported. All requests are handled in a non-streaming manner. The response is returned once the complete message is received from the LLM provider.
 
 ### Can I use Reservoir with clients other than the OpenAI Python library?
 Yes, Reservoir is designed to be fully OpenAI-compatible. It has been tested with:
@@ -19,8 +19,8 @@ Yes, Reservoir is designed to be fully OpenAI-compatible. It has been tested wit
 
 However, compatibility with some specialized clients may vary. If you encounter issues with a specific client, please report it as an issue.
 
-### What AI providers does Reservoir support?
-Reservoir supports multiple AI providers:
+### What LLM providers does Reservoir support?
+Reservoir supports multiple LLM providers:
 - **OpenAI**: GPT-4, GPT-4o, GPT-3.5-turbo, and specialized models
 - **Ollama**: Local models like Llama, Gemma, and any custom models
 - **Mistral AI**: Cloud-hosted Mistral models
@@ -35,7 +35,7 @@ Reservoir uses a two-level organization system:
 This allows you to keep conversations from different applications separate while maintaining context within each application.
 
 ### Is my data private?
-Yes, absolutely. All conversation data is stored locally in your Neo4j database and never leaves your infrastructure. Reservoir only forwards your requests to the AI providers you choose to use.
+Yes, absolutely. All conversation data is stored locally in your Neo4j database and never leaves your infrastructure. Reservoir only forwards your requests to the LLM providers you choose to use.
 
 ## Technical Questions
 
@@ -52,11 +52,11 @@ When you send a message, Reservoir:
 2. Searches for semantically similar past messages
 3. Retrieves recent conversation history
 4. Injects relevant context into your request
-5. Sends the enriched request to the AI provider
+5. Sends the enriched request to the LLM provider
 6. Stores the response for future context
 
 ### What are the token limits?
-Reservoir respects the token limits of the underlying AI models:
+Reservoir respects the token limits of the underlying LLM models:
 - **GPT-4**: 8,192 tokens (context window)
 - **GPT-4-32k**: 32,768 tokens
 - **GPT-3.5-turbo**: 4,096 tokens
@@ -168,7 +168,7 @@ Yes, you can run multiple instances by:
 2. Ensure Neo4j data is on fast storage (SSD)
 3. Optimize vector index settings
 4. Reduce the number of context messages retrieved
-5. Check network connectivity to AI providers
+5. Check network connectivity to LLM providers
 
 ## Installation Questions
 

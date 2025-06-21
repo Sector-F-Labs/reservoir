@@ -194,7 +194,7 @@ When you use Reservoir with the OpenAI library, you get:
 - **Automatic Context**: Previous conversations are automatically included
 - **Cross-Session Memory**: Conversations persist across different Python sessions
 - **Smart Token Management**: Reservoir handles token limits automatically
-- **Multi-Provider Support**: Switch between different AI providers seamlessly
+- **Multi-Provider Support**: Switch between different LLM providers seamlessly
 - **Local Storage**: All your conversation data stays on your device
 
 ## Next Steps

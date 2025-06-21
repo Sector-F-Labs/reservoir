@@ -1,6 +1,6 @@
 # Chat Gipitty Integration
 
-Reservoir was originally designed as a memory system for [Chat Gipitty](https://github.com/divanvisagie/chat-gipitty). This integration gives your cgip conversations persistent memory, context awareness, and the ability to search through your AI interaction history.
+Reservoir was originally designed as a memory system for [Chat Gipitty](https://github.com/divanvisagie/chat-gipitty). This integration gives your cgip conversations persistent memory, context awareness, and the ability to search through your LLM interaction history.
 
 ## What You Get
 
@@ -8,7 +8,7 @@ When you integrate Reservoir with Chat Gipitty, you get:
 - **Persistent Memory**: Your conversations are remembered across sessions
 - **Semantic Search**: Find relevant past discussions automatically
 - **Context Enrichment**: Each response is informed by your conversation history
-- **Multi-Model Support**: Switch between different AI providers while maintaining context
+- **Multi-Model Support**: Switch between different LLM providers while maintaining context
 
 ## Setup
 
@@ -89,10 +89,10 @@ The magic happens with follow-up questions:
 
 ```bash
 gpty "Explain neural networks"
-# ... AI responds with explanation ...
+# ... LLM responds with explanation ...
 
 gpty "How do they relate to what we discussed about machine learning earlier?"
-# ... AI responds with context from the previous conversation ...
+# ... LLM responds with context from the previous conversation ...
 ```
 
 ### Different Topics
@@ -117,7 +117,7 @@ Here's what happens when you use the integrated function:
    - Recent conversation history
 3. **Context Injection**: This context is provided to cgip as a system prompt
 4. **Enhanced Response**: cgip responds with awareness of your history
-5. **Response Storage**: The AI's response is stored for future context
+5. **Response Storage**: The LLM's response is stored for future context
 
 ## Advanced Configuration
 
@@ -209,7 +209,7 @@ function gpty_creative() {
 ## Benefits of This Integration
 
 ### Continuous Learning
-- Your AI assistant learns from every interaction
+- Your LLM assistant learns from every interaction
 - Context builds up over time, making responses more personalized
 - No need to re-explain your projects or preferences
 
@@ -225,7 +225,7 @@ function gpty_creative() {
 
 ### Privacy
 - All your conversation history stays local
-- No data sent to external services beyond the AI API calls
+- No data sent to external services beyond the LLM API calls
 - You control your data completely
 
 ## Troubleshooting
@@ -273,4 +273,4 @@ reservoir search "test"
 - Check out [Python Integration](./python-integration.md) for programmatic access
 - See [Troubleshooting](./troubleshooting/common-issues.md) if you encounter issues
 
-The Chat Gipitty integration transforms your AI interactions from isolated conversations into a connected, searchable knowledge base that grows smarter with every interaction.
+The Chat Gipitty integration transforms your LLM interactions from isolated conversations into a connected, searchable knowledge base that grows smarter with every interaction.

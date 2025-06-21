@@ -5,7 +5,7 @@ edition = "2021"
 repository = "https://github.com/sector-f-labs/reservoir"
 authors = ["Divan Visagie <me@divanv.com>"]
 license = "BSD-3-Clause"
-description = "Store all your LLM Interactions"
+description = "Store all your Language Model Interactions"
 
 [[bin]]
 name = "reservoir"

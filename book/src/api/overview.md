@@ -1,6 +1,6 @@
 # API Overview
 
-Reservoir provides an OpenAI-compatible API endpoint that acts as a smart proxy between your application and AI language models. This section covers the core API structure and basic usage patterns.
+Reservoir provides an OpenAI-compatible API endpoint that acts as a smart proxy between your application and LLM language models. This section covers the core API structure and basic usage patterns.
 
 ## URL Structure
 
@@ -64,12 +64,12 @@ When you make a request to Reservoir:
 1. **Message Storage**: Your message is stored with the specified partition/instance
 2. **Context Enrichment**: Reservoir finds relevant past conversations and recent history
 3. **Token Management**: The enriched context is checked against token limits
-4. **Request Forwarding**: The enriched request is forwarded to the appropriate AI provider
-5. **Response Storage**: The AI's response is stored for future context
+4. **Request Forwarding**: The enriched request is forwarded to the appropriate LLM provider
+5. **Response Storage**: The LLM's response is stored for future context
 
 ## Response Format
 
-Responses maintain the same format as the underlying AI provider (OpenAI, Ollama, etc.), so your existing code will work without modification.
+Responses maintain the same format as the underlying LLM provider (OpenAI, Ollama, etc.), so your existing code will work without modification.
 
 ## Next Steps
 

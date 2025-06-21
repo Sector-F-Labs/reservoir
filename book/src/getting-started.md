@@ -8,14 +8,14 @@ In this section, you'll learn how to:
 
 - **[Install Reservoir](./installation.md)** - Set up Reservoir on your system with all prerequisites
 - **[Quick Start](./quick-start.md)** - Get Reservoir running in minutes with basic configuration  
-- **[Your First Chat](./first-chat.md)** - Send your first AI conversation through Reservoir
+- **[Your First Chat](./first-chat.md)** - Send your first LLM conversation through Reservoir
 
 ## Prerequisites
 
 Before you begin, make sure you have:
 - Neo4j database running (local or remote)
 - Rust toolchain installed (for building from source)
-- API keys for your preferred AI providers (OpenAI, Mistral, etc.)
+- API keys for your preferred LLM providers (OpenAI, Mistral, etc.)
 
 ## Getting Help
 

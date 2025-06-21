@@ -26,7 +26,7 @@ Reservoir addresses these limitations by acting as an intermediary layer that:
 
 ## Architecture Overview
 
-The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target LLM provider. All conversation data remains local to the deployment environment.
+The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target Language Model provider. All conversation data remains local to the deployment environment.
 
 ## Data Model
 
@@ -39,7 +39,7 @@ Conversations are stored as a graph structure:
 
 ## Supported Providers
 
-The system supports multiple LLM providers through a unified interface:
+The system supports multiple Language Model providers through a unified interface:
 - OpenAI (gpt-4, gpt-4o, gpt-3.5-turbo)
 - Ollama (local model execution)
 - Mistral AI
@@ -57,7 +57,7 @@ The server initializes a vector index in Neo4j for efficient semantic search and
 - **Stateful chat applications**: Eliminate manual conversation state management
 - **Cross-session context**: Maintain context across application restarts
 - **Semantic search**: Retrieve relevant historical conversations
-- **Multi-provider workflows**: Maintain context when switching between LLM providers
-- **Research and development**: Build persistent knowledge bases from AI interactions
+- **Multi-provider workflows**: Maintain context when switching between Language Model providers
+- **Research and development**: Build persistent knowledge bases from Language Model interactions
 
 For implementation details, see the [Quick Start](./quick-start.md) guide.

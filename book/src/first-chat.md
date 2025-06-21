@@ -47,7 +47,7 @@ curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completi
     }'
 ```
 
-**Magic!** The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!
+**Magic!** The Language Model will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!
 
 ### Step 3: Continue the conversation
 
@@ -65,7 +65,7 @@ curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completi
     }'
 ```
 
-The AI will make suggestions based on knowing you're Alice who loves Python programming!
+The Language Model will make suggestions based on knowing you're Alice who loves Python programming!
 
 ## Example 2: Using OpenAI Models
 
@@ -155,8 +155,8 @@ When you send a message, Reservoir:
 1. **Stores your message** in Neo4j with embeddings
 2. **Searches for relevant context** from previous conversations
 3. **Injects relevant history** into your request automatically
-4. **Forwards the enriched request** to the AI provider
-5. **Stores the AI's response** for future context
+4. **Forwards the enriched request** to the Language Model provider
+5. **Stores the Language Model's response** for future context
 
 ### Viewing Your Conversation History
 
@@ -240,4 +240,4 @@ Now that you've sent your first chat, explore these features:
 - **[Chat Gipitty Integration](./chat-gipitty.md)** - Add memory to your existing chat tools
 - **[API Reference](./api/overview.md)** - Learn about advanced features
 
-**Congratulations!** You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!
+**Congratulations!** You've successfully used Reservoir to have a conversation with persistent memory. The Language Model now remembers everything from your conversation and can reference it in future chats!

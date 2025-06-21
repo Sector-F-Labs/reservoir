@@ -306,4 +306,4 @@ reservoir replay
 3. **User-Defined Thresholds**: Per-partition similarity thresholds
 4. **Manual Synapse Management**: User-controlled connection creation
 
-Synapses transform Reservoir from a simple conversation store into an intelligent knowledge network that grows more valuable with each interaction, creating a personalized AI assistant with genuine conversational memory.
+Synapses transform Reservoir from a simple conversation store into an intelligent knowledge network that grows more valuable with each interaction, creating a personalized LLM assistant with genuine conversational memory.
