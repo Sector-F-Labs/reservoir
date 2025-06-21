@@ -1750,6 +1750,353 @@ Authorization: Bearer YOUR_API_KEY
 <li><a href="api/./cli.html">Command Line Interface</a> - CLI usage and commands</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="chat-completions-endpoint"><a class="header" href="#chat-completions-endpoint">Chat Completions Endpoint</a></h1>
+<p>The Chat Completions endpoint is Reservoir's core API, providing full OpenAI API compatibility with intelligent context enrichment. This endpoint automatically enhances your conversations with relevant historical context while maintaining the same request/response format as OpenAI's Chat Completions API.</p>
+<h2 id="endpoint-url"><a class="header" href="#endpoint-url">Endpoint URL</a></h2>
+<pre><code>POST /v1/partition/{partition}/instance/{instance}/chat/completions
+</code></pre>
+<h3 id="url-parameters"><a class="header" href="#url-parameters">URL Parameters</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Description</th><th>Example</th></tr></thead><tbody>
+<tr><td><code>partition</code></td><td>Top-level organization boundary</td><td><code>alice</code>, <code>project_name</code>, <code>$USER</code></td></tr>
+<tr><td><code>instance</code></td><td>Specific context within partition</td><td><code>coding</code>, <code>research</code>, <code>session_123</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="example-urls"><a class="header" href="#example-urls">Example URLs</a></h3>
+<pre><code class="language-bash"># User-specific coding assistant
+POST /v1/partition/alice/instance/coding/chat/completions
+
+# Project-specific documentation bot  
+POST /v1/partition/docs_project/instance/support/chat/completions
+
+# Personal research assistant
+POST /v1/partition/$USER/instance/research/chat/completions
+
+# Default partition/instance (if not specified)
+POST /v1/chat/completions  # Uses partition=default, instance=default
+</code></pre>
+<h2 id="request-format"><a class="header" href="#request-format">Request Format</a></h2>
+<h3 id="headers"><a class="header" href="#headers">Headers</a></h3>
+<pre><code class="language-http">Content-Type: application/json
+Authorization: Bearer YOUR_API_KEY
+</code></pre>
+<h3 id="request-body-1"><a class="header" href="#request-body-1">Request Body</a></h3>
+<p>Reservoir accepts the standard OpenAI Chat Completions request format:</p>
+<pre><code class="language-json">{
+  "model": "gpt-4",
+  "messages": [
+    {
+      "role": "user", 
+      "content": "How do I implement error handling in async functions?"
+    }
+  ]
+}
+</code></pre>
+<h3 id="supported-models-1"><a class="header" href="#supported-models-1">Supported Models</a></h3>
+<p><strong>OpenAI Models:</strong></p>
+<ul>
+<li><code>gpt-4.1</code></li>
+<li><code>gpt-4-turbo</code></li>
+<li><code>gpt-4o</code></li>
+<li><code>gpt-4o-mini</code></li>
+<li><code>gpt-3.5-turbo</code></li>
+<li><code>gpt-4o-search-preview</code></li>
+</ul>
+<p><strong>Local Models (via Ollama):</strong></p>
+<ul>
+<li><code>llama3.1:8b</code></li>
+<li><code>llama3.1:70b</code></li>
+<li><code>mistral:7b</code></li>
+<li><code>codellama:latest</code></li>
+<li>Any Ollama-supported model</li>
+</ul>
+<h3 id="message-roles"><a class="header" href="#message-roles">Message Roles</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Role</th><th>Description</th><th>Usage</th></tr></thead><tbody>
+<tr><td><code>user</code></td><td>User input messages</td><td>Questions, requests, instructions</td></tr>
+<tr><td><code>assistant</code></td><td>AI responses</td><td>Previous AI responses in conversation</td></tr>
+<tr><td><code>system</code></td><td>System instructions</td><td>Behavior modification, context setting</td></tr>
+</tbody></table>
+</div>
+<h2 id="context-enrichment-process"><a class="header" href="#context-enrichment-process">Context Enrichment Process</a></h2>
+<p>When you send a request, Reservoir automatically enhances it with relevant context:</p>
+<h3 id="1-message-analysis"><a class="header" href="#1-message-analysis">1. Message Analysis</a></h3>
+<pre><code class="language-json">// Your original request
+{
+  "model": "gpt-4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "How do I handle database timeouts?"
+    }
+  ]
+}
+</code></pre>
+<h3 id="2-context-discovery"><a class="header" href="#2-context-discovery">2. Context Discovery</a></h3>
+<p>Reservoir finds relevant context through:</p>
+<ul>
+<li><strong>Semantic Search</strong>: Messages similar to "database timeouts"</li>
+<li><strong>Recent History</strong>: Last 15 messages from same partition/instance</li>
+<li><strong>Synapse Connections</strong>: Related discussions via SYNAPSE relationships</li>
+</ul>
+<h3 id="3-context-injection"><a class="header" href="#3-context-injection">3. Context Injection</a></h3>
+<pre><code class="language-json">// Enriched request sent to AI model
+{
+  "model": "gpt-4", 
+  "messages": [
+    {
+      "role": "system",
+      "content": "The following is the result of a semantic search of the most related messages by cosine similarity to previous conversations"
+    },
+    {
+      "role": "user",
+      "content": "What's the best way to configure database connection pools?"
+    },
+    {
+      "role": "assistant", 
+      "content": "For database connection pools, consider these settings..."
+    },
+    {
+      "role": "system",
+      "content": "The following are the most recent messages in the conversation in chronological order"
+    },
+    {
+      "role": "user",
+      "content": "I'm working on optimizing database queries"
+    },
+    {
+      "role": "assistant",
+      "content": "Here are some query optimization techniques..."
+    },
+    {
+      "role": "user",
+      "content": "How do I handle database timeouts?"  // Your original message
+    }
+  ]
+}
+</code></pre>
+<h2 id="response-format-1"><a class="header" href="#response-format-1">Response Format</a></h2>
+<p>Reservoir returns responses in the standard OpenAI Chat Completions format:</p>
+<pre><code class="language-json">{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion", 
+  "created": 1677858242,
+  "model": "gpt-4",
+  "usage": {
+    "prompt_tokens": 13,
+    "completion_tokens": 7,
+    "total_tokens": 20
+  },
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "To handle database timeouts, you should implement retry logic with exponential backoff..."
+      },
+      "finish_reason": "stop",
+      "index": 0
+    }
+  ]
+}
+</code></pre>
+<h2 id="configuration-and-model-selection"><a class="header" href="#configuration-and-model-selection">Configuration and Model Selection</a></h2>
+<h3 id="environment-variables-4"><a class="header" href="#environment-variables-4">Environment Variables</a></h3>
+<p>Configure different AI providers:</p>
+<pre><code class="language-bash"># OpenAI (default)
+export OPENAI_API_KEY="your-openai-api-key"
+export RSV_OPENAI_BASE_URL="https://api.openai.com/v1/chat/completions"
+
+# Ollama (local)
+export RSV_OLLAMA_BASE_URL="http://localhost:11434/v1/chat/completions"
+
+# Mistral
+export MISTRAL_API_KEY="your-mistral-api-key"
+export RSV_MISTRAL_BASE_URL="https://api.mistral.ai/v1/chat/completions"
+
+# Gemini
+export GEMINI_API_KEY="your-gemini-api-key"
+</code></pre>
+<h3 id="model-detection"><a class="header" href="#model-detection">Model Detection</a></h3>
+<p>Reservoir automatically routes requests based on model name:</p>
+<ul>
+<li><strong>OpenAI models</strong>: <code>gpt-*</code> → OpenAI API</li>
+<li><strong>Local models</strong>: <code>llama*</code>, <code>mistral*</code>, etc. → Ollama API</li>
+<li><strong>Mistral models</strong>: <code>mistral-*</code> → Mistral API</li>
+</ul>
+<h2 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h2>
+<h3 id="token-limit-errors"><a class="header" href="#token-limit-errors">Token Limit Errors</a></h3>
+<p>If your message exceeds model token limits:</p>
+<pre><code class="language-json">{
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "Your last message is too long. It contains approximately 5000 tokens, which exceeds the maximum limit of 4096. Please shorten your message."
+      },
+      "finish_reason": "length",
+      "index": 0
+    }
+  ]
+}
+</code></pre>
+<h3 id="api-connection-errors"><a class="header" href="#api-connection-errors">API Connection Errors</a></h3>
+<pre><code class="language-json">{
+  "error": {
+    "message": "Failed to connect to OpenAI API: Connection timeout. Check your API key and network connection. Using model 'gpt-4' at 'https://api.openai.com/v1/chat/completions'"
+  }
+}
+</code></pre>
+<h3 id="invalid-model-errors"><a class="header" href="#invalid-model-errors">Invalid Model Errors</a></h3>
+<pre><code class="language-json">{
+  "error": {
+    "message": "Invalid OpenAI model name: 'gpt-5'. Valid models are: ['gpt-4.1', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo', 'gpt-4o-search-preview']"
+  }
+}
+</code></pre>
+<h2 id="usage-examples"><a class="header" href="#usage-examples">Usage Examples</a></h2>
+<h3 id="basic-request"><a class="header" href="#basic-request">Basic Request</a></h3>
+<pre><code class="language-bash">curl -X POST "http://localhost:3017/v1/partition/alice/instance/coding/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-4",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Explain async/await in Python"
+      }
+    ]
+  }'
+</code></pre>
+<h3 id="with-system-message"><a class="header" href="#with-system-message">With System Message</a></h3>
+<pre><code class="language-bash">curl -X POST "http://localhost:3017/v1/partition/docs/instance/writing/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-4",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a technical documentation expert. Provide clear, concise explanations."
+      },
+      {
+        "role": "user",
+        "content": "How should I document API endpoints?"
+      }
+    ]
+  }'
+</code></pre>
+<h3 id="local-model-ollama"><a class="header" href="#local-model-ollama">Local Model (Ollama)</a></h3>
+<pre><code class="language-bash">curl -X POST "http://localhost:3017/v1/partition/alice/instance/local/chat/completions" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama3.1:8b",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What are the benefits of using local LLMs?"
+      }
+    ]
+  }'
+</code></pre>
+<h2 id="integration-examples"><a class="header" href="#integration-examples">Integration Examples</a></h2>
+<h3 id="python-with-openai-library"><a class="header" href="#python-with-openai-library">Python with OpenAI Library</a></h3>
+<pre><code class="language-python">import openai
+
+# Configure to use Reservoir instead of OpenAI directly
+openai.api_base = "http://localhost:3017/v1/partition/alice/instance/coding"
+
+response = openai.ChatCompletion.create(
+    model="gpt-4",
+    messages=[
+        {"role": "user", "content": "How do I optimize this database query?"}
+    ]
+)
+
+print(response.choices[0].message.content)
+</code></pre>
+<h3 id="javascriptnodejs"><a class="header" href="#javascriptnodejs">JavaScript/Node.js</a></h3>
+<pre><code class="language-javascript">const OpenAI = require('openai');
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: 'http://localhost:3017/v1/partition/myapp/instance/support'
+});
+
+async function chat(message) {
+  const completion = await openai.chat.completions.create({
+    messages: [{ role: 'user', content: message }],
+    model: 'gpt-4',
+  });
+
+  return completion.choices[0].message.content;
+}
+</code></pre>
+<h3 id="streaming-responses"><a class="header" href="#streaming-responses">Streaming Responses</a></h3>
+<p>Reservoir supports streaming responses when the underlying model supports it:</p>
+<pre><code class="language-python">import openai
+
+openai.api_base = "http://localhost:3017/v1/partition/alice/instance/chat"
+
+response = openai.ChatCompletion.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Explain machine learning"}],
+    stream=True
+)
+
+for chunk in response:
+    print(chunk.choices[0].delta.content, end="")
+</code></pre>
+<h2 id="advanced-features"><a class="header" href="#advanced-features">Advanced Features</a></h2>
+<h3 id="web-search-integration-1"><a class="header" href="#web-search-integration-1">Web Search Integration</a></h3>
+<p>Some models support web search capabilities:</p>
+<pre><code class="language-json">{
+  "model": "gpt-4o-search-preview",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What are the latest developments in AI?"
+    }
+  ],
+  "web_search_options": {
+    "enabled": true
+  }
+}
+</code></pre>
+<h3 id="message-storage"><a class="header" href="#message-storage">Message Storage</a></h3>
+<p>All messages (user and assistant) are automatically stored with:</p>
+<ul>
+<li><strong>Embeddings</strong>: For semantic search and context enrichment</li>
+<li><strong>Timestamps</strong>: For chronological ordering</li>
+<li><strong>Partition/Instance</strong>: For data organization</li>
+<li><strong>Trace IDs</strong>: For linking request/response pairs</li>
+</ul>
+<h3 id="context-control"><a class="header" href="#context-control">Context Control</a></h3>
+<p>Control context enrichment via configuration:</p>
+<pre><code class="language-bash"># Adjust context size
+reservoir config --set semantic_context_size=20
+reservoir config --set recent_context_size=15
+
+# View current settings
+reservoir config --get semantic_context_size
+</code></pre>
+<h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance Considerations</a></h2>
+<h3 id="token-management"><a class="header" href="#token-management">Token Management</a></h3>
+<ul>
+<li>Reservoir automatically manages token limits for each model</li>
+<li>Context is intelligently truncated when necessary</li>
+<li>Priority given to most relevant and recent content</li>
+</ul>
+<h3 id="caching"><a class="header" href="#caching">Caching</a></h3>
+<ul>
+<li>Embeddings are cached to avoid recomputation</li>
+<li>Vector indices are optimized for fast similarity search</li>
+<li>Connection pooling for database efficiency</li>
+</ul>
+<h3 id="latency"><a class="header" href="#latency">Latency</a></h3>
+<ul>
+<li>Typical latency: 200-500ms for context enrichment</li>
+<li>Parallel processing of semantic search and recent history</li>
+<li>Optimized Neo4j queries for fast retrieval</li>
+</ul>
+<p>The Chat Completions endpoint provides the full power of Reservoir's context enrichment while maintaining complete compatibility with existing OpenAI-based applications, making it easy to add conversational memory to any AI application.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="search--retrieval"><a class="header" href="#search--retrieval">Search &amp; Retrieval</a></h1>
 <p>Reservoir provides powerful search capabilities for finding relevant conversations and messages across your entire conversation history. The search system supports both keyword-based and semantic similarity searches, enabling you to discover related discussions even when they use different terminology.</p>
 <h2 id="search-methods"><a class="header" href="#search-methods">Search Methods</a></h2>
@@ -1889,7 +2236,7 @@ reservoir search --deduplicate --semantic "testing strategies"
 <li><strong>Relevance Filtering</strong>: Only high-quality matches (&gt;0.85 similarity) are used</li>
 <li><strong>Token Management</strong>: Results are truncated to fit model token limits</li>
 </ol>
-<h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance Considerations</a></h2>
+<h2 id="performance-considerations-1"><a class="header" href="#performance-considerations-1">Performance Considerations</a></h2>
 <h3 id="vector-index"><a class="header" href="#vector-index">Vector Index</a></h3>
 <p>Reservoir maintains optimized vector indices for fast search:</p>
 <pre><code class="language-cypher">CREATE VECTOR INDEX embedding1536 
@@ -2463,7 +2810,7 @@ reservoir replay bge-large-en-v15
 <li>Default values (lowest priority)</li>
 </ol>
 <p>See <a href="api/../deployment/environment.html">Environment Variables</a> for detailed configuration options.</p>
-<h2 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h2>
+<h2 id="error-handling-2"><a class="header" href="#error-handling-2">Error Handling</a></h2>
 <p>The CLI provides helpful error messages for common issues:</p>
 <ul>
 <li><strong>Connection errors</strong>: Check if Neo4j is running</li>
@@ -2577,7 +2924,7 @@ reservoir start
 <li><strong>Recency filtering</strong>: Includes recent messages from the same partition/instance</li>
 <li><strong>Context injection</strong>: Adds relevant context to the request payload</li>
 </ul>
-<h4 id="token-management"><a class="header" href="#token-management">Token Management</a></h4>
+<h4 id="token-management-1"><a class="header" href="#token-management-1">Token Management</a></h4>
 <ul>
 <li><strong>Total token calculation</strong>: Counts tokens in the enriched message list</li>
 <li><strong>Smart truncation</strong>: Removes older context while preserving system prompts and latest messages</li>
@@ -2904,7 +3251,7 @@ RETURN m, connectionCount, avgScore
 ORDER BY connectionCount DESC, avgScore DESC
 </code></pre>
 <h2 id="data-lifecycle"><a class="header" href="#data-lifecycle">Data Lifecycle</a></h2>
-<h3 id="message-storage"><a class="header" href="#message-storage">Message Storage</a></h3>
+<h3 id="message-storage-1"><a class="header" href="#message-storage-1">Message Storage</a></h3>
 <ol>
 <li><strong>Ingestion</strong>: New messages are stored with embeddings</li>
 <li><strong>Indexing</strong>: Vector embeddings are indexed for similarity search</li>
@@ -2924,7 +3271,7 @@ ORDER BY connectionCount DESC, avgScore DESC
 <li><strong>Index Optimization</strong>: Regular vector index maintenance</li>
 <li><strong>Storage Optimization</strong>: Archival of old messages based on retention policies</li>
 </ul>
-<h2 id="performance-considerations-1"><a class="header" href="#performance-considerations-1">Performance Considerations</a></h2>
+<h2 id="performance-considerations-2"><a class="header" href="#performance-considerations-2">Performance Considerations</a></h2>
 <h3 id="indexing-strategy"><a class="header" href="#indexing-strategy">Indexing Strategy</a></h3>
 <ul>
 <li><strong>Vector Index</strong>: Primary index for similarity searches</li>
@@ -2957,7 +3304,7 @@ ORDER BY connectionCount DESC, avgScore DESC
 <li><strong>Connected conversation threads</strong> through synapse relationships</li>
 </ul>
 <p>This enriched context is injected into your request before forwarding it to the AI provider, making the AI aware of relevant past discussions.</p>
-<h2 id="context-enrichment-process"><a class="header" href="#context-enrichment-process">Context Enrichment Process</a></h2>
+<h2 id="context-enrichment-process-1"><a class="header" href="#context-enrichment-process-1">Context Enrichment Process</a></h2>
 <h3 id="1-message-reception-and-initial-processing"><a class="header" href="#1-message-reception-and-initial-processing">1. Message Reception and Initial Processing</a></h3>
 <pre><code class="language-rs">pub async fn handle_with_partition(
     partition: &amp;str,
@@ -3375,7 +3722,7 @@ DELETE r
 <li><strong>Intelligent Prioritization</strong>: Most relevant historical context is prioritized while respecting token limits</li>
 <li><strong>Automatic Organization</strong>: The system builds its own knowledge graph without manual intervention</li>
 </ol>
-<h2 id="performance-considerations-2"><a class="header" href="#performance-considerations-2">Performance Considerations</a></h2>
+<h2 id="performance-considerations-3"><a class="header" href="#performance-considerations-3">Performance Considerations</a></h2>
 <ul>
 <li><strong>Vector Indexing</strong>: Neo4j's vector indices provide sub-second similarity search even with large conversation histories</li>
 <li><strong>Parallel Processing</strong>: Semantic search and recent history retrieval happen concurrently</li>
@@ -3534,7 +3881,7 @@ Cluster 2: Database Design
 ├── "Database normalization" (5 connections)
 └── "Index strategy for performance" (3 connections)
 </code></pre>
-<h2 id="performance-considerations-3"><a class="header" href="#performance-considerations-3">Performance Considerations</a></h2>
+<h2 id="performance-considerations-4"><a class="header" href="#performance-considerations-4">Performance Considerations</a></h2>
 <h3 id="synapse-creation-overhead"><a class="header" href="#synapse-creation-overhead">Synapse Creation Overhead</a></h3>
 <ul>
 <li><strong>Computation</strong>: Vector similarity calculation for each new message</li>
@@ -3663,7 +4010,7 @@ reservoir replay
 }
 </code></pre>
 <h2 id="configuration-2"><a class="header" href="#configuration-2">Configuration</a></h2>
-<h3 id="environment-variables-4"><a class="header" href="#environment-variables-4">Environment Variables</a></h3>
+<h3 id="environment-variables-5"><a class="header" href="#environment-variables-5">Environment Variables</a></h3>
 <p>Set provider endpoints and API keys:</p>
 <pre><code class="language-bash"># API Keys
 export OPENAI_API_KEY="sk-your-openai-key"
@@ -3751,7 +4098,7 @@ curl -d '{"model": "gpt-4", "messages": [...]}' localhost:3017/...
 # Use Mistral for European compliance
 curl -d '{"model": "mistral-large", "messages": [...]}' localhost:3017/...
 </code></pre>
-<h2 id="error-handling-2"><a class="header" href="#error-handling-2">Error Handling</a></h2>
+<h2 id="error-handling-3"><a class="header" href="#error-handling-3">Error Handling</a></h2>
 <p>Reservoir provides consistent error handling across all providers:</p>
 <h3 id="common-error-responses"><a class="header" href="#common-error-responses">Common Error Responses</a></h3>
 <pre><code class="language-json">{
@@ -3769,7 +4116,7 @@ curl -d '{"model": "mistral-large", "messages": [...]}' localhost:3017/...
 <li><strong>Mistral</strong>: Authentication errors, model access restrictions</li>
 <li><strong>Gemini</strong>: API quota limits, geographic restrictions</li>
 </ul>
-<h2 id="performance-considerations-4"><a class="header" href="#performance-considerations-4">Performance Considerations</a></h2>
+<h2 id="performance-considerations-5"><a class="header" href="#performance-considerations-5">Performance Considerations</a></h2>
 <h3 id="provider-comparison"><a class="header" href="#provider-comparison">Provider Comparison</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Provider</th><th>Latency</th><th>Cost</th><th>Privacy</th><th>Features</th></tr></thead><tbody>
 <tr><td>OpenAI</td><td>Medium</td><td>High</td><td>Cloud</td><td>Most comprehensive</td></tr>
@@ -3842,7 +4189,7 @@ curl https://api.mistral.ai/v1/models -H "Authorization: Bearer $MISTRAL_API_KEY
 <li>Validate model names and availability</li>
 </ul>
 <p>Multi-provider support makes Reservoir a flexible foundation for AI applications, allowing you to choose the best provider for each use case while maintaining conversation continuity.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="token-management-1"><a class="header" href="#token-management-1">Token Management</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="token-management-2"><a class="header" href="#token-management-2">Token Management</a></h1>
 <p>Reservoir intelligently manages token limits to ensure optimal context enrichment while staying within model constraints. The system automatically calculates token usage, prioritizes the most relevant context, and truncates content when necessary to fit within API limits.</p>
 <h2 id="context-token-management"><a class="header" href="#context-token-management">Context Token Management</a></h2>
 <h3 id="automatic-context-sizing"><a class="header" href="#automatic-context-sizing">Automatic Context Sizing</a></h3>
@@ -3952,7 +4299,7 @@ semantic_context_size = 10
 <li><strong>Truncation Events</strong>: When content is cut due to limits</li>
 <li><strong>Model Utilization</strong>: Percentage of context window used</li>
 </ul>
-<h3 id="usage-examples"><a class="header" href="#usage-examples">Usage Examples</a></h3>
+<h3 id="usage-examples-1"><a class="header" href="#usage-examples-1">Usage Examples</a></h3>
 <pre><code class="language-bash"># View recent messages with estimated token usage
 reservoir view 10 | while read -r line; do
     echo "$line (est. tokens: $((${#line}/4)))"
@@ -4352,7 +4699,325 @@ reservoir export | jq '.[] | select(.partition=="alice" and .instance=="coding")
 <li><strong>Token Limits</strong>: Applied per partition context</li>
 </ul>
 <p>This partitioning system makes Reservoir suitable for multi-user environments, project-based work, and any scenario where logical separation of conversation contexts is beneficial.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="web-search-integration-1"><a class="header" href="#web-search-integration-1">Web Search Integration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="web-search-integration-2"><a class="header" href="#web-search-integration-2">Web Search Integration</a></h1>
+<p>Reservoir supports web search integration for models that provide this capability, enabling AI assistants to access real-time information from the internet while maintaining the benefits of conversational memory and context enrichment.</p>
+<h2 id="overview-3"><a class="header" href="#overview-3">Overview</a></h2>
+<p>Web search integration allows AI models to:</p>
+<ul>
+<li><strong>Access Current Information</strong>: Get up-to-date data not in training sets</li>
+<li><strong>Verify Facts</strong>: Cross-reference stored conversations with current sources</li>
+<li><strong>Expand Context</strong>: Combine web results with Reservoir's semantic memory</li>
+<li><strong>Enhanced Research</strong>: Build knowledge from both conversation history and web sources</li>
+</ul>
+<h2 id="supported-models-2"><a class="header" href="#supported-models-2">Supported Models</a></h2>
+<h3 id="openai-models-with-web-search"><a class="header" href="#openai-models-with-web-search">OpenAI Models with Web Search</a></h3>
+<ul>
+<li><strong><code>gpt-4o-search-preview</code></strong>: OpenAI's experimental web search model</li>
+<li><strong>Future Models</strong>: Additional web-enabled models as they become available</li>
+</ul>
+<h3 id="local-models"><a class="header" href="#local-models">Local Models</a></h3>
+<p>Web search capability depends on the underlying model's features:</p>
+<ul>
+<li>Some Ollama models may support web search plugins</li>
+<li>Custom implementations can be integrated via the API</li>
+</ul>
+<h2 id="usage-1"><a class="header" href="#usage-1">Usage</a></h2>
+<h3 id="basic-web-search-request"><a class="header" href="#basic-web-search-request">Basic Web Search Request</a></h3>
+<pre><code class="language-bash">curl -X POST "http://localhost:3017/v1/partition/research/instance/current_events/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-4o-search-preview",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What are the latest developments in renewable energy technology?"
+      }
+    ],
+    "web_search_options": {
+      "enabled": true
+    }
+  }'
+</code></pre>
+<h3 id="web-search-with-context"><a class="header" href="#web-search-with-context">Web Search with Context</a></h3>
+<pre><code class="language-json">{
+  "model": "gpt-4o-search-preview",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Based on our previous discussion about solar panels, what are the newest efficiency improvements announced this month?"
+    }
+  ],
+  "web_search_options": {
+    "enabled": true,
+    "max_results": 5,
+    "search_depth": "recent"
+  }
+}
+</code></pre>
+<h2 id="web-search-options"><a class="header" href="#web-search-options">Web Search Options</a></h2>
+<h3 id="configuration-parameters"><a class="header" href="#configuration-parameters">Configuration Parameters</a></h3>
+<pre><code class="language-json">{
+  "web_search_options": {
+    "enabled": true,
+    "max_results": 10,
+    "search_depth": "comprehensive",
+    "time_range": "recent",
+    "include_sources": true,
+    "filter_domains": ["example.com", "trusted-source.org"]
+  }
+}
+</code></pre>
+<h3 id="parameter-details"><a class="header" href="#parameter-details">Parameter Details</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default</th></tr></thead><tbody>
+<tr><td><code>enabled</code></td><td>boolean</td><td>Enable/disable web search</td><td><code>false</code></td></tr>
+<tr><td><code>max_results</code></td><td>integer</td><td>Maximum search results to consider</td><td><code>5</code></td></tr>
+<tr><td><code>search_depth</code></td><td>string</td><td><code>"quick"</code>, <code>"standard"</code>, <code>"comprehensive"</code></td><td><code>"standard"</code></td></tr>
+<tr><td><code>time_range</code></td><td>string</td><td><code>"recent"</code>, <code>"week"</code>, <code>"month"</code>, <code>"any"</code></td><td><code>"any"</code></td></tr>
+<tr><td><code>include_sources</code></td><td>boolean</td><td>Include source URLs in response</td><td><code>true</code></td></tr>
+<tr><td><code>filter_domains</code></td><td>array</td><td>Restrict to specific domains</td><td><code>[]</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="how-web-search-works-with-reservoir"><a class="header" href="#how-web-search-works-with-reservoir">How Web Search Works with Reservoir</a></h2>
+<h3 id="enhanced-context-flow"><a class="header" href="#enhanced-context-flow">Enhanced Context Flow</a></h3>
+<pre class="mermaid">flowchart TD
+    A[&quot;User Query Arrives&quot;] --&gt; B[&quot;Extract Search Terms&quot;]
+    B --&gt; C[&quot;Reservoir Context Enrichment&quot;]
+    C --&gt; D[&quot;Semantic Search (Local)&quot;]
+    C --&gt; E[&quot;Recent History (Local)&quot;]
+    D --&gt; F[&quot;Combine Local Context&quot;]
+    E --&gt; F
+    F --&gt; G[&quot;Web Search (if enabled)&quot;]
+    G --&gt; H[&quot;Merge Web Results with Context&quot;]
+    H --&gt; I[&quot;Send Enriched Request to AI&quot;]
+    I --&gt; J[&quot;AI Response with Web Sources&quot;]
+    J --&gt; K[&quot;Store Response in Reservoir&quot;]
+</pre>
+<h3 id="context-prioritization-1"><a class="header" href="#context-prioritization-1">Context Prioritization</a></h3>
+<p>When web search is enabled, context is prioritized:</p>
+<ol>
+<li><strong>User's Current Message</strong>: Always highest priority</li>
+<li><strong>Web Search Results</strong>: Real-time information</li>
+<li><strong>Semantic Context</strong>: Relevant past conversations</li>
+<li><strong>Recent History</strong>: Chronological conversation flow</li>
+<li><strong>Additional Context</strong>: Synapse connections</li>
+</ol>
+<h2 id="example-workflows"><a class="header" href="#example-workflows">Example Workflows</a></h2>
+<h3 id="research-assistant"><a class="header" href="#research-assistant">Research Assistant</a></h3>
+<pre><code class="language-python">import openai
+
+openai.api_base = "http://localhost:3017/v1/partition/research/instance/ai_trends"
+
+# Initial research query
+response = openai.ChatCompletion.create(
+    model="gpt-4o-search-preview",
+    messages=[
+        {
+            "role": "user", 
+            "content": "What are the latest breakthroughs in large language models?"
+        }
+    ],
+    web_search_options={
+        "enabled": True,
+        "time_range": "recent",
+        "max_results": 8
+    }
+)
+
+print(response.choices[0].message.content)
+
+# Follow-up question (benefits from both web search and conversation history)
+response = openai.ChatCompletion.create(
+    model="gpt-4o-search-preview",
+    messages=[
+        {
+            "role": "user",
+            "content": "How do these breakthroughs compare to what we discussed last week about model efficiency?"
+        }
+    ],
+    web_search_options={"enabled": True}
+)
+</code></pre>
+<h3 id="news-analysis"><a class="header" href="#news-analysis">News Analysis</a></h3>
+<pre><code class="language-bash"># Get latest information
+curl -X POST "http://localhost:3017/v1/partition/news/instance/tech/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-4o-search-preview",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Summarize today'\''s major technology news"
+      }
+    ],
+    "web_search_options": {
+      "enabled": true,
+      "time_range": "recent",
+      "max_results": 10
+    }
+  }'
+
+# Follow up with context
+curl -X POST "http://localhost:3017/v1/partition/news/instance/tech/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-4o-search-preview", 
+    "messages": [
+      {
+        "role": "user",
+        "content": "How does this relate to the trends we'\''ve been tracking this month?"
+      }
+    ],
+    "web_search_options": {
+      "enabled": true
+    }
+  }'
+</code></pre>
+<h2 id="response-format-2"><a class="header" href="#response-format-2">Response Format</a></h2>
+<h3 id="with-web-sources"><a class="header" href="#with-web-sources">With Web Sources</a></h3>
+<pre><code class="language-json">{
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "Based on recent reports and our previous discussions about solar technology, here are the latest efficiency improvements:\n\n## Recent Developments\n\n1. **Perovskite-Silicon Tandem Cells**: New research published this week shows efficiency rates reaching 33.7%...\n\n2. **Quantum Dot Technology**: Scientists have achieved 15% efficiency improvements...\n\nThese developments build on your earlier questions about cost-effectiveness, and the new efficiency gains should address the concerns you raised about ROI timelines.\n\n### Sources:\n- Nature Energy, December 2024\n- MIT Technology Review, December 2024\n- Previous conversation: Solar panel efficiency discussion"
+      },
+      "finish_reason": "stop",
+      "index": 0
+    }
+  ],
+  "web_sources": [
+    {
+      "title": "Breakthrough in Perovskite Solar Cell Efficiency",
+      "url": "https://www.nature.com/articles/...",
+      "snippet": "Researchers achieve record-breaking 33.7% efficiency...",
+      "date": "2024-12-15"
+    }
+  ]
+}
+</code></pre>
+<h2 id="configuration-3"><a class="header" href="#configuration-3">Configuration</a></h2>
+<h3 id="environment-variables-6"><a class="header" href="#environment-variables-6">Environment Variables</a></h3>
+<pre><code class="language-bash"># Enable web search by default
+export RSV_WEB_SEARCH_ENABLED=true
+
+# Configure search limits
+export RSV_WEB_SEARCH_MAX_RESULTS=5
+export RSV_WEB_SEARCH_TIME_RANGE=recent
+
+# API keys for search providers (if needed)
+export SEARCH_API_KEY="your-search-api-key"
+</code></pre>
+<h3 id="per-request-configuration"><a class="header" href="#per-request-configuration">Per-Request Configuration</a></h3>
+<p>Web search can be enabled/disabled per request:</p>
+<pre><code class="language-python"># Enable for research
+response = openai.ChatCompletion.create(
+    model="gpt-4o-search-preview",
+    messages=[{"role": "user", "content": "Current AI research trends"}],
+    web_search_options={"enabled": True}
+)
+
+# Disable for private discussions
+response = openai.ChatCompletion.create(
+    model="gpt-4o-search-preview", 
+    messages=[{"role": "user", "content": "Help me plan my personal project"}],
+    web_search_options={"enabled": False}
+)
+</code></pre>
+<h2 id="use-cases-1"><a class="header" href="#use-cases-1">Use Cases</a></h2>
+<h3 id="when-to-enable-web-search"><a class="header" href="#when-to-enable-web-search">When to Enable Web Search</a></h3>
+<p><strong>✅ Good Use Cases:</strong></p>
+<ul>
+<li>Current events and news</li>
+<li>Latest research and publications</li>
+<li>Real-time data (stock prices, weather, etc.)</li>
+<li>Technical documentation updates</li>
+<li>Recent product releases or updates</li>
+</ul>
+<p><strong>❌ Avoid Web Search For:</strong></p>
+<ul>
+<li>Personal conversations</li>
+<li>Private project discussions</li>
+<li>Creative writing tasks</li>
+<li>Code debugging (unless looking for new solutions)</li>
+<li>Historical analysis (where training data is sufficient)</li>
+</ul>
+<h3 id="partition-strategies"><a class="header" href="#partition-strategies">Partition Strategies</a></h3>
+<pre><code class="language-bash"># News and current events
+/v1/partition/news/instance/tech/chat/completions
+
+# Research and academic work
+/v1/partition/research/instance/ai_papers/chat/completions
+
+# Market analysis
+/v1/partition/business/instance/market_intel/chat/completions
+
+# Personal assistant (web search disabled)
+/v1/partition/personal/instance/planning/chat/completions
+</code></pre>
+<h2 id="performance-considerations-6"><a class="header" href="#performance-considerations-6">Performance Considerations</a></h2>
+<h3 id="latency-impact"><a class="header" href="#latency-impact">Latency Impact</a></h3>
+<ul>
+<li><strong>Web Search Enabled</strong>: +1-3 seconds for search and processing</li>
+<li><strong>Web Search Disabled</strong>: Standard Reservoir latency (200-500ms)</li>
+<li><strong>Caching</strong>: Some web results may be cached for performance</li>
+</ul>
+<h3 id="cost-implications"><a class="header" href="#cost-implications">Cost Implications</a></h3>
+<ul>
+<li>Web search may incur additional API costs</li>
+<li>Consider rate limiting for high-volume applications</li>
+<li>Balance between information freshness and cost</li>
+</ul>
+<h3 id="token-usage"><a class="header" href="#token-usage">Token Usage</a></h3>
+<p>Web search results count toward token limits:</p>
+<ul>
+<li>Search results are included in context token calculation</li>
+<li>May reduce available space for conversation history</li>
+<li>Automatic truncation applies when limits are exceeded</li>
+</ul>
+<h2 id="troubleshooting-2"><a class="header" href="#troubleshooting-2">Troubleshooting</a></h2>
+<h3 id="web-search-not-working"><a class="header" href="#web-search-not-working">Web Search Not Working</a></h3>
+<pre><code class="language-bash"># Check model support
+reservoir config --get web_search_enabled
+
+# Verify API keys
+echo $OPENAI_API_KEY | wc -c  # Should be &gt; 0
+
+# Test with minimal request
+curl -X POST "http://localhost:3017/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-4o-search-preview",
+    "messages": [{"role": "user", "content": "What is today'\''s date?"}],
+    "web_search_options": {"enabled": true}
+  }'
+</code></pre>
+<h3 id="search-quality-issues"><a class="header" href="#search-quality-issues">Search Quality Issues</a></h3>
+<ol>
+<li><strong>Refine Search Terms</strong>: Use more specific queries</li>
+<li><strong>Adjust Time Range</strong>: Narrow to recent results for current topics</li>
+<li><strong>Filter Domains</strong>: Restrict to authoritative sources</li>
+<li><strong>Combine with Context</strong>: Let Reservoir's memory provide additional context</li>
+</ol>
+<h2 id="future-enhancements-3"><a class="header" href="#future-enhancements-3">Future Enhancements</a></h2>
+<h3 id="planned-features-1"><a class="header" href="#planned-features-1">Planned Features</a></h3>
+<ol>
+<li><strong>Custom Search Providers</strong>: Integration with different search APIs</li>
+<li><strong>Search Result Caching</strong>: Store web results for reuse</li>
+<li><strong>Source Ranking</strong>: Prioritize trusted sources</li>
+<li><strong>Search History</strong>: Track and learn from search patterns</li>
+</ol>
+<h3 id="integration-possibilities"><a class="header" href="#integration-possibilities">Integration Possibilities</a></h3>
+<ol>
+<li><strong>Domain-Specific Search</strong>: Academic papers, patents, documentation</li>
+<li><strong>Real-Time Data</strong>: APIs for live information</li>
+<li><strong>Multi-Modal Search</strong>: Images, videos, and documents</li>
+<li><strong>Knowledge Graphs</strong>: Structured information integration</li>
+</ol>
+<p>Web search integration transforms Reservoir from a conversational memory system into a comprehensive knowledge assistant that combines the depth of accumulated conversations with the breadth of current web information.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="importexport"><a class="header" href="#importexport">Import/Export</a></h1>
 <p>Reservoir provides comprehensive import and export capabilities for backing up your conversation data, migrating between systems, and integrating with external tools. The system exports data in JSON format, preserving all message metadata, embeddings, and relationships.</p>
 <h2 id="export-functionality"><a class="header" href="#export-functionality">Export Functionality</a></h2>
@@ -4608,7 +5273,7 @@ jq '.[] | select(.trace_id and .partition and .instance and .role and .content)'
 reservoir view 10
 reservoir search --semantic "test query"
 </code></pre>
-<h2 id="performance-considerations-5"><a class="header" href="#performance-considerations-5">Performance Considerations</a></h2>
+<h2 id="performance-considerations-7"><a class="header" href="#performance-considerations-7">Performance Considerations</a></h2>
 <h3 id="large-dataset-handling"><a class="header" href="#large-dataset-handling">Large Dataset Handling</a></h3>
 <p><strong>Streaming Export</strong></p>
 <pre><code class="language-bash"># For very large datasets, process in chunks
@@ -4634,7 +5299,7 @@ ssh source_server 'reservoir export' | reservoir import /dev/stdin
 # Compressed transfer
 ssh source_server 'reservoir export | gzip' | gunzip | reservoir import /dev/stdin
 </code></pre>
-<h2 id="troubleshooting-2"><a class="header" href="#troubleshooting-2">Troubleshooting</a></h2>
+<h2 id="troubleshooting-3"><a class="header" href="#troubleshooting-3">Troubleshooting</a></h2>
 <h3 id="common-issues-3"><a class="header" href="#common-issues-3">Common Issues</a></h3>
 <p><strong>Import Failures</strong></p>
 <pre><code class="language-bash"># Check JSON validity
@@ -4849,7 +5514,7 @@ curl -u neo4j:password http://localhost:7474/db/data/
 <tr><td><code>RSV_MISTRAL_BASE_URL</code></td><td><code>https://api.mistral.ai/v1/chat/completions</code></td><td>Mistral API endpoint</td></tr>
 </tbody></table>
 </div>
-<h2 id="troubleshooting-3"><a class="header" href="#troubleshooting-3">Troubleshooting</a></h2>
+<h2 id="troubleshooting-4"><a class="header" href="#troubleshooting-4">Troubleshooting</a></h2>
 <h3 id="common-issues-4"><a class="header" href="#common-issues-4">Common Issues</a></h3>
 <p><strong>Port Already in Use:</strong></p>
 <pre><code class="language-bash"># Check what's using port 3017
@@ -4913,7 +5578,7 @@ NEO4J_CONNECTION_TIMEOUT=30s
 </ul>
 <p>Your Reservoir instance is now ready for local development and testing!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="production-setup"><a class="header" href="#production-setup">Production Setup</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="environment-variables-5"><a class="header" href="#environment-variables-5">Environment Variables</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="environment-variables-7"><a class="header" href="#environment-variables-7">Environment Variables</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="common-issues-5"><a class="header" href="#common-issues-5">Common Issues</a></h1>
 <p>This page covers the most common issues you might encounter when using Reservoir and how to solve them.</p>
 <h2 id="server-issues"><a class="header" href="#server-issues">Server Issues</a></h2>
@@ -4943,7 +5608,7 @@ lsof -i :3017
 # Use a different port
 RESERVOIR_PORT=3018 cargo run -- start
 </code></pre>
-<h4 id="environment-variables-6"><a class="header" href="#environment-variables-6">Environment Variables</a></h4>
+<h4 id="environment-variables-8"><a class="header" href="#environment-variables-8">Environment Variables</a></h4>
 <p>If using direnv, make sure it's loaded:</p>
 <pre><code class="language-bash"># Check if direnv is working
 direnv status
@@ -5320,7 +5985,7 @@ NEO4J_PASSWORD="your-password"
 <li>Using different Neo4j databases</li>
 <li>Using different partition/instance combinations</li>
 </ul>
-<h2 id="troubleshooting-4"><a class="header" href="#troubleshooting-4">Troubleshooting</a></h2>
+<h2 id="troubleshooting-5"><a class="header" href="#troubleshooting-5">Troubleshooting</a></h2>
 <h3 id="neo4j-connection-issues"><a class="header" href="#neo4j-connection-issues">Neo4j Connection Issues</a></h3>
 <p><strong>Problem</strong>: Unable to connect to Neo4j.</p>
 <p><strong>Solutions</strong>:</p>
@@ -5362,7 +6027,7 @@ NEO4J_PASSWORD=password
 <p>Ensure there are no extra spaces or quotes in your environment variable.</p>
 </li>
 </ol>
-<h3 id="token-limit-errors"><a class="header" href="#token-limit-errors">Token Limit Errors</a></h3>
+<h3 id="token-limit-errors-1"><a class="header" href="#token-limit-errors-1">Token Limit Errors</a></h3>
 <p><strong>Problem</strong>: Requests fail due to exceeding the token limit.</p>
 <p><strong>Solutions</strong>:</p>
 <ol>
