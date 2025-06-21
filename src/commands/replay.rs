@@ -13,7 +13,7 @@ use crate::{
 
 pub async fn execute(model: &str) -> Result<(), Error> {
     let messages = get_messages(connect).await?;
-    info!("Found {} messages to process", messages.len());
+    println!("Found {} messages to process", messages.len());
 
     for message in messages {
         let ec: EmbeddingInfo = EmbeddingInfo::with_fastembed(model);
@@ -22,7 +22,7 @@ pub async fn execute(model: &str) -> Result<(), Error> {
         match message.content.clone() {
             Some(content) => match get_embeddings_for_txt(content.as_str(), ec.clone()).await {
                 Ok(embeddings) => {
-                    info!("attaching to message: {:?}", message.id);
+                    println!("attaching to message: {:?}", message.id);
                     let r = attach_embedding_to_message(connect, &message, embeddings, &ec, model)
                         .await;
                     match r {

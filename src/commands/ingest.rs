@@ -38,8 +38,6 @@ pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
     let embedding = get_embeddings_for_txt(&content, embedding_info.clone()).await?;
     let embedding_test = get_embeddings_for_txt(&content, embedding_info.clone()).await?;
 
-    info!("Embedding test: {:?}", embedding_test);
-
     let node = MessageNode::from_message(&message, &trace_id, &partition, &instance, embedding);
     save_message_node(connect, &node, &embedding_info).await?;
     debug!("Saved message with trace_id: {}", trace_id);
