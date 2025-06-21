@@ -229,7 +229,7 @@
 </ul>
 <h2 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h2>
 <p>If you run into any issues during setup, check out our <a href="./troubleshooting/common-issues.html">Help &amp; Support</a> section for troubleshooting guides and frequently asked questions.</p>
-<p>Let's get started! 🚀</p>
+<p>Let's get started!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
 <p>This guide will walk you through installing and setting up Reservoir on your system.</p>
 <h2 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h2>
@@ -555,9 +555,9 @@ export MISTRAL_API_KEY=your-key-here         # Mistral API key
 <h2 id="prerequisites-2"><a class="header" href="#prerequisites-2">Prerequisites</a></h2>
 <p>Before starting, make sure you have:</p>
 <ul>
-<li>✅ Reservoir server running (<code>cargo run -- start</code>)</li>
-<li>✅ Neo4j database accessible</li>
-<li>✅ API keys set up (if using cloud providers)</li>
+<li>Reservoir server running (<code>cargo run -- start</code>)</li>
+<li>Neo4j database accessible</li>
+<li>API keys set up (if using cloud providers)</li>
 </ul>
 <h2 id="example-1-testing-with-ollama-local"><a class="header" href="#example-1-testing-with-ollama-local">Example 1: Testing with Ollama (Local)</a></h2>
 <p>Let's start with a local Ollama model since it doesn't require API keys:</p>
@@ -588,7 +588,7 @@ export MISTRAL_API_KEY=your-key-here         # Mistral API key
         ]
     }'
 </code></pre>
-<p><strong>🎉 Magic!</strong> The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
+<p><strong>Magic!</strong> The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
 <h3 id="step-3-continue-the-conversation"><a class="header" href="#step-3-continue-the-conversation">Step 3: Continue the conversation</a></h3>
 <pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
     -H "Content-Type: application/json" \
@@ -738,7 +738,7 @@ cargo run -- start
 <li><strong><a href="./chat-gipitty.html">Chat Gipitty Integration</a></strong> - Add memory to your existing chat tools</li>
 <li><strong><a href="./api/overview.html">API Reference</a></strong> - Learn about advanced features</li>
 </ul>
-<p><strong>Congratulations!</strong> 🎉 You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!</p>
+<p><strong>Congratulations!</strong> You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="usage--integration"><a class="header" href="#usage--integration">Usage &amp; Integration</a></h1>
 <p>Reservoir is designed to work seamlessly with your existing AI workflows and tools. This section covers various ways to integrate and use Reservoir in your projects.</p>
 <h2 id="integration-options"><a class="header" href="#integration-options">Integration Options</a></h2>
@@ -1488,7 +1488,7 @@ ollama list
         ]
     }'
 </code></pre>
-<p>No API key required! 🎉</p>
+<p>No API key required!</p>
 <h3 id="ollama-mode"><a class="header" href="#ollama-mode">Ollama Mode</a></h3>
 <p>Reservoir also provides a special "Ollama mode" that makes it a drop-in replacement for Ollama's API:</p>
 <pre><code class="language-bash"># Start Reservoir in Ollama mode
@@ -1755,9 +1755,35 @@ Authorization: Bearer YOUR_API_KEY
 <div style="break-before: page; page-break-before: always;"></div><h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command Line Interface</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
 <p>Reservoir is designed as a transparent proxy for OpenAI-compatible APIs, with a focus on capturing and enriching AI conversations. This section provides an overview of the system architecture and how components interact.</p>
+<h2 id="request-processing-sequence"><a class="header" href="#request-processing-sequence">Request Processing Sequence</a></h2>
+<p>Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual LLM service. Here's the detailed sequence:</p>
+<pre class="mermaid">sequenceDiagram
+    participant App
+    participant Reservoir
+    participant Neo4j
+    participant LLM as OpenAI/Ollama
+
+    App-&gt;&gt;Reservoir: Request (e.g. /v1/chat/completions/$USER/my-application)
+    Reservoir-&gt;&gt;Reservoir: Check if last message exceeds token limit (Return error if true)
+    Reservoir-&gt;&gt;Reservoir: Tag with Trace ID + Partition
+    Reservoir-&gt;&gt;Neo4j: Store original request message(s)
+
+    %% --- Context Enrichment Steps ---
+    Reservoir-&gt;&gt;Neo4j: Query for similar &amp; recent messages
+    Neo4j--&gt;&gt;Reservoir: Return relevant context messages
+    Reservoir-&gt;&gt;Reservoir: Inject context messages into request payload
+    %% --- End Enrichment Steps ---
+
+    Reservoir-&gt;&gt;Reservoir: Check total token count &amp; truncate if needed (preserving system/last messages)
+
+    Reservoir-&gt;&gt;LLM: Forward enriched &amp; potentially truncated request
+    LLM-&gt;&gt;Reservoir: Return LLM response
+    Reservoir-&gt;&gt;Neo4j: Store LLM response message
+    Reservoir-&gt;&gt;App: Return LLM response
+</pre>
 <h2 id="high-level-architecture"><a class="header" href="#high-level-architecture">High-Level Architecture</a></h2>
-<pre><code class="language-mermaid">flowchart TB
-    Client(["Client App"]) --&gt;|API Request| HTTPServer{{HTTP Server}}
+<pre class="mermaid">flowchart TB
+    Client([&quot;Client App&quot;]) --&gt;|API Request| HTTPServer{{HTTP Server}}
     HTTPServer --&gt;|Process Request| Handler[Request Handler]
 
     subgraph Handler Logic
@@ -1780,7 +1806,7 @@ Authorization: Bearer YOUR_API_KEY
     Config[/Env Vars/] --&gt; HTTPServer
     Config --&gt; Handler
     Config --&gt; Neo4j
-</code></pre>
+</pre>
 <h2 id="core-components"><a class="header" href="#core-components">Core Components</a></h2>
 <h3 id="1-client-application"><a class="header" href="#1-client-application">1. Client Application</a></h3>
 <p>Your application making API calls to Reservoir. This could be:</p>
@@ -2026,6 +2052,18 @@ Authorization: Bearer YOUR_API_KEY
 │  tree search?"  │                     │                 │
 └─────────────────┘                     └─────────────────┘
 </code></pre>
+<h2 id="real-conversation-graph-visualization"><a class="header" href="#real-conversation-graph-visualization">Real Conversation Graph Visualization</a></h2>
+<p>Here's an example of how conversations and their threads appear in practice, showing the synapse relationships that connect semantically related messages across different conversation flows:</p>
+<p><img src="architecture/../conversation_graph_view.png" alt="Conversation Graph View" /></p>
+<p>This visualization shows:</p>
+<ul>
+<li><strong>Message nodes</strong> representing individual user and assistant messages</li>
+<li><strong>RESPONDED_WITH relationships</strong> (direct conversation flow)</li>
+<li><strong>SYNAPSE relationships</strong> connecting semantically similar messages</li>
+<li><strong>Conversation threads</strong> formed by chains of related messages</li>
+<li><strong>Cross-conversation connections</strong> where topics are discussed in multiple conversations</li>
+</ul>
+<p>The graph structure enables Reservoir to find relevant context from past conversations when enriching new requests, creating a rich conversational memory that spans multiple sessions and topics.</p>
 <h2 id="vector-index"><a class="header" href="#vector-index">Vector Index</a></h2>
 <p>Reservoir maintains a vector index called <code>messageEmbeddings</code> in Neo4j for efficient similarity searches.</p>
 <h3 id="index-configuration"><a class="header" href="#index-configuration">Index Configuration</a></h3>
@@ -2178,6 +2216,442 @@ ORDER BY connectionCount DESC, avgScore DESC
 </ul>
 <p>This data model provides a robust foundation for conversation storage and retrieval while maintaining flexibility for future enhancements and optimizations.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="context-enrichment-1"><a class="header" href="#context-enrichment-1">Context Enrichment</a></h1>
+<p>Context enrichment is Reservoir's core mechanism for providing intelligent, memory-aware AI conversations. By automatically injecting relevant historical context and recent conversation history into each request, Reservoir gives AI models a persistent memory that improves response quality and maintains conversational continuity across sessions.</p>
+<h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
+<p>When you send a message to Reservoir, the system automatically enhances your request with:</p>
+<ul>
+<li><strong>Semantically similar messages</strong> from past conversations (using vector similarity search)</li>
+<li><strong>Recent conversation history</strong> from the same partition/instance</li>
+<li><strong>Connected conversation threads</strong> through synapse relationships</li>
+</ul>
+<p>This enriched context is injected into your request before forwarding it to the AI provider, making the AI aware of relevant past discussions.</p>
+<h2 id="context-enrichment-process"><a class="header" href="#context-enrichment-process">Context Enrichment Process</a></h2>
+<h3 id="1-message-reception-and-initial-processing"><a class="header" href="#1-message-reception-and-initial-processing">1. Message Reception and Initial Processing</a></h3>
+<pre><code class="language-rs">pub async fn handle_with_partition(
+    partition: &amp;str,
+    instance: &amp;str,
+    whole_body: Bytes,
+) -&gt; Result&lt;Bytes, Error&gt; {
+    let json_string = String::from_utf8_lossy(&amp;whole_body).to_string();
+    let chat_request_model = ChatRequest::from_json(json_string.as_str()).expect("Valid JSON");
+    let model_info = ModelInfo::new(chat_request_model.model.clone());
+
+    let trace_id = Uuid::new_v4().to_string();
+    let service = ChatRequestService::new();
+</code></pre>
+<p>When a request arrives:</p>
+<ul>
+<li>A unique <strong>trace ID</strong> is generated for tracking</li>
+<li>The request is parsed and validated</li>
+<li>Model information is extracted to determine token limits</li>
+</ul>
+<h3 id="2-embedding-generation"><a class="header" href="#2-embedding-generation">2. Embedding Generation</a></h3>
+<pre><code class="language-rs">    let search_term = last_message.content.as_str();
+    get_last_message_in_chat_request(&amp;chat_request_model)?;
+
+    info!("Using search term: {}", search_term);
+    let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
+    let embeddings = get_embeddings_for_txt(search_term, embedding_info.clone()).await?;
+
+    let context_size = config::get_context_size();
+</code></pre>
+<p>The last user message is used as the search term to generate vector embeddings using the BGE-Large-EN-v1.5 model. This embedding represents the semantic meaning of the current query.</p>
+<h3 id="3-semantic-context-retrieval"><a class="header" href="#3-semantic-context-retrieval">3. Semantic Context Retrieval</a></h3>
+<pre><code class="language-rs">    let similar = get_related_messages_with_strategy(
+        embeddings,
+        &amp;embedding_info,
+        partition,
+        instance,
+        context_size,
+    )
+    .await?;
+</code></pre>
+<p>Using the generated embedding, Reservoir searches for semantically similar messages from past conversations within the same partition/instance. The search strategy includes:</p>
+<h4 id="vector-similarity-search"><a class="header" href="#vector-similarity-search">Vector Similarity Search</a></h4>
+<pre><code class="language-rs">    let query_string = format!(
+        r#"
+                CALL db.index.vector.queryNodes(
+                    '{}',
+                    $topKExtended,
+                    $embedding
+                ) YIELD node, score
+                WITH node, score
+                WHERE node.partition = $partition
+                  AND node.instance = $instance
+                RETURN node.partition AS partition,
+                       node.instance AS instance,
+                       node.embedding AS embedding,
+                       node.model AS model,
+                       id(node) AS id,
+                       score
+                ORDER BY score DESC
+                "#,
+        embedding_info.get_index_name()
+    );
+</code></pre>
+<h4 id="synapse-expansion"><a class="header" href="#synapse-expansion">Synapse Expansion</a></h4>
+<pre><code class="language-rs">pub async fn get_related_messages_with_strategy(
+    embedding: Vec&lt;f32&gt;,
+    embedding_info: &amp;EmbeddingInfo,
+    partition: &amp;str,
+    instance: &amp;str,
+    top_k: usize,
+) -&gt; Result&lt;Vec&lt;MessageNode&gt;, Error&gt; {
+    let similar_messages =
+        get_most_similar_messages(embedding, embedding_info, partition, instance, top_k).await?;
+    let mut found_messages = vec![];
+    for message in similar_messages.clone() {
+        let mut connected = get_nodes_connected_by_synapses(connect, &amp;message).await?;
+        if found_messages.len() &gt; top_k * 3 {
+            break;
+        }
+        if connected.len() &gt; 2 {
+            found_messages.append(connected.as_mut());
+        }
+        found_messages = deduplicate_message_nodes(found_messages);
+    }
+
+    Ok(found_messages.into_iter().take(top_k).collect())
+}
+</code></pre>
+<p>The system expands the context by following synapse relationships - connections between messages that are semantically similar (cosine similarity &gt; 0.85).</p>
+<h3 id="4-recent-history-retrieval"><a class="header" href="#4-recent-history-retrieval">4. Recent History Retrieval</a></h3>
+<pre><code class="language-rs">    let last_messages = get_last_messages_for_partition_and_instance(
+        connect,
+        partition.to_string(),
+        instance.to_string(),
+        LAST_MESSAGES_LIMIT,
+    )
+    .await
+    .unwrap_or_else(|e| {
+        error!("Error finding last messages: {}", e);
+        Vec::new()
+    });
+</code></pre>
+<p>Retrieves the most recent 15 messages from the same partition/instance to provide immediate conversational context.</p>
+<h3 id="5-context-injection"><a class="header" href="#5-context-injection">5. Context Injection</a></h3>
+<pre><code class="language-rs">let mut enriched_chat_request =
+        enrich_chat_request(similar, last_messages, &amp;chat_request_model);
+truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.input_tokens);
+</code></pre>
+<p>The <code>enrich_chat_request</code> function combines all context sources:</p>
+<pre><code class="language-rs">pub fn enrich_chat_request(
+    similar_messages: Vec&lt;MessageNode&gt;,
+    mut last_messages: Vec&lt;MessageNode&gt;, // Add `mut` here
+    chat_request: &amp;ChatRequest,
+) -&gt; ChatRequest {
+    let mut chat_request = chat_request.clone();
+
+    let semantic_prompt = r#"The following is the result of a semantic search 
+        of the most related messages by cosine similarity to previous 
+        conversations"#;
+    let recent_prompt = r#"The following are the most recent messages in the 
+        conversation in chronological order"#;
+
+    last_messages.sort_by(|a, b| a.timestamp.cmp(&amp;b.timestamp));
+
+    let mut enrichment_block = Vec::new();
+
+    enrichment_block.push(Message {
+        role: "system".to_string(),
+        content: semantic_prompt.to_string(),
+    });
+    enrichment_block.extend(similar_messages.iter().map(MessageNode::to_message));
+    enrichment_block.push(Message {
+        role: "system".to_string(),
+        content: recent_prompt.to_string(),
+    });
+    enrichment_block.extend(last_messages.iter().map(MessageNode::to_message));
+
+    enrichment_block.retain(|m| !m.content.is_empty());
+
+    let insert_index = if chat_request
+        .messages
+        .first()
+        .is_some_and(|m| m.role == "system")
+    {
+        1
+    } else {
+        0
+    };
+
+    // Insert enrichment block
+    chat_request
+        .messages
+        .splice(insert_index..insert_index, enrichment_block);
+    chat_request
+}
+</code></pre>
+<p>The enrichment process:</p>
+<ol>
+<li>Creates descriptive system prompts to explain the context</li>
+<li>Adds semantically similar messages with explanation</li>
+<li>Adds recent chronological history with explanation</li>
+<li>Inserts the enrichment block after any existing system message</li>
+<li>Filters out empty messages</li>
+</ol>
+<h3 id="6-token-management-and-truncation"><a class="header" href="#6-token-management-and-truncation">6. Token Management and Truncation</a></h3>
+<pre><code class="language-rs">truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.input_tokens);
+</code></pre>
+<p>The enriched request may exceed the model's token limits. The truncation algorithm:</p>
+<pre><code class="language-rs">pub fn truncate_messages_if_needed(messages: &amp;mut Vec&lt;Message&gt;, limit: usize) {
+    let mut current_tokens = count_chat_tokens(messages);
+    info!("Current token count: {}", current_tokens);
+
+    if current_tokens &lt;= limit {
+        return; // No truncation needed
+    }
+
+    info!(
+        "Token count ({}) exceeds limit ({}), truncating...",
+        current_tokens, limit
+    );
+
+    // Identify indices of system messages and the last message
+    let system_message_indices: HashSet&lt;usize&gt; = messages
+        .iter()
+        .enumerate()
+        .filter(|(_, m)| m.role == "system")
+        .map(|(i, _)| i)
+        .collect();
+    let last_message_index = messages.len().saturating_sub(1); // Index of the last message
+
+    // Start checking for removal from the first message
+    let mut current_index = 0;
+
+    while current_tokens &gt; limit &amp;&amp; current_index &lt; messages.len() {
+        // Check if the current index is a system message or the last message
+        if system_message_indices.contains(&amp;current_index) || current_index == last_message_index {
+            // Skip this message, move to the next index
+            current_index += 1;
+            continue;
+        }
+
+        // If it's safe to remove (not system, not the last message)
+        if messages.len() &gt; 1 {
+            // Ensure we don't remove the only message left (shouldn't happen here)
+            info!(
+                "Removing message at index {}: Role='{}', Content='{}...'",
+                current_index,
+                messages[current_index].role,
+                messages[current_index]
+                    .content
+                    .chars()
+                    .take(30)
+                    .collect::&lt;String&gt;()
+            );
+            messages.remove(current_index);
+            // Don't increment current_index, as removing shifts subsequent elements down.
+            // Recalculate tokens and update system/last indices if needed (though less efficient)
+            // For simplicity here, we just recalculate tokens. A more optimized approach
+            // might update indices, but given the context size, recalculating tokens is okay.
+            current_tokens = count_chat_tokens(messages);
+            // Re-evaluate system_message_indices and last_message_index is safer if indices change significantly,
+            // but let's stick to the simpler approach for now. If performance becomes an issue, optimize this.
+        } else {
+            // Safety break: Should not be able to remove the last message due to the check above.
+            error!("Warning: Truncation stopped unexpectedly.");
+            break;
+        }
+    }
+
+    info!("Truncated token count: {}", current_tokens);
+}
+</code></pre>
+<p>The truncation algorithm preserves:</p>
+<ul>
+<li>All system messages (including enrichment context)</li>
+<li>The user's current/last message</li>
+<li>Removes older context messages if needed</li>
+</ul>
+<h3 id="7-response-storage-and-synapse-building"><a class="header" href="#7-response-storage-and-synapse-building">7. Response Storage and Synapse Building</a></h3>
+<p>After receiving the AI's response:</p>
+<pre><code class="language-149:162:src/handler/completions.rs">    let message_node = chat_response.choices.first().unwrap().message.clone();
+    let embedding =
+        get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
+    let message_node = MessageNode::from_message(
+        &amp;message_node,
+        trace_id.as_str(),
+        partition,
+        instance,
+        embedding,
+    );
+    save_message_node(connect, &amp;message_node, &amp;embedding_info)
+        .await
+        .expect("Failed to save message node");
+
+    connect_synapses(connect)
+        .await
+        .expect("Failed to connect synapses");
+</code></pre>
+<ol>
+<li>The AI's response is stored with its own embedding</li>
+<li>Synapses (semantic connections) are built between messages</li>
+<li>The system continuously builds a knowledge graph of related conversations</li>
+</ol>
+<h2 id="context-architecture-flow"><a class="header" href="#context-architecture-flow">Context Architecture Flow</a></h2>
+<pre class="mermaid">flowchart TD
+    A[&quot;User Request Arrives&quot;] --&gt; B[&quot;Generate Trace ID &amp; Parse Request&quot;]
+    B --&gt; C[&quot;Extract Last User Message&quot;]
+    C --&gt; D[&quot;Generate Embedding&lt;br/&gt;(BGE-Large-EN-v1.5)&quot;]
+    
+    %% Parallel context retrieval
+    D --&gt; E[&quot;Semantic Search&quot;]
+    D --&gt; F[&quot;Recent History Query&quot;]
+    
+    E --&gt; E1[&quot;Vector Similarity Search&lt;br/&gt;(Neo4j Index)&quot;]
+    E1 --&gt; E2[&quot;Expand via Synapses&lt;br/&gt;(Related Conversations)&quot;]
+    E2 --&gt; E3[&quot;Deduplicate Messages&quot;]
+    
+    F --&gt; F1[&quot;Get Last 15 Messages&lt;br/&gt;(Same Partition/Instance)&quot;]
+    F1 --&gt; F2[&quot;Sort by Timestamp&quot;]
+    
+    %% Context assembly
+    E3 --&gt; G[&quot;Assemble Context Block&quot;]
+    F2 --&gt; G
+    
+    G --&gt; G1[&quot;Add Semantic Context&lt;br/&gt;'The following is semantic search...'&quot;]
+    G1 --&gt; G2[&quot;Add Similar Messages&quot;]
+    G2 --&gt; G3[&quot;Add Recent Context&lt;br/&gt;'The following are recent messages...'&quot;]
+    G3 --&gt; G4[&quot;Add Recent Messages&quot;]
+    
+    %% Context injection
+    G4 --&gt; H[&quot;Inject Context into Request&quot;]
+    H --&gt; H1{&quot;Check if System Message Exists&quot;}
+    H1 --&gt;|Yes| H2[&quot;Insert after System Message&quot;]
+    H1 --&gt;|No| H3[&quot;Insert at Beginning&quot;]
+    
+    H2 --&gt; I[&quot;Token Management&quot;]
+    H3 --&gt; I
+    
+    %% Token management
+    I --&gt; I1[&quot;Count Total Tokens&quot;]
+    I1 --&gt; I2{&quot;Exceeds Token Limit?&quot;}
+    I2 --&gt;|No| J[&quot;Send to AI Provider&quot;]
+    I2 --&gt;|Yes| I3[&quot;Smart Truncation&quot;]
+    
+    I3 --&gt; I4[&quot;Preserve System Messages&quot;]
+    I4 --&gt; I5[&quot;Preserve Last User Message&quot;]
+    I5 --&gt; I6[&quot;Remove Older Context&quot;]
+    I6 --&gt; I7[&quot;Recalculate Tokens&quot;]
+    I7 --&gt; I2
+    
+    %% AI interaction
+    J --&gt; K[&quot;AI Provider Response&quot;]
+    K --&gt; L[&quot;Store Response&quot;]
+    
+    %% Post-processing
+    L --&gt; L1[&quot;Generate Response Embedding&quot;]
+    L1 --&gt; L2[&quot;Save to Neo4j with Trace ID&quot;]
+    L2 --&gt; L3[&quot;Link User-Assistant Messages&quot;]
+    L3 --&gt; M[&quot;Build Synapses&quot;]
+    
+    M --&gt; M1[&quot;Calculate Similarity Scores&lt;br/&gt;(Cosine Similarity)&quot;]
+    M1 --&gt; M2[&quot;Create SYNAPSE Relationships&lt;br/&gt;(Score &gt; 0.85)&quot;]
+    M2 --&gt; M3[&quot;Remove Weak Synapses&lt;br/&gt;(Score &lt; 0.85)&quot;]
+    
+    M3 --&gt; N[&quot;Return Enriched Response&quot;]
+    
+    %% Styling
+    classDef inputStep fill:#e1f5fe
+    classDef processStep fill:#f3e5f5
+    classDef storageStep fill:#e8f5e8
+    classDef aiStep fill:#fff3e0
+    classDef outputStep fill:#fce4ec
+    
+    class A,C inputStep
+    class B,D,E,E1,E2,E3,F,F1,F2,G,G1,G2,G3,G4,H,H1,H2,H3,I,I1,I2,I3,I4,I5,I6,I7 processStep
+    class L,L1,L2,L3,M,M1,M2,M3 storageStep
+    class J,K aiStep
+    class N outputStep
+</pre>
+<h2 id="key-configuration-parameters"><a class="header" href="#key-configuration-parameters">Key Configuration Parameters</a></h2>
+<h3 id="context-size"><a class="header" href="#context-size">Context Size</a></h3>
+<pre><code class="language-116:118:src/repos/config.rs">pub fn get_context_size() -&gt; usize {
+    get_config().semantic_context_size.unwrap_or(15)
+}
+</code></pre>
+<p>The semantic context size (default: 15) determines how many semantically similar messages are retrieved and potentially included in the context.</p>
+<h3 id="recent-messages-limit"><a class="header" href="#recent-messages-limit">Recent Messages Limit</a></h3>
+<pre><code class="language-25:25:src/handler/completions.rs">const LAST_MESSAGES_LIMIT: usize = 15;
+</code></pre>
+<p>The system retrieves up to 15 most recent messages from the same partition/instance for chronological context.</p>
+<h3 id="embedding-model"><a class="header" href="#embedding-model">Embedding Model</a></h3>
+<pre><code class="language-95:95:src/handler/completions.rs">    let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
+</code></pre>
+<p>Reservoir uses BGE-Large-EN-v1.5 for generating embeddings, providing high-quality semantic representations.</p>
+<h3 id="synapse-threshold"><a class="header" href="#synapse-threshold">Synapse Threshold</a></h3>
+<pre><code class="language-297:300:src/repos/message/neo4j_message.rs">            MATCH (m1:MessageNode)-[r:SYNAPSE]-&gt;(m2:MessageNode)
+            WHERE r.score &lt; 0.85
+            DELETE r
+        "#;
+</code></pre>
+<p>Only relationships with cosine similarity scores above 0.85 are maintained as synapses, ensuring high-quality semantic connections.</p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key Concepts</a></h2>
+<h3 id="partitions-and-instances"><a class="header" href="#partitions-and-instances">Partitions and Instances</a></h3>
+<p>Context is scoped to specific partition/instance combinations, allowing for:</p>
+<ul>
+<li><strong>Organizational separation</strong>: Different teams or projects can have isolated contexts</li>
+<li><strong>Application isolation</strong>: Multiple applications can use the same Reservoir instance without cross-contamination</li>
+<li><strong>User-specific contexts</strong>: Individual users can maintain separate conversation histories</li>
+</ul>
+<h3 id="synapses"><a class="header" href="#synapses">Synapses</a></h3>
+<p>Synapses are semantic relationships between messages that:</p>
+<ul>
+<li><strong>Connect related conversations</strong> across different sessions</li>
+<li><strong>Build over time</strong> as the system learns from interactions</li>
+<li><strong>Self-organize</strong> the knowledge graph based on content similarity</li>
+<li><strong>Get pruned automatically</strong> when relationships are too weak (&lt; 0.85 similarity)</li>
+</ul>
+<h3 id="trace-ids"><a class="header" href="#trace-ids">Trace IDs</a></h3>
+<p>Every request gets a unique trace ID that:</p>
+<ul>
+<li><strong>Links user messages to AI responses</strong> within the same conversation turn</li>
+<li><strong>Enables conversation threading</strong> and relationship building</li>
+<li><strong>Provides audit trails</strong> for debugging and analysis</li>
+<li><strong>Supports parallel processing</strong> of multiple simultaneous requests</li>
+</ul>
+<h3 id="system-context-compression"><a class="header" href="#system-context-compression">System Context Compression</a></h3>
+<pre><code class="language-22:41:src/utils/mod.rs">pub fn compress_system_context(messages: &amp;[Message]) -&gt; Vec&lt;Message&gt; {
+    let first_index = messages.iter().position(|m| m.role == "system");
+    let last_index = messages.iter().rposition(|m| m.role == "system");
+
+    if let (Some(first), Some(last)) = (first_index, last_index) {
+        if first != 0 || first == last {
+            return messages.to_vec();
+        }
+
+        let mut compressed = vec![messages[0].clone()];
+
+        for item in messages.iter().take(last + 1).skip(first + 1) {
+            compressed[0].content += &amp;format!("\n{}", message_to_string(item));
+        }
+
+        compressed.extend_from_slice(&amp;messages[last + 1..]);
+        compressed
+    } else {
+        messages.to_vec()
+    }
+}
+</code></pre>
+<p>Multiple system messages (including enrichment context) are compressed into a single system message to optimize token usage while preserving all contextual information.</p>
+<h2 id="benefits-of-context-enrichment"><a class="header" href="#benefits-of-context-enrichment">Benefits of Context Enrichment</a></h2>
+<ol>
+<li><strong>Conversational Continuity</strong>: AI maintains awareness of past discussions across sessions</li>
+<li><strong>Semantic Understanding</strong>: Related topics are automatically surfaced even when not explicitly mentioned</li>
+<li><strong>Multi-Session Learning</strong>: Knowledge accumulates over time, improving response quality</li>
+<li><strong>Cross-Model Memory</strong>: Context persists when switching between different AI providers</li>
+<li><strong>Intelligent Prioritization</strong>: Most relevant historical context is prioritized while respecting token limits</li>
+<li><strong>Automatic Organization</strong>: The system builds its own knowledge graph without manual intervention</li>
+</ol>
+<h2 id="performance-considerations-1"><a class="header" href="#performance-considerations-1">Performance Considerations</a></h2>
+<ul>
+<li><strong>Vector Indexing</strong>: Neo4j's vector indices provide sub-second similarity search even with large conversation histories</li>
+<li><strong>Parallel Processing</strong>: Semantic search and recent history retrieval happen concurrently</li>
+<li><strong>Smart Truncation</strong>: Context is intelligently trimmed to fit model limits while preserving essential information</li>
+<li><strong>Synapse Pruning</strong>: Weak connections are automatically removed to maintain graph quality</li>
+<li><strong>Token Optimization</strong>: System messages are compressed to maximize available context within token limits</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="conversation-threads-synapses"><a class="header" href="#conversation-threads-synapses">Conversation Threads (Synapses)</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-provider-support"><a class="header" href="#multi-provider-support">Multi-Provider Support</a></h1>
 <p>Reservoir supports multiple AI providers through its flexible routing system. This allows you to use different AI models seamlessly while maintaining conversation context and history across all providers.</p>
@@ -2332,7 +2806,7 @@ curl -d '{"model": "mistral-large", "messages": [...]}' localhost:3017/...
 <li><strong>Mistral</strong>: Authentication errors, model access restrictions</li>
 <li><strong>Gemini</strong>: API quota limits, geographic restrictions</li>
 </ul>
-<h2 id="performance-considerations-1"><a class="header" href="#performance-considerations-1">Performance Considerations</a></h2>
+<h2 id="performance-considerations-2"><a class="header" href="#performance-considerations-2">Performance Considerations</a></h2>
 <h3 id="provider-comparison"><a class="header" href="#provider-comparison">Provider Comparison</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Provider</th><th>Latency</th><th>Cost</th><th>Privacy</th><th>Features</th></tr></thead><tbody>
 <tr><td>OpenAI</td><td>Medium</td><td>High</td><td>Cloud</td><td>Most comprehensive</td></tr>
@@ -2645,6 +3119,342 @@ NEO4J_CONNECTION_TIMEOUT=30s
 <div style="break-before: page; page-break-before: always;"></div><h1 id="production-setup"><a class="header" href="#production-setup">Production Setup</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="environment-variables-5"><a class="header" href="#environment-variables-5">Environment Variables</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="common-issues-3"><a class="header" href="#common-issues-3">Common Issues</a></h1>
+<p>This page covers the most common issues you might encounter when using Reservoir and how to solve them.</p>
+<h2 id="server-issues"><a class="header" href="#server-issues">Server Issues</a></h2>
+<h3 id="server-not-starting"><a class="header" href="#server-not-starting">Server Not Starting</a></h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Cannot connect to <code>http://localhost:3017</code></li>
+<li>Connection refused errors</li>
+<li>Server fails to start</li>
+</ul>
+<p><strong>Solutions:</strong></p>
+<h4 id="check-neo4j"><a class="header" href="#check-neo4j">Check Neo4j</a></h4>
+<p>Ensure Neo4j is running and accessible:</p>
+<pre><code class="language-bash"># Check if Neo4j is running
+systemctl status neo4j  # Linux
+brew services list | grep neo4j  # macOS
+
+# Start Neo4j if not running
+systemctl start neo4j  # Linux
+brew services start neo4j  # macOS
+</code></pre>
+<h4 id="port-conflicts"><a class="header" href="#port-conflicts">Port Conflicts</a></h4>
+<p>Default port 3017 might be in use:</p>
+<pre><code class="language-bash"># Check what's using port 3017
+lsof -i :3017
+
+# Use a different port
+RESERVOIR_PORT=3018 cargo run -- start
+</code></pre>
+<h4 id="environment-variables-6"><a class="header" href="#environment-variables-6">Environment Variables</a></h4>
+<p>If using direnv, make sure it's loaded:</p>
+<pre><code class="language-bash"># Check if direnv is working
+direnv status
+
+# Allow direnv for current directory
+direnv allow
+</code></pre>
+<h3 id="server-starts-but-returns-errors"><a class="header" href="#server-starts-but-returns-errors">Server Starts But Returns Errors</a></h3>
+<h4 id="check-server-logs"><a class="header" href="#check-server-logs">Check Server Logs</a></h4>
+<p>Look at the server output for detailed error messages:</p>
+<pre><code class="language-bash"># Start with verbose logging
+RUST_LOG=debug cargo run -- start
+</code></pre>
+<h4 id="test-basic-connectivity-1"><a class="header" href="#test-basic-connectivity-1">Test Basic Connectivity</a></h4>
+<pre><code class="language-bash"># Test if server is responding
+curl http://localhost:3017/health
+
+# If health endpoint doesn't exist, try a simple request
+curl "http://localhost:3017/partition/test/instance/basic/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{"model": "gemma3", "messages": [{"role": "user", "content": "hello"}]}'
+</code></pre>
+<h2 id="api-and-model-issues"><a class="header" href="#api-and-model-issues">API and Model Issues</a></h2>
+<h3 id="internal-server-error-responses"><a class="header" href="#internal-server-error-responses">"Internal Server Error" Responses</a></h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>HTTP 500 errors</li>
+<li>Generic error messages</li>
+<li>Requests failing unexpectedly</li>
+</ul>
+<p><strong>Solutions:</strong></p>
+<h4 id="verify-api-keys"><a class="header" href="#verify-api-keys">Verify API Keys</a></h4>
+<p>Check that your API keys are set correctly:</p>
+<pre><code class="language-bash">echo $OPENAI_API_KEY
+echo $MISTRAL_API_KEY
+echo $GEMINI_API_KEY
+</code></pre>
+<p>If not set:</p>
+<pre><code class="language-bash">export OPENAI_API_KEY="your-openai-key"
+export MISTRAL_API_KEY="your-mistral-key"
+export GEMINI_API_KEY="your-gemini-key"
+</code></pre>
+<h4 id="check-model-names"><a class="header" href="#check-model-names">Check Model Names</a></h4>
+<p>Ensure you're using supported model names:</p>
+<div class="table-wrapper"><table><thead><tr><th>Model</th><th>Provider</th><th>API Key Required</th></tr></thead><tbody>
+<tr><td><code>gpt-4</code>, <code>gpt-4o</code>, <code>gpt-4o-mini</code>, <code>gpt-3.5-turbo</code></td><td>OpenAI</td><td>Yes (<code>OPENAI_API_KEY</code>)</td></tr>
+<tr><td><code>gpt-4o-search-preview</code></td><td>OpenAI</td><td>Yes (<code>OPENAI_API_KEY</code>)</td></tr>
+<tr><td><code>llama3.2</code>, <code>gemma3</code>, or any custom name</td><td>Ollama</td><td>No</td></tr>
+<tr><td><code>mistral-large-2402</code></td><td>Mistral</td><td>Yes (<code>MISTRAL_API_KEY</code>)</td></tr>
+<tr><td><code>gemini-2.0-flash</code>, <code>gemini-2.5-flash-preview-05-20</code></td><td>Google</td><td>Yes (<code>GEMINI_API_KEY</code>)</td></tr>
+</tbody></table>
+</div>
+<h4 id="verify-ollama-for-local-models"><a class="header" href="#verify-ollama-for-local-models">Verify Ollama (for local models)</a></h4>
+<p>If using Ollama models, verify Ollama is running:</p>
+<pre><code class="language-bash"># Check Ollama status
+ollama list
+
+# If not running, start it
+ollama serve
+
+# Test Ollama directly
+curl http://localhost:11434/api/tags
+</code></pre>
+<h3 id="deserialization-errors"><a class="header" href="#deserialization-errors">Deserialization Errors</a></h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>JSON parsing errors</li>
+<li>"Failed to deserialize" messages</li>
+<li>Malformed request errors</li>
+</ul>
+<p><strong>Solutions:</strong></p>
+<h4 id="check-json-format"><a class="header" href="#check-json-format">Check JSON Format</a></h4>
+<p>Ensure your JSON request is properly formatted:</p>
+<pre><code class="language-bash"># Good format
+curl "http://localhost:3017/partition/$USER/instance/test/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello"
+            }
+        ]
+    }'
+</code></pre>
+<h4 id="content-type-header"><a class="header" href="#content-type-header">Content-Type Header</a></h4>
+<p>Always use the correct content type:</p>
+<pre><code class="language-bash"># Always include this header
+-H "Content-Type: application/json"
+</code></pre>
+<h4 id="optional-fields"><a class="header" href="#optional-fields">Optional Fields</a></h4>
+<p>Remember that fields like <code>web_search_options</code> are optional and can be omitted:</p>
+<pre><code class="language-bash"># This is valid without web_search_options
+{
+    "model": "gpt-4",
+    "messages": [{"role": "user", "content": "Hello"}]
+}
+</code></pre>
+<h3 id="connection-issues"><a class="header" href="#connection-issues">Connection Issues</a></h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Timeout errors</li>
+<li>Network unreachable</li>
+<li>DNS resolution failures</li>
+</ul>
+<p><strong>Solutions:</strong></p>
+<h4 id="check-provider-urls"><a class="header" href="#check-provider-urls">Check Provider URLs</a></h4>
+<p>Verify that custom provider URLs are accessible:</p>
+<pre><code class="language-bash"># Test OpenAI endpoint
+curl -I https://api.openai.com/v1/chat/completions
+
+# Test custom endpoint (if configured)
+curl -I $RSV_OPENAI_BASE_URL
+</code></pre>
+<h4 id="verify-internet-connectivity"><a class="header" href="#verify-internet-connectivity">Verify Internet Connectivity</a></h4>
+<p>For cloud providers, ensure internet connectivity:</p>
+<pre><code class="language-bash"># Test internet connection
+ping google.com
+
+# Test specific provider
+ping api.openai.com
+</code></pre>
+<h4 id="check-firewall-settings"><a class="header" href="#check-firewall-settings">Check Firewall Settings</a></h4>
+<p>Ensure no firewall is blocking outbound requests:</p>
+<pre><code class="language-bash"># Check if ports are blocked
+telnet api.openai.com 443
+telnet localhost 11434  # For Ollama
+</code></pre>
+<h2 id="database-issues"><a class="header" href="#database-issues">Database Issues</a></h2>
+<h3 id="neo4j-connection-problems"><a class="header" href="#neo4j-connection-problems">Neo4j Connection Problems</a></h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>"Failed to connect to Neo4j" errors</li>
+<li>Database timeout errors</li>
+<li>Authentication failures</li>
+</ul>
+<p><strong>Solutions:</strong></p>
+<h4 id="check-neo4j-status"><a class="header" href="#check-neo4j-status">Check Neo4j Status</a></h4>
+<pre><code class="language-bash"># Check if Neo4j is running
+systemctl status neo4j  # Linux
+brew services list | grep neo4j  # macOS
+
+# Check Neo4j logs
+journalctl -u neo4j  # Linux
+tail -f /usr/local/var/log/neo4j/neo4j.log  # macOS
+</code></pre>
+<h4 id="verify-connection-details"><a class="header" href="#verify-connection-details">Verify Connection Details</a></h4>
+<p>Check your Neo4j connection settings:</p>
+<pre><code class="language-bash"># Default connection
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your-password
+</code></pre>
+<h4 id="test-neo4j-directly"><a class="header" href="#test-neo4j-directly">Test Neo4j Directly</a></h4>
+<pre><code class="language-bash"># Test with cypher-shell
+cypher-shell -a bolt://localhost:7687 -u neo4j -p your-password
+
+# Or use Neo4j Browser
+# Navigate to http://localhost:7474
+</code></pre>
+<h3 id="vector-index-issues"><a class="header" href="#vector-index-issues">Vector Index Issues</a></h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Slow semantic search</li>
+<li>"Index not found" errors</li>
+<li>Context enrichment not working</li>
+</ul>
+<p><strong>Solutions:</strong></p>
+<h4 id="recreate-vector-index"><a class="header" href="#recreate-vector-index">Recreate Vector Index</a></h4>
+<pre><code class="language-bash"># Stop Reservoir
+# Connect to Neo4j and run:
+DROP INDEX embedding_index IF EXISTS;
+CREATE VECTOR INDEX embedding_index FOR (n:EmbeddingNode) ON (n.embedding) OPTIONS {indexConfig: {`vector.dimensions`: 1536, `vector.similarity_function`: 'cosine'}};
+</code></pre>
+<h4 id="check-index-status"><a class="header" href="#check-index-status">Check Index Status</a></h4>
+<pre><code class="language-cypher">SHOW INDEXES;
+</code></pre>
+<h2 id="memory-and-performance-issues"><a class="header" href="#memory-and-performance-issues">Memory and Performance Issues</a></h2>
+<h3 id="high-memory-usage"><a class="header" href="#high-memory-usage">High Memory Usage</a></h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>System running out of memory</li>
+<li>Slow responses</li>
+<li>Process killed by system</li>
+</ul>
+<p><strong>Solutions:</strong></p>
+<h4 id="monitor-resource-usage"><a class="header" href="#monitor-resource-usage">Monitor Resource Usage</a></h4>
+<pre><code class="language-bash"># Check Reservoir process
+ps aux | grep reservoir
+
+# Monitor system resources
+htop
+# or
+top
+</code></pre>
+<h4 id="use-smaller-models"><a class="header" href="#use-smaller-models">Use Smaller Models</a></h4>
+<p>Switch to smaller models if using Ollama:</p>
+<pre><code class="language-bash"># Instead of large models, use smaller ones
+ollama pull gemma3:2b  # 2B parameters instead of 7B
+</code></pre>
+<h4 id="limit-conversation-history"><a class="header" href="#limit-conversation-history">Limit Conversation History</a></h4>
+<p>The system automatically manages token limits, but you can monitor:</p>
+<pre><code class="language-bash"># View recent conversations to check size
+cargo run -- view 10 --partition $USER --instance your-instance
+</code></pre>
+<h3 id="slow-responses"><a class="header" href="#slow-responses">Slow Responses</a></h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Long wait times for responses</li>
+<li>Timeouts</li>
+<li>Poor performance</li>
+</ul>
+<p><strong>Solutions:</strong></p>
+<h4 id="check-model-performance"><a class="header" href="#check-model-performance">Check Model Performance</a></h4>
+<p>Different models have different performance characteristics:</p>
+<ul>
+<li><strong>Fastest</strong>: Smaller Ollama models (2B-7B parameters)</li>
+<li><strong>Medium</strong>: Cloud models like GPT-3.5-turbo</li>
+<li><strong>Slowest</strong>: Large local models (13B+ parameters)</li>
+</ul>
+<h4 id="optimize-ollama"><a class="header" href="#optimize-ollama">Optimize Ollama</a></h4>
+<pre><code class="language-bash"># Use GPU acceleration if available
+ollama run gemma3 --gpu
+
+# Check Ollama performance
+ollama ps
+</code></pre>
+<h4 id="network-optimization"><a class="header" href="#network-optimization">Network Optimization</a></h4>
+<p>For cloud models:</p>
+<pre><code class="language-bash"># Test network speed to provider
+curl -w "@curl-format.txt" -o /dev/null -s "https://api.openai.com/v1/models"
+</code></pre>
+<h2 id="testing-and-debugging"><a class="header" href="#testing-and-debugging">Testing and Debugging</a></h2>
+<h3 id="systematic-troubleshooting"><a class="header" href="#systematic-troubleshooting">Systematic Troubleshooting</a></h3>
+<h4 id="step-1-test-basic-setup"><a class="header" href="#step-1-test-basic-setup">Step 1: Test Basic Setup</a></h4>
+<pre><code class="language-bash"># Test Reservoir is running
+curl http://localhost:3017/health
+
+# Test with simplest possible request
+curl "http://localhost:3017/partition/test/instance/debug/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{"model": "gemma3", "messages": [{"role": "user", "content": "hi"}]}'
+</code></pre>
+<h4 id="step-2-test-with-different-models"><a class="header" href="#step-2-test-with-different-models">Step 2: Test with Different Models</a></h4>
+<pre><code class="language-bash"># Test Ollama model (no API key)
+curl "http://localhost:3017/partition/test/instance/debug/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -d '{"model": "gemma3", "messages": [{"role": "user", "content": "test"}]}'
+
+# Test OpenAI model (requires API key)
+curl "http://localhost:3017/partition/test/instance/debug/v1/chat/completions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "test"}]}'
+</code></pre>
+<h4 id="step-3-check-logs"><a class="header" href="#step-3-check-logs">Step 3: Check Logs</a></h4>
+<pre><code class="language-bash"># Run with debug logging
+RUST_LOG=debug cargo run -- start
+
+# Check for specific error patterns
+grep -i error reservoir.log
+grep -i "failed" reservoir.log
+</code></pre>
+<h3 id="using-the-included-tests"><a class="header" href="#using-the-included-tests">Using the Included Tests</a></h3>
+<p>Reservoir includes hurl tests that you can use to verify your setup:</p>
+<pre><code class="language-bash"># Test all endpoints
+./hurl/test.sh
+
+# Test specific endpoints
+hurl --variable USER="$USER" --variable OPENAI_API_KEY="$OPENAI_API_KEY" hurl/chat_completion.hurl
+hurl --variable USER="$USER" hurl/reservoir-view.hurl
+hurl --variable USER="$USER" hurl/reservoir-search.hurl
+
+# Test Ollama mode
+hurl hurl/ollama_mode.hurl
+</code></pre>
+<h2 id="getting-help-2"><a class="header" href="#getting-help-2">Getting Help</a></h2>
+<p>If you encounter issues not covered here:</p>
+<ol>
+<li><strong>Check the server logs</strong> for detailed error messages</li>
+<li><strong>Verify your environment variables</strong> are set correctly</li>
+<li><strong>Test with a simple curl request</strong> first</li>
+<li><strong>Try the included hurl tests</strong> to isolate the problem</li>
+<li><strong>Check the <a href="troubleshooting/./faq.html">FAQ</a></strong> for additional solutions</li>
+<li><strong>Review the <a href="troubleshooting/./debugging.html">debugging guide</a></strong> for advanced troubleshooting</li>
+</ol>
+<h2 id="environment-variable-reference"><a class="header" href="#environment-variable-reference">Environment Variable Reference</a></h2>
+<p>For quick reference, here are the key environment variables:</p>
+<pre><code class="language-bash"># Provider endpoints
+RSV_OPENAI_BASE_URL="https://api.openai.com/v1/chat/completions"
+RSV_OLLAMA_BASE_URL="http://localhost:11434/v1/chat/completions"
+RSV_MISTRAL_BASE_URL="https://api.mistral.ai/v1/chat/completions"
+
+# API keys
+OPENAI_API_KEY="your-openai-key"
+MISTRAL_API_KEY="your-mistral-key"
+GEMINI_API_KEY="your-gemini-key"
+
+# Reservoir settings
+RESERVOIR_PORT="3017"
+
+# Neo4j settings
+NEO4J_URI="bolt://localhost:7687"
+NEO4J_USER="neo4j"
+NEO4J_PASSWORD="your-password"
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="frequently-asked-questions"><a class="header" href="#frequently-asked-questions">Frequently Asked Questions</a></h1>
 <p>This section addresses common questions and issues you might encounter while using Reservoir.</p>
 <h2 id="general-questions"><a class="header" href="#general-questions">General Questions</a></h2>
@@ -2863,7 +3673,7 @@ reservoir import conversations.json
 <li>Configuring appropriate firewall rules</li>
 <li>Using HTTPS for external access</li>
 </ul>
-<h2 id="getting-help-2"><a class="header" href="#getting-help-2">Getting Help</a></h2>
+<h2 id="getting-help-3"><a class="header" href="#getting-help-3">Getting Help</a></h2>
 <p>If your question isn't answered here:</p>
 <ol>
 <li>Check the <a href="troubleshooting/./common-issues.html">Common Issues</a> section</li>
@@ -3151,7 +3961,7 @@ Brief description of changes
 <li><strong>Build Documentation</strong>: Ensure docs are up to date</li>
 <li><strong>Publish</strong>: Publish to crates.io if applicable</li>
 </ol>
-<h2 id="getting-help-3"><a class="header" href="#getting-help-3">Getting Help</a></h2>
+<h2 id="getting-help-4"><a class="header" href="#getting-help-4">Getting Help</a></h2>
 <ul>
 <li><strong>Issues</strong>: Check existing issues or create a new one</li>
 <li><strong>Discussions</strong>: Use GitHub Discussions for questions</li>
@@ -3190,7 +4000,7 @@ Brief description of changes
 <li>Test migration on sample data</li>
 <li>Ensure backward compatibility</li>
 </ol>
-<p>Thank you for contributing to Reservoir! 🚀</p>
+<p>Thank you for contributing to Reservoir!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="building-from-source"><a class="header" href="#building-from-source">Building from Source</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="testing-2"><a class="header" href="#testing-2">Testing</a></h1>
 
@@ -3228,6 +4038,8 @@ Brief description of changes
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
+        <script src="mermaid.min.js"></script>
+        <script src="mermaid-init.js"></script>
 
         <script>
         window.addEventListener('load', function() {

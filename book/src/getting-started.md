@@ -21,4 +21,4 @@ Before you begin, make sure you have:
 
 If you run into any issues during setup, check out our [Help & Support](./troubleshooting/common-issues.md) section for troubleshooting guides and frequently asked questions.
 
-Let's get started! 🚀
+Let's get started!

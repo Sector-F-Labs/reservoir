@@ -17,4 +17,5 @@ site-url = "/reservoir/"
 copy-fonts = true
 no-section-label = false
 additional-assets = ["theme/logo.png"]
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
 

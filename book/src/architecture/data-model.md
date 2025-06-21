@@ -96,6 +96,21 @@ Links semantically similar messages based on vector similarity, enabling cross-c
 └─────────────────┘                     └─────────────────┘
 ```
 
+## Real Conversation Graph Visualization
+
+Here's an example of how conversations and their threads appear in practice, showing the synapse relationships that connect semantically related messages across different conversation flows:
+
+![Conversation Graph View](../conversation_graph_view.png)
+
+This visualization shows:
+- **Message nodes** representing individual user and assistant messages
+- **RESPONDED_WITH relationships** (direct conversation flow)
+- **SYNAPSE relationships** connecting semantically similar messages
+- **Conversation threads** formed by chains of related messages
+- **Cross-conversation connections** where topics are discussed in multiple conversations
+
+The graph structure enables Reservoir to find relevant context from past conversations when enriching new requests, creating a rich conversational memory that spans multiple sessions and topics.
+
 ## Vector Index
 
 Reservoir maintains a vector index called `messageEmbeddings` in Neo4j for efficient similarity searches.

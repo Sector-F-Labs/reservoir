@@ -242,6 +242,18 @@
 │  tree search?"  │                     │                 │
 └─────────────────┘                     └─────────────────┘
 </code></pre>
+<h2 id="real-conversation-graph-visualization"><a class="header" href="#real-conversation-graph-visualization">Real Conversation Graph Visualization</a></h2>
+<p>Here's an example of how conversations and their threads appear in practice, showing the synapse relationships that connect semantically related messages across different conversation flows:</p>
+<p><img src="../conversation_graph_view.png" alt="Conversation Graph View" /></p>
+<p>This visualization shows:</p>
+<ul>
+<li><strong>Message nodes</strong> representing individual user and assistant messages</li>
+<li><strong>RESPONDED_WITH relationships</strong> (direct conversation flow)</li>
+<li><strong>SYNAPSE relationships</strong> connecting semantically similar messages</li>
+<li><strong>Conversation threads</strong> formed by chains of related messages</li>
+<li><strong>Cross-conversation connections</strong> where topics are discussed in multiple conversations</li>
+</ul>
+<p>The graph structure enables Reservoir to find relevant context from past conversations when enriching new requests, creating a rich conversational memory that spans multiple sessions and topics.</p>
 <h2 id="vector-index"><a class="header" href="#vector-index">Vector Index</a></h2>
 <p>Reservoir maintains a vector index called <code>messageEmbeddings</code> in Neo4j for efficient similarity searches.</p>
 <h3 id="index-configuration"><a class="header" href="#index-configuration">Index Configuration</a></h3>
@@ -440,6 +452,8 @@ ORDER BY connectionCount DESC, avgScore DESC
         <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
 
 
     </div>

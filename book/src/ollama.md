@@ -76,7 +76,7 @@ curl "http://127.0.0.1:3017/partition/$USER/instance/ollama-chat/v1/chat/complet
     }'
 ```
 
-No API key required! 🎉
+No API key required!
 
 ### Ollama Mode
 

@@ -5,9 +5,9 @@ This guide will walk you through sending your first message through Reservoir an
 ## Prerequisites
 
 Before starting, make sure you have:
-- ✅ Reservoir server running (`cargo run -- start`)
-- ✅ Neo4j database accessible
-- ✅ API keys set up (if using cloud providers)
+- Reservoir server running (`cargo run -- start`)
+- Neo4j database accessible
+- API keys set up (if using cloud providers)
 
 ## Example 1: Testing with Ollama (Local)
 
@@ -47,7 +47,7 @@ curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completi
     }'
 ```
 
-**🎉 Magic!** The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!
+**Magic!** The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!
 
 ### Step 3: Continue the conversation
 
@@ -240,4 +240,4 @@ Now that you've sent your first chat, explore these features:
 - **[Chat Gipitty Integration](./chat-gipitty.md)** - Add memory to your existing chat tools
 - **[API Reference](./api/overview.md)** - Learn about advanced features
 
-**Congratulations!** 🎉 You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!
+**Congratulations!** You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!

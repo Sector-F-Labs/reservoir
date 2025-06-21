@@ -330,4 +330,4 @@ Before making significant changes, familiarize yourself with:
 3. Test migration on sample data
 4. Ensure backward compatibility
 
-Thank you for contributing to Reservoir! 🚀
+Thank you for contributing to Reservoir!

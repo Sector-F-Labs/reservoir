@@ -2,6 +2,36 @@
 
 Reservoir is designed as a transparent proxy for OpenAI-compatible APIs, with a focus on capturing and enriching AI conversations. This section provides an overview of the system architecture and how components interact.
 
+## Request Processing Sequence
+
+Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual LLM service. Here's the detailed sequence:
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant Reservoir
+    participant Neo4j
+    participant LLM as OpenAI/Ollama
+
+    App->>Reservoir: Request (e.g. /v1/chat/completions/$USER/my-application)
+    Reservoir->>Reservoir: Check if last message exceeds token limit (Return error if true)
+    Reservoir->>Reservoir: Tag with Trace ID + Partition
+    Reservoir->>Neo4j: Store original request message(s)
+
+    %% --- Context Enrichment Steps ---
+    Reservoir->>Neo4j: Query for similar & recent messages
+    Neo4j-->>Reservoir: Return relevant context messages
+    Reservoir->>Reservoir: Inject context messages into request payload
+    %% --- End Enrichment Steps ---
+
+    Reservoir->>Reservoir: Check total token count & truncate if needed (preserving system/last messages)
+
+    Reservoir->>LLM: Forward enriched & potentially truncated request
+    LLM->>Reservoir: Return LLM response
+    Reservoir->>Neo4j: Store LLM response message
+    Reservoir->>App: Return LLM response
+```
+
 ## High-Level Architecture
 
 ```mermaid

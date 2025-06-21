@@ -163,6 +163,442 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="context-enrichment"><a class="header" href="#context-enrichment">Context Enrichment</a></h1>
+<p>Context enrichment is Reservoir's core mechanism for providing intelligent, memory-aware AI conversations. By automatically injecting relevant historical context and recent conversation history into each request, Reservoir gives AI models a persistent memory that improves response quality and maintains conversational continuity across sessions.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>When you send a message to Reservoir, the system automatically enhances your request with:</p>
+<ul>
+<li><strong>Semantically similar messages</strong> from past conversations (using vector similarity search)</li>
+<li><strong>Recent conversation history</strong> from the same partition/instance</li>
+<li><strong>Connected conversation threads</strong> through synapse relationships</li>
+</ul>
+<p>This enriched context is injected into your request before forwarding it to the AI provider, making the AI aware of relevant past discussions.</p>
+<h2 id="context-enrichment-process"><a class="header" href="#context-enrichment-process">Context Enrichment Process</a></h2>
+<h3 id="1-message-reception-and-initial-processing"><a class="header" href="#1-message-reception-and-initial-processing">1. Message Reception and Initial Processing</a></h3>
+<pre><code class="language-rs">pub async fn handle_with_partition(
+    partition: &amp;str,
+    instance: &amp;str,
+    whole_body: Bytes,
+) -&gt; Result&lt;Bytes, Error&gt; {
+    let json_string = String::from_utf8_lossy(&amp;whole_body).to_string();
+    let chat_request_model = ChatRequest::from_json(json_string.as_str()).expect("Valid JSON");
+    let model_info = ModelInfo::new(chat_request_model.model.clone());
+
+    let trace_id = Uuid::new_v4().to_string();
+    let service = ChatRequestService::new();
+</code></pre>
+<p>When a request arrives:</p>
+<ul>
+<li>A unique <strong>trace ID</strong> is generated for tracking</li>
+<li>The request is parsed and validated</li>
+<li>Model information is extracted to determine token limits</li>
+</ul>
+<h3 id="2-embedding-generation"><a class="header" href="#2-embedding-generation">2. Embedding Generation</a></h3>
+<pre><code class="language-rs">    let search_term = last_message.content.as_str();
+    get_last_message_in_chat_request(&amp;chat_request_model)?;
+
+    info!("Using search term: {}", search_term);
+    let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
+    let embeddings = get_embeddings_for_txt(search_term, embedding_info.clone()).await?;
+
+    let context_size = config::get_context_size();
+</code></pre>
+<p>The last user message is used as the search term to generate vector embeddings using the BGE-Large-EN-v1.5 model. This embedding represents the semantic meaning of the current query.</p>
+<h3 id="3-semantic-context-retrieval"><a class="header" href="#3-semantic-context-retrieval">3. Semantic Context Retrieval</a></h3>
+<pre><code class="language-rs">    let similar = get_related_messages_with_strategy(
+        embeddings,
+        &amp;embedding_info,
+        partition,
+        instance,
+        context_size,
+    )
+    .await?;
+</code></pre>
+<p>Using the generated embedding, Reservoir searches for semantically similar messages from past conversations within the same partition/instance. The search strategy includes:</p>
+<h4 id="vector-similarity-search"><a class="header" href="#vector-similarity-search">Vector Similarity Search</a></h4>
+<pre><code class="language-rs">    let query_string = format!(
+        r#"
+                CALL db.index.vector.queryNodes(
+                    '{}',
+                    $topKExtended,
+                    $embedding
+                ) YIELD node, score
+                WITH node, score
+                WHERE node.partition = $partition
+                  AND node.instance = $instance
+                RETURN node.partition AS partition,
+                       node.instance AS instance,
+                       node.embedding AS embedding,
+                       node.model AS model,
+                       id(node) AS id,
+                       score
+                ORDER BY score DESC
+                "#,
+        embedding_info.get_index_name()
+    );
+</code></pre>
+<h4 id="synapse-expansion"><a class="header" href="#synapse-expansion">Synapse Expansion</a></h4>
+<pre><code class="language-rs">pub async fn get_related_messages_with_strategy(
+    embedding: Vec&lt;f32&gt;,
+    embedding_info: &amp;EmbeddingInfo,
+    partition: &amp;str,
+    instance: &amp;str,
+    top_k: usize,
+) -&gt; Result&lt;Vec&lt;MessageNode&gt;, Error&gt; {
+    let similar_messages =
+        get_most_similar_messages(embedding, embedding_info, partition, instance, top_k).await?;
+    let mut found_messages = vec![];
+    for message in similar_messages.clone() {
+        let mut connected = get_nodes_connected_by_synapses(connect, &amp;message).await?;
+        if found_messages.len() &gt; top_k * 3 {
+            break;
+        }
+        if connected.len() &gt; 2 {
+            found_messages.append(connected.as_mut());
+        }
+        found_messages = deduplicate_message_nodes(found_messages);
+    }
+
+    Ok(found_messages.into_iter().take(top_k).collect())
+}
+</code></pre>
+<p>The system expands the context by following synapse relationships - connections between messages that are semantically similar (cosine similarity &gt; 0.85).</p>
+<h3 id="4-recent-history-retrieval"><a class="header" href="#4-recent-history-retrieval">4. Recent History Retrieval</a></h3>
+<pre><code class="language-rs">    let last_messages = get_last_messages_for_partition_and_instance(
+        connect,
+        partition.to_string(),
+        instance.to_string(),
+        LAST_MESSAGES_LIMIT,
+    )
+    .await
+    .unwrap_or_else(|e| {
+        error!("Error finding last messages: {}", e);
+        Vec::new()
+    });
+</code></pre>
+<p>Retrieves the most recent 15 messages from the same partition/instance to provide immediate conversational context.</p>
+<h3 id="5-context-injection"><a class="header" href="#5-context-injection">5. Context Injection</a></h3>
+<pre><code class="language-rs">let mut enriched_chat_request =
+        enrich_chat_request(similar, last_messages, &amp;chat_request_model);
+truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.input_tokens);
+</code></pre>
+<p>The <code>enrich_chat_request</code> function combines all context sources:</p>
+<pre><code class="language-rs">pub fn enrich_chat_request(
+    similar_messages: Vec&lt;MessageNode&gt;,
+    mut last_messages: Vec&lt;MessageNode&gt;, // Add `mut` here
+    chat_request: &amp;ChatRequest,
+) -&gt; ChatRequest {
+    let mut chat_request = chat_request.clone();
+
+    let semantic_prompt = r#"The following is the result of a semantic search 
+        of the most related messages by cosine similarity to previous 
+        conversations"#;
+    let recent_prompt = r#"The following are the most recent messages in the 
+        conversation in chronological order"#;
+
+    last_messages.sort_by(|a, b| a.timestamp.cmp(&amp;b.timestamp));
+
+    let mut enrichment_block = Vec::new();
+
+    enrichment_block.push(Message {
+        role: "system".to_string(),
+        content: semantic_prompt.to_string(),
+    });
+    enrichment_block.extend(similar_messages.iter().map(MessageNode::to_message));
+    enrichment_block.push(Message {
+        role: "system".to_string(),
+        content: recent_prompt.to_string(),
+    });
+    enrichment_block.extend(last_messages.iter().map(MessageNode::to_message));
+
+    enrichment_block.retain(|m| !m.content.is_empty());
+
+    let insert_index = if chat_request
+        .messages
+        .first()
+        .is_some_and(|m| m.role == "system")
+    {
+        1
+    } else {
+        0
+    };
+
+    // Insert enrichment block
+    chat_request
+        .messages
+        .splice(insert_index..insert_index, enrichment_block);
+    chat_request
+}
+</code></pre>
+<p>The enrichment process:</p>
+<ol>
+<li>Creates descriptive system prompts to explain the context</li>
+<li>Adds semantically similar messages with explanation</li>
+<li>Adds recent chronological history with explanation</li>
+<li>Inserts the enrichment block after any existing system message</li>
+<li>Filters out empty messages</li>
+</ol>
+<h3 id="6-token-management-and-truncation"><a class="header" href="#6-token-management-and-truncation">6. Token Management and Truncation</a></h3>
+<pre><code class="language-rs">truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.input_tokens);
+</code></pre>
+<p>The enriched request may exceed the model's token limits. The truncation algorithm:</p>
+<pre><code class="language-rs">pub fn truncate_messages_if_needed(messages: &amp;mut Vec&lt;Message&gt;, limit: usize) {
+    let mut current_tokens = count_chat_tokens(messages);
+    info!("Current token count: {}", current_tokens);
+
+    if current_tokens &lt;= limit {
+        return; // No truncation needed
+    }
+
+    info!(
+        "Token count ({}) exceeds limit ({}), truncating...",
+        current_tokens, limit
+    );
+
+    // Identify indices of system messages and the last message
+    let system_message_indices: HashSet&lt;usize&gt; = messages
+        .iter()
+        .enumerate()
+        .filter(|(_, m)| m.role == "system")
+        .map(|(i, _)| i)
+        .collect();
+    let last_message_index = messages.len().saturating_sub(1); // Index of the last message
+
+    // Start checking for removal from the first message
+    let mut current_index = 0;
+
+    while current_tokens &gt; limit &amp;&amp; current_index &lt; messages.len() {
+        // Check if the current index is a system message or the last message
+        if system_message_indices.contains(&amp;current_index) || current_index == last_message_index {
+            // Skip this message, move to the next index
+            current_index += 1;
+            continue;
+        }
+
+        // If it's safe to remove (not system, not the last message)
+        if messages.len() &gt; 1 {
+            // Ensure we don't remove the only message left (shouldn't happen here)
+            info!(
+                "Removing message at index {}: Role='{}', Content='{}...'",
+                current_index,
+                messages[current_index].role,
+                messages[current_index]
+                    .content
+                    .chars()
+                    .take(30)
+                    .collect::&lt;String&gt;()
+            );
+            messages.remove(current_index);
+            // Don't increment current_index, as removing shifts subsequent elements down.
+            // Recalculate tokens and update system/last indices if needed (though less efficient)
+            // For simplicity here, we just recalculate tokens. A more optimized approach
+            // might update indices, but given the context size, recalculating tokens is okay.
+            current_tokens = count_chat_tokens(messages);
+            // Re-evaluate system_message_indices and last_message_index is safer if indices change significantly,
+            // but let's stick to the simpler approach for now. If performance becomes an issue, optimize this.
+        } else {
+            // Safety break: Should not be able to remove the last message due to the check above.
+            error!("Warning: Truncation stopped unexpectedly.");
+            break;
+        }
+    }
+
+    info!("Truncated token count: {}", current_tokens);
+}
+</code></pre>
+<p>The truncation algorithm preserves:</p>
+<ul>
+<li>All system messages (including enrichment context)</li>
+<li>The user's current/last message</li>
+<li>Removes older context messages if needed</li>
+</ul>
+<h3 id="7-response-storage-and-synapse-building"><a class="header" href="#7-response-storage-and-synapse-building">7. Response Storage and Synapse Building</a></h3>
+<p>After receiving the AI's response:</p>
+<pre><code class="language-149:162:src/handler/completions.rs">    let message_node = chat_response.choices.first().unwrap().message.clone();
+    let embedding =
+        get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
+    let message_node = MessageNode::from_message(
+        &amp;message_node,
+        trace_id.as_str(),
+        partition,
+        instance,
+        embedding,
+    );
+    save_message_node(connect, &amp;message_node, &amp;embedding_info)
+        .await
+        .expect("Failed to save message node");
+
+    connect_synapses(connect)
+        .await
+        .expect("Failed to connect synapses");
+</code></pre>
+<ol>
+<li>The AI's response is stored with its own embedding</li>
+<li>Synapses (semantic connections) are built between messages</li>
+<li>The system continuously builds a knowledge graph of related conversations</li>
+</ol>
+<h2 id="context-architecture-flow"><a class="header" href="#context-architecture-flow">Context Architecture Flow</a></h2>
+<pre class="mermaid">flowchart TD
+    A[&quot;User Request Arrives&quot;] --&gt; B[&quot;Generate Trace ID &amp; Parse Request&quot;]
+    B --&gt; C[&quot;Extract Last User Message&quot;]
+    C --&gt; D[&quot;Generate Embedding&lt;br/&gt;(BGE-Large-EN-v1.5)&quot;]
+    
+    %% Parallel context retrieval
+    D --&gt; E[&quot;Semantic Search&quot;]
+    D --&gt; F[&quot;Recent History Query&quot;]
+    
+    E --&gt; E1[&quot;Vector Similarity Search&lt;br/&gt;(Neo4j Index)&quot;]
+    E1 --&gt; E2[&quot;Expand via Synapses&lt;br/&gt;(Related Conversations)&quot;]
+    E2 --&gt; E3[&quot;Deduplicate Messages&quot;]
+    
+    F --&gt; F1[&quot;Get Last 15 Messages&lt;br/&gt;(Same Partition/Instance)&quot;]
+    F1 --&gt; F2[&quot;Sort by Timestamp&quot;]
+    
+    %% Context assembly
+    E3 --&gt; G[&quot;Assemble Context Block&quot;]
+    F2 --&gt; G
+    
+    G --&gt; G1[&quot;Add Semantic Context&lt;br/&gt;'The following is semantic search...'&quot;]
+    G1 --&gt; G2[&quot;Add Similar Messages&quot;]
+    G2 --&gt; G3[&quot;Add Recent Context&lt;br/&gt;'The following are recent messages...'&quot;]
+    G3 --&gt; G4[&quot;Add Recent Messages&quot;]
+    
+    %% Context injection
+    G4 --&gt; H[&quot;Inject Context into Request&quot;]
+    H --&gt; H1{&quot;Check if System Message Exists&quot;}
+    H1 --&gt;|Yes| H2[&quot;Insert after System Message&quot;]
+    H1 --&gt;|No| H3[&quot;Insert at Beginning&quot;]
+    
+    H2 --&gt; I[&quot;Token Management&quot;]
+    H3 --&gt; I
+    
+    %% Token management
+    I --&gt; I1[&quot;Count Total Tokens&quot;]
+    I1 --&gt; I2{&quot;Exceeds Token Limit?&quot;}
+    I2 --&gt;|No| J[&quot;Send to AI Provider&quot;]
+    I2 --&gt;|Yes| I3[&quot;Smart Truncation&quot;]
+    
+    I3 --&gt; I4[&quot;Preserve System Messages&quot;]
+    I4 --&gt; I5[&quot;Preserve Last User Message&quot;]
+    I5 --&gt; I6[&quot;Remove Older Context&quot;]
+    I6 --&gt; I7[&quot;Recalculate Tokens&quot;]
+    I7 --&gt; I2
+    
+    %% AI interaction
+    J --&gt; K[&quot;AI Provider Response&quot;]
+    K --&gt; L[&quot;Store Response&quot;]
+    
+    %% Post-processing
+    L --&gt; L1[&quot;Generate Response Embedding&quot;]
+    L1 --&gt; L2[&quot;Save to Neo4j with Trace ID&quot;]
+    L2 --&gt; L3[&quot;Link User-Assistant Messages&quot;]
+    L3 --&gt; M[&quot;Build Synapses&quot;]
+    
+    M --&gt; M1[&quot;Calculate Similarity Scores&lt;br/&gt;(Cosine Similarity)&quot;]
+    M1 --&gt; M2[&quot;Create SYNAPSE Relationships&lt;br/&gt;(Score &gt; 0.85)&quot;]
+    M2 --&gt; M3[&quot;Remove Weak Synapses&lt;br/&gt;(Score &lt; 0.85)&quot;]
+    
+    M3 --&gt; N[&quot;Return Enriched Response&quot;]
+    
+    %% Styling
+    classDef inputStep fill:#e1f5fe
+    classDef processStep fill:#f3e5f5
+    classDef storageStep fill:#e8f5e8
+    classDef aiStep fill:#fff3e0
+    classDef outputStep fill:#fce4ec
+    
+    class A,C inputStep
+    class B,D,E,E1,E2,E3,F,F1,F2,G,G1,G2,G3,G4,H,H1,H2,H3,I,I1,I2,I3,I4,I5,I6,I7 processStep
+    class L,L1,L2,L3,M,M1,M2,M3 storageStep
+    class J,K aiStep
+    class N outputStep
+</pre>
+<h2 id="key-configuration-parameters"><a class="header" href="#key-configuration-parameters">Key Configuration Parameters</a></h2>
+<h3 id="context-size"><a class="header" href="#context-size">Context Size</a></h3>
+<pre><code class="language-116:118:src/repos/config.rs">pub fn get_context_size() -&gt; usize {
+    get_config().semantic_context_size.unwrap_or(15)
+}
+</code></pre>
+<p>The semantic context size (default: 15) determines how many semantically similar messages are retrieved and potentially included in the context.</p>
+<h3 id="recent-messages-limit"><a class="header" href="#recent-messages-limit">Recent Messages Limit</a></h3>
+<pre><code class="language-25:25:src/handler/completions.rs">const LAST_MESSAGES_LIMIT: usize = 15;
+</code></pre>
+<p>The system retrieves up to 15 most recent messages from the same partition/instance for chronological context.</p>
+<h3 id="embedding-model"><a class="header" href="#embedding-model">Embedding Model</a></h3>
+<pre><code class="language-95:95:src/handler/completions.rs">    let embedding_info = EmbeddingInfo::with_fastembed("bge-large-en-v15");
+</code></pre>
+<p>Reservoir uses BGE-Large-EN-v1.5 for generating embeddings, providing high-quality semantic representations.</p>
+<h3 id="synapse-threshold"><a class="header" href="#synapse-threshold">Synapse Threshold</a></h3>
+<pre><code class="language-297:300:src/repos/message/neo4j_message.rs">            MATCH (m1:MessageNode)-[r:SYNAPSE]-&gt;(m2:MessageNode)
+            WHERE r.score &lt; 0.85
+            DELETE r
+        "#;
+</code></pre>
+<p>Only relationships with cosine similarity scores above 0.85 are maintained as synapses, ensuring high-quality semantic connections.</p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key Concepts</a></h2>
+<h3 id="partitions-and-instances"><a class="header" href="#partitions-and-instances">Partitions and Instances</a></h3>
+<p>Context is scoped to specific partition/instance combinations, allowing for:</p>
+<ul>
+<li><strong>Organizational separation</strong>: Different teams or projects can have isolated contexts</li>
+<li><strong>Application isolation</strong>: Multiple applications can use the same Reservoir instance without cross-contamination</li>
+<li><strong>User-specific contexts</strong>: Individual users can maintain separate conversation histories</li>
+</ul>
+<h3 id="synapses"><a class="header" href="#synapses">Synapses</a></h3>
+<p>Synapses are semantic relationships between messages that:</p>
+<ul>
+<li><strong>Connect related conversations</strong> across different sessions</li>
+<li><strong>Build over time</strong> as the system learns from interactions</li>
+<li><strong>Self-organize</strong> the knowledge graph based on content similarity</li>
+<li><strong>Get pruned automatically</strong> when relationships are too weak (&lt; 0.85 similarity)</li>
+</ul>
+<h3 id="trace-ids"><a class="header" href="#trace-ids">Trace IDs</a></h3>
+<p>Every request gets a unique trace ID that:</p>
+<ul>
+<li><strong>Links user messages to AI responses</strong> within the same conversation turn</li>
+<li><strong>Enables conversation threading</strong> and relationship building</li>
+<li><strong>Provides audit trails</strong> for debugging and analysis</li>
+<li><strong>Supports parallel processing</strong> of multiple simultaneous requests</li>
+</ul>
+<h3 id="system-context-compression"><a class="header" href="#system-context-compression">System Context Compression</a></h3>
+<pre><code class="language-22:41:src/utils/mod.rs">pub fn compress_system_context(messages: &amp;[Message]) -&gt; Vec&lt;Message&gt; {
+    let first_index = messages.iter().position(|m| m.role == "system");
+    let last_index = messages.iter().rposition(|m| m.role == "system");
+
+    if let (Some(first), Some(last)) = (first_index, last_index) {
+        if first != 0 || first == last {
+            return messages.to_vec();
+        }
+
+        let mut compressed = vec![messages[0].clone()];
+
+        for item in messages.iter().take(last + 1).skip(first + 1) {
+            compressed[0].content += &amp;format!("\n{}", message_to_string(item));
+        }
+
+        compressed.extend_from_slice(&amp;messages[last + 1..]);
+        compressed
+    } else {
+        messages.to_vec()
+    }
+}
+</code></pre>
+<p>Multiple system messages (including enrichment context) are compressed into a single system message to optimize token usage while preserving all contextual information.</p>
+<h2 id="benefits-of-context-enrichment"><a class="header" href="#benefits-of-context-enrichment">Benefits of Context Enrichment</a></h2>
+<ol>
+<li><strong>Conversational Continuity</strong>: AI maintains awareness of past discussions across sessions</li>
+<li><strong>Semantic Understanding</strong>: Related topics are automatically surfaced even when not explicitly mentioned</li>
+<li><strong>Multi-Session Learning</strong>: Knowledge accumulates over time, improving response quality</li>
+<li><strong>Cross-Model Memory</strong>: Context persists when switching between different AI providers</li>
+<li><strong>Intelligent Prioritization</strong>: Most relevant historical context is prioritized while respecting token limits</li>
+<li><strong>Automatic Organization</strong>: The system builds its own knowledge graph without manual intervention</li>
+</ol>
+<h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance Considerations</a></h2>
+<ul>
+<li><strong>Vector Indexing</strong>: Neo4j's vector indices provide sub-second similarity search even with large conversation histories</li>
+<li><strong>Parallel Processing</strong>: Semantic search and recent history retrieval happen concurrently</li>
+<li><strong>Smart Truncation</strong>: Context is intelligently trimmed to fit model limits while preserving essential information</li>
+<li><strong>Synapse Pruning</strong>: Weak connections are automatically removed to maintain graph quality</li>
+<li><strong>Token Optimization</strong>: System messages are compressed to maximize available context within token limits</li>
+</ul>
 
                     </main>
 
@@ -210,6 +646,8 @@
         <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
 
 
     </div>

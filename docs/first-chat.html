@@ -167,9 +167,9 @@
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>Before starting, make sure you have:</p>
 <ul>
-<li>✅ Reservoir server running (<code>cargo run -- start</code>)</li>
-<li>✅ Neo4j database accessible</li>
-<li>✅ API keys set up (if using cloud providers)</li>
+<li>Reservoir server running (<code>cargo run -- start</code>)</li>
+<li>Neo4j database accessible</li>
+<li>API keys set up (if using cloud providers)</li>
 </ul>
 <h2 id="example-1-testing-with-ollama-local"><a class="header" href="#example-1-testing-with-ollama-local">Example 1: Testing with Ollama (Local)</a></h2>
 <p>Let's start with a local Ollama model since it doesn't require API keys:</p>
@@ -200,7 +200,7 @@
         ]
     }'
 </code></pre>
-<p><strong>🎉 Magic!</strong> The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
+<p><strong>Magic!</strong> The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
 <h3 id="step-3-continue-the-conversation"><a class="header" href="#step-3-continue-the-conversation">Step 3: Continue the conversation</a></h3>
 <pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
     -H "Content-Type: application/json" \
@@ -350,7 +350,7 @@ cargo run -- start
 <li><strong><a href="./chat-gipitty.html">Chat Gipitty Integration</a></strong> - Add memory to your existing chat tools</li>
 <li><strong><a href="./api/overview.html">API Reference</a></strong> - Learn about advanced features</li>
 </ul>
-<p><strong>Congratulations!</strong> 🎉 You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!</p>
+<p><strong>Congratulations!</strong> You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!</p>
 
                     </main>
 
@@ -398,6 +398,8 @@ cargo run -- start
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
+        <script src="mermaid.min.js"></script>
+        <script src="mermaid-init.js"></script>
 
 
     </div>
