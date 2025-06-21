@@ -181,7 +181,7 @@
 <li><strong>Manages token limits</strong> through intelligent truncation while preserving system and user messages</li>
 </ul>
 <h2 id="architecture-overview"><a class="header" href="#architecture-overview">Architecture Overview</a></h2>
-<p>The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target LLM provider. All conversation data remains local to the deployment environment.</p>
+<p>The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target Language Model provider. All conversation data remains local to the deployment environment.</p>
 <h2 id="data-model"><a class="header" href="#data-model">Data Model</a></h2>
 <p>Conversations are stored as a graph structure:</p>
 <ul>
@@ -192,7 +192,7 @@
 <li><strong>HAS_EMBEDDING</strong>: Message-to-embedding associations</li>
 </ul>
 <h2 id="supported-providers"><a class="header" href="#supported-providers">Supported Providers</a></h2>
-<p>The system supports multiple LLM providers through a unified interface:</p>
+<p>The system supports multiple Language Model providers through a unified interface:</p>
 <ul>
 <li>OpenAI (gpt-4, gpt-4o, gpt-3.5-turbo)</li>
 <li>Ollama (local model execution)</li>
@@ -208,8 +208,8 @@
 <li><strong>Stateful chat applications</strong>: Eliminate manual conversation state management</li>
 <li><strong>Cross-session context</strong>: Maintain context across application restarts</li>
 <li><strong>Semantic search</strong>: Retrieve relevant historical conversations</li>
-<li><strong>Multi-provider workflows</strong>: Maintain context when switching between LLM providers</li>
-<li><strong>Research and development</strong>: Build persistent knowledge bases from AI interactions</li>
+<li><strong>Multi-provider workflows</strong>: Maintain context when switching between Language Model providers</li>
+<li><strong>Research and development</strong>: Build persistent knowledge bases from Language Model interactions</li>
 </ul>
 <p>For implementation details, see the <a href="./quick-start.html">Quick Start</a> guide.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
@@ -219,14 +219,14 @@
 <ul>
 <li><strong><a href="./installation.html">Install Reservoir</a></strong> - Set up Reservoir on your system with all prerequisites</li>
 <li><strong><a href="./quick-start.html">Quick Start</a></strong> - Get Reservoir running in minutes with basic configuration</li>
-<li><strong><a href="./first-chat.html">Your First Chat</a></strong> - Send your first AI conversation through Reservoir</li>
+<li><strong><a href="./first-chat.html">Your First Chat</a></strong> - Send your first LLM conversation through Reservoir</li>
 </ul>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>Before you begin, make sure you have:</p>
 <ul>
 <li>Neo4j database running (local or remote)</li>
 <li>Rust toolchain installed (for building from source)</li>
-<li>API keys for your preferred AI providers (OpenAI, Mistral, etc.)</li>
+<li>API keys for your preferred LLM providers (OpenAI, Mistral, etc.)</li>
 </ul>
 <h2 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h2>
 <p>If you run into any issues during setup, check out our <a href="./troubleshooting/common-issues.html">Help &amp; Support</a> section for troubleshooting guides and frequently asked questions.</p>
@@ -458,7 +458,7 @@ hurl --variable USER="$USER" --variable OPENAI_API_KEY="$OPENAI_API_KEY" hurl/ch
 </code></pre>
 <p>The response will look like a standard OpenAI API response, but Reservoir has:</p>
 <ul>
-<li>Stored your message and the AI's response</li>
+<li>Stored your message and the LLM's response</li>
 <li>Tagged them with your username and "quickstart" instance</li>
 <li>Made them available for future context enrichment</li>
 </ul>
@@ -477,7 +477,7 @@ hurl --variable USER="$USER" --variable OPENAI_API_KEY="$OPENAI_API_KEY" hurl/ch
         ]
     }'
 </code></pre>
-<p>Notice how the AI understands "what you just told me" - that's Reservoir automatically injecting the previous conversation context!</p>
+<p>Notice how the LLM understands "what you just told me" - that's Reservoir automatically injecting the previous conversation context!</p>
 <h2 id="step-4-view-your-conversation-history"><a class="header" href="#step-4-view-your-conversation-history">Step 4: View Your Conversation History</a></h2>
 <p>Check what Reservoir has stored:</p>
 <pre><code class="language-bash">cargo run -- view 5 --partition "$USER" --instance quickstart
@@ -514,7 +514,7 @@ hurl --variable USER="$USER" --variable OPENAI_API_KEY="$OPENAI_API_KEY" hurl/ch
 </ul>
 <h2 id="what-just-happened"><a class="header" href="#what-just-happened">What Just Happened?</a></h2>
 <ol>
-<li><strong>Storage</strong>: Every message (yours and the AI's) was stored in Neo4j</li>
+<li><strong>Storage</strong>: Every message (yours and the LLM's) was stored in Neo4j</li>
 <li><strong>Context Enrichment</strong>: Reservoir automatically found relevant past messages and included them in requests</li>
 <li><strong>Multi-Provider</strong>: You used both OpenAI and Ollama with the same conversation history</li>
 <li><strong>Organization</strong>: Your conversations were organized by partition and instance</li>
@@ -589,7 +589,7 @@ export MISTRAL_API_KEY=your-key-here         # Mistral API key
         ]
     }'
 </code></pre>
-<p><strong>Magic!</strong> The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
+<p><strong>Magic!</strong> The Language Model will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
 <h3 id="step-3-continue-the-conversation"><a class="header" href="#step-3-continue-the-conversation">Step 3: Continue the conversation</a></h3>
 <pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
     -H "Content-Type: application/json" \
@@ -603,7 +603,7 @@ export MISTRAL_API_KEY=your-key-here         # Mistral API key
         ]
     }'
 </code></pre>
-<p>The AI will make suggestions based on knowing you're Alice who loves Python programming!</p>
+<p>The Language Model will make suggestions based on knowing you're Alice who loves Python programming!</p>
 <h2 id="example-2-using-openai-models"><a class="header" href="#example-2-using-openai-models">Example 2: Using OpenAI Models</a></h2>
 <p>If you have an OpenAI API key set up:</p>
 <h3 id="step-1-introduction-with-gpt-4"><a class="header" href="#step-1-introduction-with-gpt-4">Step 1: Introduction with GPT-4</a></h3>
@@ -672,8 +672,8 @@ export MISTRAL_API_KEY=your-key-here         # Mistral API key
 <li><strong>Stores your message</strong> in Neo4j with embeddings</li>
 <li><strong>Searches for relevant context</strong> from previous conversations</li>
 <li><strong>Injects relevant history</strong> into your request automatically</li>
-<li><strong>Forwards the enriched request</strong> to the AI provider</li>
-<li><strong>Stores the AI's response</strong> for future context</li>
+<li><strong>Forwards the enriched request</strong> to the Language Model provider</li>
+<li><strong>Stores the Language Model's response</strong> for future context</li>
 </ol>
 <h3 id="viewing-your-conversation-history"><a class="header" href="#viewing-your-conversation-history">Viewing Your Conversation History</a></h3>
 <p>You can see your stored conversations using the CLI:</p>
@@ -739,7 +739,7 @@ cargo run -- start
 <li><strong><a href="./chat-gipitty.html">Chat Gipitty Integration</a></strong> - Add memory to your existing chat tools</li>
 <li><strong><a href="./api/overview.html">API Reference</a></strong> - Learn about advanced features</li>
 </ul>
-<p><strong>Congratulations!</strong> You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!</p>
+<p><strong>Congratulations!</strong> You've successfully used Reservoir to have a conversation with persistent memory. The Language Model now remembers everything from your conversation and can reference it in future chats!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="usage--integration"><a class="header" href="#usage--integration">Usage &amp; Integration</a></h1>
 <p>Reservoir is designed to work seamlessly with your existing AI workflows and tools. This section covers various ways to integrate and use Reservoir in your projects.</p>
 <h2 id="integration-options"><a class="header" href="#integration-options">Integration Options</a></h2>
@@ -769,14 +769,14 @@ cargo run -- start
 </ul>
 <p>Each integration method maintains the same core benefits: persistent memory, context enrichment, and seamless AI conversations.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="chat-gipitty-integration"><a class="header" href="#chat-gipitty-integration">Chat Gipitty Integration</a></h1>
-<p>Reservoir was originally designed as a memory system for <a href="https://github.com/divanvisagie/chat-gipitty">Chat Gipitty</a>. This integration gives your cgip conversations persistent memory, context awareness, and the ability to search through your AI interaction history.</p>
+<p>Reservoir was originally designed as a memory system for <a href="https://github.com/divanvisagie/chat-gipitty">Chat Gipitty</a>. This integration gives your cgip conversations persistent memory, context awareness, and the ability to search through your LLM interaction history.</p>
 <h2 id="what-you-get"><a class="header" href="#what-you-get">What You Get</a></h2>
 <p>When you integrate Reservoir with Chat Gipitty, you get:</p>
 <ul>
 <li><strong>Persistent Memory</strong>: Your conversations are remembered across sessions</li>
 <li><strong>Semantic Search</strong>: Find relevant past discussions automatically</li>
 <li><strong>Context Enrichment</strong>: Each response is informed by your conversation history</li>
-<li><strong>Multi-Model Support</strong>: Switch between different AI providers while maintaining context</li>
+<li><strong>Multi-Model Support</strong>: Switch between different LLM providers while maintaining context</li>
 </ul>
 <h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
 <h3 id="prerequisites-3"><a class="header" href="#prerequisites-3">Prerequisites</a></h3>
@@ -838,10 +838,10 @@ source ~/.zshrc
 <h3 id="follow-up-questions"><a class="header" href="#follow-up-questions">Follow-up Questions</a></h3>
 <p>The magic happens with follow-up questions:</p>
 <pre><code class="language-bash">gpty "Explain neural networks"
-# ... AI responds with explanation ...
+# ... LLM responds with explanation ...
 
 gpty "How do they relate to what we discussed about machine learning earlier?"
-# ... AI responds with context from the previous conversation ...
+# ... LLM responds with context from the previous conversation ...
 </code></pre>
 <h3 id="different-topics"><a class="header" href="#different-topics">Different Topics</a></h3>
 <p>Start a new topic, and Reservoir will find relevant context:</p>
@@ -863,7 +863,7 @@ gpty "Show me some advanced Rust patterns"
 </li>
 <li><strong>Context Injection</strong>: This context is provided to cgip as a system prompt</li>
 <li><strong>Enhanced Response</strong>: cgip responds with awareness of your history</li>
-<li><strong>Response Storage</strong>: The AI's response is stored for future context</li>
+<li><strong>Response Storage</strong>: The LLM's response is stored for future context</li>
 </ol>
 <h2 id="advanced-configuration"><a class="header" href="#advanced-configuration">Advanced Configuration</a></h2>
 <h3 id="custom-search-parameters"><a class="header" href="#custom-search-parameters">Custom Search Parameters</a></h3>
@@ -942,7 +942,7 @@ function gpty_personal() {
 <h2 id="benefits-of-this-integration"><a class="header" href="#benefits-of-this-integration">Benefits of This Integration</a></h2>
 <h3 id="continuous-learning"><a class="header" href="#continuous-learning">Continuous Learning</a></h3>
 <ul>
-<li>Your AI assistant learns from every interaction</li>
+<li>Your LLM assistant learns from every interaction</li>
 <li>Context builds up over time, making responses more personalized</li>
 <li>No need to re-explain your projects or preferences</li>
 </ul>
@@ -961,7 +961,7 @@ function gpty_personal() {
 <h3 id="privacy"><a class="header" href="#privacy">Privacy</a></h3>
 <ul>
 <li>All your conversation history stays local</li>
-<li>No data sent to external services beyond the AI API calls</li>
+<li>No data sent to external services beyond the LLM API calls</li>
 <li>You control your data completely</li>
 </ul>
 <h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
@@ -1000,7 +1000,7 @@ reservoir search "test"
 <li>Check out <a href="./python-integration.html">Python Integration</a> for programmatic access</li>
 <li>See <a href="./troubleshooting/common-issues.html">Troubleshooting</a> if you encounter issues</li>
 </ul>
-<p>The Chat Gipitty integration transforms your AI interactions from isolated conversations into a connected, searchable knowledge base that grows smarter with every interaction.</p>
+<p>The Chat Gipitty integration transforms your LLM interactions from isolated conversations into a connected, searchable knowledge base that grows smarter with every interaction.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="python-integration"><a class="header" href="#python-integration">Python Integration</a></h1>
 <p>Reservoir works seamlessly with the popular OpenAI Python library. You simply point the client to your Reservoir instance instead of directly to OpenAI, and Reservoir handles all the memory and context management automatically.</p>
 <h2 id="setup-1"><a class="header" href="#setup-1">Setup</a></h2>
@@ -1164,7 +1164,7 @@ if __name__ == "__main__":
 <li><strong>Automatic Context</strong>: Previous conversations are automatically included</li>
 <li><strong>Cross-Session Memory</strong>: Conversations persist across different Python sessions</li>
 <li><strong>Smart Token Management</strong>: Reservoir handles token limits automatically</li>
-<li><strong>Multi-Provider Support</strong>: Switch between different AI providers seamlessly</li>
+<li><strong>Multi-Provider Support</strong>: Switch between different LLM providers seamlessly</li>
 <li><strong>Local Storage</strong>: All your conversation data stays on your device</li>
 </ul>
 <h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next Steps</a></h2>
@@ -1691,7 +1691,7 @@ cloud_response = client.chat.completions.create(
 </ul>
 <p><strong>Ready to go private?</strong> 🔒 With Ollama and Reservoir, you have a completely local AI assistant with persistent memory!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="api-overview"><a class="header" href="#api-overview">API Overview</a></h1>
-<p>Reservoir provides an OpenAI-compatible API endpoint that acts as a smart proxy between your application and AI language models. This section covers the core API structure and basic usage patterns.</p>
+<p>Reservoir provides an OpenAI-compatible API endpoint that acts as a smart proxy between your application and LLM language models. This section covers the core API structure and basic usage patterns.</p>
 <h2 id="url-structure"><a class="header" href="#url-structure">URL Structure</a></h2>
 <p>The Reservoir API follows this pattern:</p>
 <pre><code>/v1/partition/{partition}/instance/{instance}/chat/completions
@@ -1738,11 +1738,11 @@ Authorization: Bearer YOUR_API_KEY
 <li><strong>Message Storage</strong>: Your message is stored with the specified partition/instance</li>
 <li><strong>Context Enrichment</strong>: Reservoir finds relevant past conversations and recent history</li>
 <li><strong>Token Management</strong>: The enriched context is checked against token limits</li>
-<li><strong>Request Forwarding</strong>: The enriched request is forwarded to the appropriate AI provider</li>
-<li><strong>Response Storage</strong>: The AI's response is stored for future context</li>
+<li><strong>Request Forwarding</strong>: The enriched request is forwarded to the appropriate LLM provider</li>
+<li><strong>Response Storage</strong>: The LLM's response is stored for future context</li>
 </ol>
 <h2 id="response-format"><a class="header" href="#response-format">Response Format</a></h2>
-<p>Responses maintain the same format as the underlying AI provider (OpenAI, Ollama, etc.), so your existing code will work without modification.</p>
+<p>Responses maintain the same format as the underlying LLM provider (OpenAI, Ollama, etc.), so your existing code will work without modification.</p>
 <h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next Steps</a></h2>
 <ul>
 <li><a href="api/./chat-completions.html">Chat Completions Endpoint</a> - Detailed endpoint documentation</li>
@@ -1812,7 +1812,7 @@ Authorization: Bearer YOUR_API_KEY
 <h3 id="message-roles"><a class="header" href="#message-roles">Message Roles</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Role</th><th>Description</th><th>Usage</th></tr></thead><tbody>
 <tr><td><code>user</code></td><td>User input messages</td><td>Questions, requests, instructions</td></tr>
-<tr><td><code>assistant</code></td><td>AI responses</td><td>Previous AI responses in conversation</td></tr>
+<tr><td><code>assistant</code></td><td>LLM responses</td><td>Previous LLM responses in conversation</td></tr>
 <tr><td><code>system</code></td><td>System instructions</td><td>Behavior modification, context setting</td></tr>
 </tbody></table>
 </div>
@@ -1838,7 +1838,7 @@ Authorization: Bearer YOUR_API_KEY
 <li><strong>Synapse Connections</strong>: Related discussions via SYNAPSE relationships</li>
 </ul>
 <h3 id="3-context-injection"><a class="header" href="#3-context-injection">3. Context Injection</a></h3>
-<pre><code class="language-json">// Enriched request sent to AI model
+<pre><code class="language-json">// Enriched request sent to the Language Model
 {
   "model": "gpt-4", 
   "messages": [
@@ -1899,7 +1899,7 @@ Authorization: Bearer YOUR_API_KEY
 </code></pre>
 <h2 id="configuration-and-model-selection"><a class="header" href="#configuration-and-model-selection">Configuration and Model Selection</a></h2>
 <h3 id="environment-variables-4"><a class="header" href="#environment-variables-4">Environment Variables</a></h3>
-<p>Configure different AI providers:</p>
+<p>Configure different LLM providers:</p>
 <pre><code class="language-bash"># OpenAI (default)
 export OPENAI_API_KEY="your-openai-api-key"
 export RSV_OPENAI_BASE_URL="https://api.openai.com/v1/chat/completions"
@@ -2097,7 +2097,7 @@ reservoir config --get semantic_context_size
 <li>Parallel processing of semantic search and recent history</li>
 <li>Optimized Neo4j queries for fast retrieval</li>
 </ul>
-<p>The Chat Completions endpoint provides the full power of Reservoir's context enrichment while maintaining complete compatibility with existing OpenAI-based applications, making it easy to add conversational memory to any AI application.</p>
+<p>The Chat Completions endpoint provides the full power of Reservoir's context enrichment while maintaining complete compatibility with existing OpenAI-based applications, making it easy to add conversational memory to any LLM application.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="search--retrieval"><a class="header" href="#search--retrieval">Search &amp; Retrieval</a></h1>
 <p>Reservoir provides powerful search capabilities for finding relevant conversations and messages across your entire conversation history. The search system supports both keyword-based and semantic similarity searches, enabling you to discover related discussions even when they use different terminology.</p>
 <h2 id="search-methods"><a class="header" href="#search-methods">Search Methods</a></h2>
@@ -2836,7 +2836,7 @@ reservoir start
 <div style="break-before: page; page-break-before: always;"></div><h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
 <p>Reservoir is designed as a transparent proxy for OpenAI-compatible APIs, with a focus on capturing and enriching AI conversations. This section provides an overview of the system architecture and how components interact.</p>
 <h2 id="request-processing-sequence"><a class="header" href="#request-processing-sequence">Request Processing Sequence</a></h2>
-<p>Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual LLM service. Here's the detailed sequence:</p>
+<p>Reservoir intercepts your API calls, enriches them with relevant history, manages token limits, and then forwards them to the actual Language Model service. Here's the detailed sequence:</p>
 <pre class="mermaid">sequenceDiagram
     participant App
     participant Reservoir
@@ -3058,7 +3058,7 @@ reservoir start
 <p>The data model is designed around the concept of messages as nodes in a graph, with relationships that capture both the conversational flow and semantic similarities. This approach enables powerful querying capabilities for context enrichment and conversation analysis.</p>
 <h2 id="nodes"><a class="header" href="#nodes">Nodes</a></h2>
 <h3 id="messagenode"><a class="header" href="#messagenode">MessageNode</a></h3>
-<p>Represents a single message in a conversation, whether from a user or an AI assistant.</p>
+<p>Represents a single message in a conversation, whether from a user or an LLM assistant.</p>
 <div class="table-wrapper"><table><thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>trace_id</code></td><td>String</td><td>Unique identifier per request/response pair</td></tr>
 <tr><td><code>partition</code></td><td>String</td><td>Logical namespace from URL, typically the system username (<code>$USER</code>)</td></tr>
@@ -3296,7 +3296,7 @@ ORDER BY connectionCount DESC, avgScore DESC
 </ul>
 <p>This data model provides a robust foundation for conversation storage and retrieval while maintaining flexibility for future enhancements and optimizations.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="context-enrichment-1"><a class="header" href="#context-enrichment-1">Context Enrichment</a></h1>
-<p>Context enrichment is Reservoir's core mechanism for providing intelligent, memory-aware AI conversations. By automatically injecting relevant historical context and recent conversation history into each request, Reservoir gives AI models a persistent memory that improves response quality and maintains conversational continuity across sessions.</p>
+<p>Context enrichment is Reservoir's core mechanism for providing intelligent, memory-aware LLM conversations. By automatically injecting relevant historical context and recent conversation history into each request, Reservoir gives LLM models a persistent memory that improves response quality and maintains conversational continuity across sessions.</p>
 <h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
 <p>When you send a message to Reservoir, the system automatically enhances your request with:</p>
 <ul>
@@ -3304,7 +3304,7 @@ ORDER BY connectionCount DESC, avgScore DESC
 <li><strong>Recent conversation history</strong> from the same partition/instance</li>
 <li><strong>Connected conversation threads</strong> through synapse relationships</li>
 </ul>
-<p>This enriched context is injected into your request before forwarding it to the AI provider, making the AI aware of relevant past discussions.</p>
+<p>This enriched context is injected into your request before forwarding it to the LLM provider, making the LLM aware of relevant past discussions.</p>
 <h2 id="context-enrichment-process-1"><a class="header" href="#context-enrichment-process-1">Context Enrichment Process</a></h2>
 <h3 id="1-message-reception-and-initial-processing"><a class="header" href="#1-message-reception-and-initial-processing">1. Message Reception and Initial Processing</a></h3>
 <pre><code class="language-rs">pub async fn handle_with_partition(
@@ -3545,7 +3545,7 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 <li>Removes older context messages if needed</li>
 </ul>
 <h3 id="7-response-storage-and-synapse-building"><a class="header" href="#7-response-storage-and-synapse-building">7. Response Storage and Synapse Building</a></h3>
-<p>After receiving the AI's response:</p>
+<p>After receiving the LLM's response:</p>
 <pre><code class="language-rs">let message_node = chat_response.choices.first().unwrap().message.clone();
 let embedding =
     get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
@@ -3565,7 +3565,7 @@ connect_synapses(connect)
     .expect("Failed to connect synapses");
 </code></pre>
 <ol>
-<li>The AI's response is stored with its own embedding</li>
+<li>The LLM's response is stored with its own embedding</li>
 <li>Synapses (semantic connections) are built between messages</li>
 <li>The system continuously builds a knowledge graph of related conversations</li>
 </ol>
@@ -3685,7 +3685,7 @@ DELETE r
 <h3 id="trace-ids"><a class="header" href="#trace-ids">Trace IDs</a></h3>
 <p>Every request gets a unique trace ID that:</p>
 <ul>
-<li><strong>Links user messages to AI responses</strong> within the same conversation turn</li>
+<li><strong>Links user messages to LLM responses</strong> within the same conversation turn</li>
 <li><strong>Enables conversation threading</strong> and relationship building</li>
 <li><strong>Provides audit trails</strong> for debugging and analysis</li>
 <li><strong>Supports parallel processing</strong> of multiple simultaneous requests</li>
@@ -3716,10 +3716,10 @@ DELETE r
 <p>Multiple system messages (including enrichment context) are compressed into a single system message to optimize token usage while preserving all contextual information.</p>
 <h2 id="benefits-of-context-enrichment"><a class="header" href="#benefits-of-context-enrichment">Benefits of Context Enrichment</a></h2>
 <ol>
-<li><strong>Conversational Continuity</strong>: AI maintains awareness of past discussions across sessions</li>
+<li><strong>Conversational Continuity</strong>: LLM maintains awareness of past discussions across sessions</li>
 <li><strong>Semantic Understanding</strong>: Related topics are automatically surfaced even when not explicitly mentioned</li>
 <li><strong>Multi-Session Learning</strong>: Knowledge accumulates over time, improving response quality</li>
-<li><strong>Cross-Model Memory</strong>: Context persists when switching between different AI providers</li>
+<li><strong>Cross-Model Memory</strong>: Context persists when switching between different LLM providers</li>
 <li><strong>Intelligent Prioritization</strong>: Most relevant historical context is prioritized while respecting token limits</li>
 <li><strong>Automatic Organization</strong>: The system builds its own knowledge graph without manual intervention</li>
 </ol>
@@ -3963,7 +3963,7 @@ reservoir replay
 <li><strong>User-Defined Thresholds</strong>: Per-partition similarity thresholds</li>
 <li><strong>Manual Synapse Management</strong>: User-controlled connection creation</li>
 </ol>
-<p>Synapses transform Reservoir from a simple conversation store into an intelligent knowledge network that grows more valuable with each interaction, creating a personalized AI assistant with genuine conversational memory.</p>
+<p>Synapses transform Reservoir from a simple conversation store into an intelligent knowledge network that grows more valuable with each interaction, creating a personalized LLM assistant with genuine conversational memory.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-provider-support"><a class="header" href="#multi-provider-support">Multi-Provider Support</a></h1>
 <p>Reservoir supports multiple AI providers through its flexible routing system. This allows you to use different AI models seamlessly while maintaining conversation context and history across all providers.</p>
 <h2 id="supported-providers-1"><a class="header" href="#supported-providers-1">Supported Providers</a></h2>
@@ -5919,9 +5919,9 @@ NEO4J_PASSWORD="your-password"
 <p>This section addresses common questions and issues you might encounter while using Reservoir.</p>
 <h2 id="general-questions"><a class="header" href="#general-questions">General Questions</a></h2>
 <h3 id="what-is-reservoir"><a class="header" href="#what-is-reservoir">What is Reservoir?</a></h3>
-<p>Reservoir is a memory system for AI conversations that acts as a smart proxy between your applications and OpenAI-compatible APIs. It automatically stores conversation history and enriches new requests with relevant context from past conversations.</p>
+<p>Reservoir is a memory system for LLM conversations that acts as a smart proxy between your applications and OpenAI-compatible APIs. It automatically stores conversation history and enriches new requests with relevant context from past conversations.</p>
 <h3 id="does-reservoir-support-streaming-responses"><a class="header" href="#does-reservoir-support-streaming-responses">Does Reservoir support streaming responses?</a></h3>
-<p>No, streaming responses are not currently supported. All requests are handled in a non-streaming manner. The response is returned once the complete message is received from the AI provider.</p>
+<p>No, streaming responses are not currently supported. All requests are handled in a non-streaming manner. The response is returned once the complete message is received from the LLM provider.</p>
 <h3 id="can-i-use-reservoir-with-clients-other-than-the-openai-python-library"><a class="header" href="#can-i-use-reservoir-with-clients-other-than-the-openai-python-library">Can I use Reservoir with clients other than the OpenAI Python library?</a></h3>
 <p>Yes, Reservoir is designed to be fully OpenAI-compatible. It has been tested with:</p>
 <ul>
@@ -5931,8 +5931,8 @@ NEO4J_PASSWORD="your-password"
 <li>Any application that can make HTTP requests to OpenAI-compatible endpoints</li>
 </ul>
 <p>However, compatibility with some specialized clients may vary. If you encounter issues with a specific client, please report it as an issue.</p>
-<h3 id="what-ai-providers-does-reservoir-support"><a class="header" href="#what-ai-providers-does-reservoir-support">What AI providers does Reservoir support?</a></h3>
-<p>Reservoir supports multiple AI providers:</p>
+<h3 id="what-llm-providers-does-reservoir-support"><a class="header" href="#what-llm-providers-does-reservoir-support">What LLM providers does Reservoir support?</a></h3>
+<p>Reservoir supports multiple LLM providers:</p>
 <ul>
 <li><strong>OpenAI</strong>: GPT-4, GPT-4o, GPT-3.5-turbo, and specialized models</li>
 <li><strong>Ollama</strong>: Local models like Llama, Gemma, and any custom models</li>
@@ -5948,7 +5948,7 @@ NEO4J_PASSWORD="your-password"
 </ul>
 <p>This allows you to keep conversations from different applications separate while maintaining context within each application.</p>
 <h3 id="is-my-data-private"><a class="header" href="#is-my-data-private">Is my data private?</a></h3>
-<p>Yes, absolutely. All conversation data is stored locally in your Neo4j database and never leaves your infrastructure. Reservoir only forwards your requests to the AI providers you choose to use.</p>
+<p>Yes, absolutely. All conversation data is stored locally in your Neo4j database and never leaves your infrastructure. Reservoir only forwards your requests to the LLM providers you choose to use.</p>
 <h2 id="technical-questions"><a class="header" href="#technical-questions">Technical Questions</a></h2>
 <h3 id="what-database-does-reservoir-use"><a class="header" href="#what-database-does-reservoir-use">What database does Reservoir use?</a></h3>
 <p>Reservoir uses Neo4j as its graph database. Neo4j provides:</p>
@@ -5965,11 +5965,11 @@ NEO4J_PASSWORD="your-password"
 <li>Searches for semantically similar past messages</li>
 <li>Retrieves recent conversation history</li>
 <li>Injects relevant context into your request</li>
-<li>Sends the enriched request to the AI provider</li>
+<li>Sends the enriched request to the LLM provider</li>
 <li>Stores the response for future context</li>
 </ol>
 <h3 id="what-are-the-token-limits"><a class="header" href="#what-are-the-token-limits">What are the token limits?</a></h3>
-<p>Reservoir respects the token limits of the underlying AI models:</p>
+<p>Reservoir respects the token limits of the underlying LLM models:</p>
 <ul>
 <li><strong>GPT-4</strong>: 8,192 tokens (context window)</li>
 <li><strong>GPT-4-32k</strong>: 32,768 tokens</li>
@@ -6081,7 +6081,7 @@ NEO4J_PASSWORD=password
 <li>Ensure Neo4j data is on fast storage (SSD)</li>
 <li>Optimize vector index settings</li>
 <li>Reduce the number of context messages retrieved</li>
-<li>Check network connectivity to AI providers</li>
+<li>Check network connectivity to LLM providers</li>
 </ol>
 <h2 id="installation-questions"><a class="header" href="#installation-questions">Installation Questions</a></h2>
 <h3 id="do-i-need-to-install-neo4j-separately"><a class="header" href="#do-i-need-to-install-neo4j-separately">Do I need to install Neo4j separately?</a></h3>

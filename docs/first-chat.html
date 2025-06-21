@@ -200,7 +200,7 @@
         ]
     }'
 </code></pre>
-<p><strong>Magic!</strong> The AI will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
+<p><strong>Magic!</strong> The Language Model will remember that you like Python, even though you didn't include the previous conversation in your request. Reservoir handled that automatically!</p>
 <h3 id="step-3-continue-the-conversation"><a class="header" href="#step-3-continue-the-conversation">Step 3: Continue the conversation</a></h3>
 <pre><code class="language-bash">curl "http://127.0.0.1:3017/partition/$USER/instance/first-chat/v1/chat/completions" \
     -H "Content-Type: application/json" \
@@ -214,7 +214,7 @@
         ]
     }'
 </code></pre>
-<p>The AI will make suggestions based on knowing you're Alice who loves Python programming!</p>
+<p>The Language Model will make suggestions based on knowing you're Alice who loves Python programming!</p>
 <h2 id="example-2-using-openai-models"><a class="header" href="#example-2-using-openai-models">Example 2: Using OpenAI Models</a></h2>
 <p>If you have an OpenAI API key set up:</p>
 <h3 id="step-1-introduction-with-gpt-4"><a class="header" href="#step-1-introduction-with-gpt-4">Step 1: Introduction with GPT-4</a></h3>
@@ -283,8 +283,8 @@
 <li><strong>Stores your message</strong> in Neo4j with embeddings</li>
 <li><strong>Searches for relevant context</strong> from previous conversations</li>
 <li><strong>Injects relevant history</strong> into your request automatically</li>
-<li><strong>Forwards the enriched request</strong> to the AI provider</li>
-<li><strong>Stores the AI's response</strong> for future context</li>
+<li><strong>Forwards the enriched request</strong> to the Language Model provider</li>
+<li><strong>Stores the Language Model's response</strong> for future context</li>
 </ol>
 <h3 id="viewing-your-conversation-history"><a class="header" href="#viewing-your-conversation-history">Viewing Your Conversation History</a></h3>
 <p>You can see your stored conversations using the CLI:</p>
@@ -350,7 +350,7 @@ cargo run -- start
 <li><strong><a href="./chat-gipitty.html">Chat Gipitty Integration</a></strong> - Add memory to your existing chat tools</li>
 <li><strong><a href="./api/overview.html">API Reference</a></strong> - Learn about advanced features</li>
 </ul>
-<p><strong>Congratulations!</strong> You've successfully used Reservoir to have a conversation with persistent memory. The AI now remembers everything from your conversation and can reference it in future chats!</p>
+<p><strong>Congratulations!</strong> You've successfully used Reservoir to have a conversation with persistent memory. The Language Model now remembers everything from your conversation and can reference it in future chats!</p>
 
                     </main>
 

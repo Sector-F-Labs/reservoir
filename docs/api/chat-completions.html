@@ -224,7 +224,7 @@ Authorization: Bearer YOUR_API_KEY
 <h3 id="message-roles"><a class="header" href="#message-roles">Message Roles</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Role</th><th>Description</th><th>Usage</th></tr></thead><tbody>
 <tr><td><code>user</code></td><td>User input messages</td><td>Questions, requests, instructions</td></tr>
-<tr><td><code>assistant</code></td><td>AI responses</td><td>Previous AI responses in conversation</td></tr>
+<tr><td><code>assistant</code></td><td>LLM responses</td><td>Previous LLM responses in conversation</td></tr>
 <tr><td><code>system</code></td><td>System instructions</td><td>Behavior modification, context setting</td></tr>
 </tbody></table>
 </div>
@@ -250,7 +250,7 @@ Authorization: Bearer YOUR_API_KEY
 <li><strong>Synapse Connections</strong>: Related discussions via SYNAPSE relationships</li>
 </ul>
 <h3 id="3-context-injection"><a class="header" href="#3-context-injection">3. Context Injection</a></h3>
-<pre><code class="language-json">// Enriched request sent to AI model
+<pre><code class="language-json">// Enriched request sent to the Language Model
 {
   "model": "gpt-4", 
   "messages": [
@@ -311,7 +311,7 @@ Authorization: Bearer YOUR_API_KEY
 </code></pre>
 <h2 id="configuration-and-model-selection"><a class="header" href="#configuration-and-model-selection">Configuration and Model Selection</a></h2>
 <h3 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h3>
-<p>Configure different AI providers:</p>
+<p>Configure different LLM providers:</p>
 <pre><code class="language-bash"># OpenAI (default)
 export OPENAI_API_KEY="your-openai-api-key"
 export RSV_OPENAI_BASE_URL="https://api.openai.com/v1/chat/completions"
@@ -509,7 +509,7 @@ reservoir config --get semantic_context_size
 <li>Parallel processing of semantic search and recent history</li>
 <li>Optimized Neo4j queries for fast retrieval</li>
 </ul>
-<p>The Chat Completions endpoint provides the full power of Reservoir's context enrichment while maintaining complete compatibility with existing OpenAI-based applications, making it easy to add conversational memory to any AI application.</p>
+<p>The Chat Completions endpoint provides the full power of Reservoir's context enrichment while maintaining complete compatibility with existing OpenAI-based applications, making it easy to add conversational memory to any LLM application.</p>
 
                     </main>
 

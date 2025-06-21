@@ -166,9 +166,9 @@
 <p>This section addresses common questions and issues you might encounter while using Reservoir.</p>
 <h2 id="general-questions"><a class="header" href="#general-questions">General Questions</a></h2>
 <h3 id="what-is-reservoir"><a class="header" href="#what-is-reservoir">What is Reservoir?</a></h3>
-<p>Reservoir is a memory system for AI conversations that acts as a smart proxy between your applications and OpenAI-compatible APIs. It automatically stores conversation history and enriches new requests with relevant context from past conversations.</p>
+<p>Reservoir is a memory system for LLM conversations that acts as a smart proxy between your applications and OpenAI-compatible APIs. It automatically stores conversation history and enriches new requests with relevant context from past conversations.</p>
 <h3 id="does-reservoir-support-streaming-responses"><a class="header" href="#does-reservoir-support-streaming-responses">Does Reservoir support streaming responses?</a></h3>
-<p>No, streaming responses are not currently supported. All requests are handled in a non-streaming manner. The response is returned once the complete message is received from the AI provider.</p>
+<p>No, streaming responses are not currently supported. All requests are handled in a non-streaming manner. The response is returned once the complete message is received from the LLM provider.</p>
 <h3 id="can-i-use-reservoir-with-clients-other-than-the-openai-python-library"><a class="header" href="#can-i-use-reservoir-with-clients-other-than-the-openai-python-library">Can I use Reservoir with clients other than the OpenAI Python library?</a></h3>
 <p>Yes, Reservoir is designed to be fully OpenAI-compatible. It has been tested with:</p>
 <ul>
@@ -178,8 +178,8 @@
 <li>Any application that can make HTTP requests to OpenAI-compatible endpoints</li>
 </ul>
 <p>However, compatibility with some specialized clients may vary. If you encounter issues with a specific client, please report it as an issue.</p>
-<h3 id="what-ai-providers-does-reservoir-support"><a class="header" href="#what-ai-providers-does-reservoir-support">What AI providers does Reservoir support?</a></h3>
-<p>Reservoir supports multiple AI providers:</p>
+<h3 id="what-llm-providers-does-reservoir-support"><a class="header" href="#what-llm-providers-does-reservoir-support">What LLM providers does Reservoir support?</a></h3>
+<p>Reservoir supports multiple LLM providers:</p>
 <ul>
 <li><strong>OpenAI</strong>: GPT-4, GPT-4o, GPT-3.5-turbo, and specialized models</li>
 <li><strong>Ollama</strong>: Local models like Llama, Gemma, and any custom models</li>
@@ -195,7 +195,7 @@
 </ul>
 <p>This allows you to keep conversations from different applications separate while maintaining context within each application.</p>
 <h3 id="is-my-data-private"><a class="header" href="#is-my-data-private">Is my data private?</a></h3>
-<p>Yes, absolutely. All conversation data is stored locally in your Neo4j database and never leaves your infrastructure. Reservoir only forwards your requests to the AI providers you choose to use.</p>
+<p>Yes, absolutely. All conversation data is stored locally in your Neo4j database and never leaves your infrastructure. Reservoir only forwards your requests to the LLM providers you choose to use.</p>
 <h2 id="technical-questions"><a class="header" href="#technical-questions">Technical Questions</a></h2>
 <h3 id="what-database-does-reservoir-use"><a class="header" href="#what-database-does-reservoir-use">What database does Reservoir use?</a></h3>
 <p>Reservoir uses Neo4j as its graph database. Neo4j provides:</p>
@@ -212,11 +212,11 @@
 <li>Searches for semantically similar past messages</li>
 <li>Retrieves recent conversation history</li>
 <li>Injects relevant context into your request</li>
-<li>Sends the enriched request to the AI provider</li>
+<li>Sends the enriched request to the LLM provider</li>
 <li>Stores the response for future context</li>
 </ol>
 <h3 id="what-are-the-token-limits"><a class="header" href="#what-are-the-token-limits">What are the token limits?</a></h3>
-<p>Reservoir respects the token limits of the underlying AI models:</p>
+<p>Reservoir respects the token limits of the underlying LLM models:</p>
 <ul>
 <li><strong>GPT-4</strong>: 8,192 tokens (context window)</li>
 <li><strong>GPT-4-32k</strong>: 32,768 tokens</li>
@@ -328,7 +328,7 @@ NEO4J_PASSWORD=password
 <li>Ensure Neo4j data is on fast storage (SSD)</li>
 <li>Optimize vector index settings</li>
 <li>Reduce the number of context messages retrieved</li>
-<li>Check network connectivity to AI providers</li>
+<li>Check network connectivity to LLM providers</li>
 </ol>
 <h2 id="installation-questions"><a class="header" href="#installation-questions">Installation Questions</a></h2>
 <h3 id="do-i-need-to-install-neo4j-separately"><a class="header" href="#do-i-need-to-install-neo4j-separately">Do I need to install Neo4j separately?</a></h3>

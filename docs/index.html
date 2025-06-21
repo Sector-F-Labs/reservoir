@@ -183,7 +183,7 @@
 <li><strong>Manages token limits</strong> through intelligent truncation while preserving system and user messages</li>
 </ul>
 <h2 id="architecture-overview"><a class="header" href="#architecture-overview">Architecture Overview</a></h2>
-<p>The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target LLM provider. All conversation data remains local to the deployment environment.</p>
+<p>The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target Language Model provider. All conversation data remains local to the deployment environment.</p>
 <h2 id="data-model"><a class="header" href="#data-model">Data Model</a></h2>
 <p>Conversations are stored as a graph structure:</p>
 <ul>
@@ -194,7 +194,7 @@
 <li><strong>HAS_EMBEDDING</strong>: Message-to-embedding associations</li>
 </ul>
 <h2 id="supported-providers"><a class="header" href="#supported-providers">Supported Providers</a></h2>
-<p>The system supports multiple LLM providers through a unified interface:</p>
+<p>The system supports multiple Language Model providers through a unified interface:</p>
 <ul>
 <li>OpenAI (gpt-4, gpt-4o, gpt-3.5-turbo)</li>
 <li>Ollama (local model execution)</li>
@@ -210,8 +210,8 @@
 <li><strong>Stateful chat applications</strong>: Eliminate manual conversation state management</li>
 <li><strong>Cross-session context</strong>: Maintain context across application restarts</li>
 <li><strong>Semantic search</strong>: Retrieve relevant historical conversations</li>
-<li><strong>Multi-provider workflows</strong>: Maintain context when switching between LLM providers</li>
-<li><strong>Research and development</strong>: Build persistent knowledge bases from AI interactions</li>
+<li><strong>Multi-provider workflows</strong>: Maintain context when switching between Language Model providers</li>
+<li><strong>Research and development</strong>: Build persistent knowledge bases from Language Model interactions</li>
 </ul>
 <p>For implementation details, see the <a href="./quick-start.html">Quick Start</a> guide.</p>
 

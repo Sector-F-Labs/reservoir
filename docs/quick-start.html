@@ -197,7 +197,7 @@
 </code></pre>
 <p>The response will look like a standard OpenAI API response, but Reservoir has:</p>
 <ul>
-<li>Stored your message and the AI's response</li>
+<li>Stored your message and the LLM's response</li>
 <li>Tagged them with your username and "quickstart" instance</li>
 <li>Made them available for future context enrichment</li>
 </ul>
@@ -216,7 +216,7 @@
         ]
     }'
 </code></pre>
-<p>Notice how the AI understands "what you just told me" - that's Reservoir automatically injecting the previous conversation context!</p>
+<p>Notice how the LLM understands "what you just told me" - that's Reservoir automatically injecting the previous conversation context!</p>
 <h2 id="step-4-view-your-conversation-history"><a class="header" href="#step-4-view-your-conversation-history">Step 4: View Your Conversation History</a></h2>
 <p>Check what Reservoir has stored:</p>
 <pre><code class="language-bash">cargo run -- view 5 --partition "$USER" --instance quickstart
@@ -253,7 +253,7 @@
 </ul>
 <h2 id="what-just-happened"><a class="header" href="#what-just-happened">What Just Happened?</a></h2>
 <ol>
-<li><strong>Storage</strong>: Every message (yours and the AI's) was stored in Neo4j</li>
+<li><strong>Storage</strong>: Every message (yours and the LLM's) was stored in Neo4j</li>
 <li><strong>Context Enrichment</strong>: Reservoir automatically found relevant past messages and included them in requests</li>
 <li><strong>Multi-Provider</strong>: You used both OpenAI and Ollama with the same conversation history</li>
 <li><strong>Organization</strong>: Your conversations were organized by partition and instance</li>

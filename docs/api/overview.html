@@ -163,7 +163,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="api-overview"><a class="header" href="#api-overview">API Overview</a></h1>
-<p>Reservoir provides an OpenAI-compatible API endpoint that acts as a smart proxy between your application and AI language models. This section covers the core API structure and basic usage patterns.</p>
+<p>Reservoir provides an OpenAI-compatible API endpoint that acts as a smart proxy between your application and LLM language models. This section covers the core API structure and basic usage patterns.</p>
 <h2 id="url-structure"><a class="header" href="#url-structure">URL Structure</a></h2>
 <p>The Reservoir API follows this pattern:</p>
 <pre><code>/v1/partition/{partition}/instance/{instance}/chat/completions
@@ -210,11 +210,11 @@ Authorization: Bearer YOUR_API_KEY
 <li><strong>Message Storage</strong>: Your message is stored with the specified partition/instance</li>
 <li><strong>Context Enrichment</strong>: Reservoir finds relevant past conversations and recent history</li>
 <li><strong>Token Management</strong>: The enriched context is checked against token limits</li>
-<li><strong>Request Forwarding</strong>: The enriched request is forwarded to the appropriate AI provider</li>
-<li><strong>Response Storage</strong>: The AI's response is stored for future context</li>
+<li><strong>Request Forwarding</strong>: The enriched request is forwarded to the appropriate LLM provider</li>
+<li><strong>Response Storage</strong>: The LLM's response is stored for future context</li>
 </ol>
 <h2 id="response-format"><a class="header" href="#response-format">Response Format</a></h2>
-<p>Responses maintain the same format as the underlying AI provider (OpenAI, Ollama, etc.), so your existing code will work without modification.</p>
+<p>Responses maintain the same format as the underlying LLM provider (OpenAI, Ollama, etc.), so your existing code will work without modification.</p>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
 <ul>
 <li><a href="./chat-completions.html">Chat Completions Endpoint</a> - Detailed endpoint documentation</li>

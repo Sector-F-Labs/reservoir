@@ -163,7 +163,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="context-enrichment"><a class="header" href="#context-enrichment">Context Enrichment</a></h1>
-<p>Context enrichment is Reservoir's core mechanism for providing intelligent, memory-aware AI conversations. By automatically injecting relevant historical context and recent conversation history into each request, Reservoir gives AI models a persistent memory that improves response quality and maintains conversational continuity across sessions.</p>
+<p>Context enrichment is Reservoir's core mechanism for providing intelligent, memory-aware LLM conversations. By automatically injecting relevant historical context and recent conversation history into each request, Reservoir gives LLM models a persistent memory that improves response quality and maintains conversational continuity across sessions.</p>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>When you send a message to Reservoir, the system automatically enhances your request with:</p>
 <ul>
@@ -171,7 +171,7 @@
 <li><strong>Recent conversation history</strong> from the same partition/instance</li>
 <li><strong>Connected conversation threads</strong> through synapse relationships</li>
 </ul>
-<p>This enriched context is injected into your request before forwarding it to the AI provider, making the AI aware of relevant past discussions.</p>
+<p>This enriched context is injected into your request before forwarding it to the LLM provider, making the LLM aware of relevant past discussions.</p>
 <h2 id="context-enrichment-process"><a class="header" href="#context-enrichment-process">Context Enrichment Process</a></h2>
 <h3 id="1-message-reception-and-initial-processing"><a class="header" href="#1-message-reception-and-initial-processing">1. Message Reception and Initial Processing</a></h3>
 <pre><code class="language-rs">pub async fn handle_with_partition(
@@ -412,7 +412,7 @@ truncate_messages_if_needed(&amp;mut enriched_chat_request.messages, model_info.
 <li>Removes older context messages if needed</li>
 </ul>
 <h3 id="7-response-storage-and-synapse-building"><a class="header" href="#7-response-storage-and-synapse-building">7. Response Storage and Synapse Building</a></h3>
-<p>After receiving the AI's response:</p>
+<p>After receiving the LLM's response:</p>
 <pre><code class="language-rs">let message_node = chat_response.choices.first().unwrap().message.clone();
 let embedding =
     get_embeddings_for_txt(message_node.content.as_str(), embedding_info.clone()).await?;
@@ -432,7 +432,7 @@ connect_synapses(connect)
     .expect("Failed to connect synapses");
 </code></pre>
 <ol>
-<li>The AI's response is stored with its own embedding</li>
+<li>The LLM's response is stored with its own embedding</li>
 <li>Synapses (semantic connections) are built between messages</li>
 <li>The system continuously builds a knowledge graph of related conversations</li>
 </ol>
@@ -552,7 +552,7 @@ DELETE r
 <h3 id="trace-ids"><a class="header" href="#trace-ids">Trace IDs</a></h3>
 <p>Every request gets a unique trace ID that:</p>
 <ul>
-<li><strong>Links user messages to AI responses</strong> within the same conversation turn</li>
+<li><strong>Links user messages to LLM responses</strong> within the same conversation turn</li>
 <li><strong>Enables conversation threading</strong> and relationship building</li>
 <li><strong>Provides audit trails</strong> for debugging and analysis</li>
 <li><strong>Supports parallel processing</strong> of multiple simultaneous requests</li>
@@ -583,10 +583,10 @@ DELETE r
 <p>Multiple system messages (including enrichment context) are compressed into a single system message to optimize token usage while preserving all contextual information.</p>
 <h2 id="benefits-of-context-enrichment"><a class="header" href="#benefits-of-context-enrichment">Benefits of Context Enrichment</a></h2>
 <ol>
-<li><strong>Conversational Continuity</strong>: AI maintains awareness of past discussions across sessions</li>
+<li><strong>Conversational Continuity</strong>: LLM maintains awareness of past discussions across sessions</li>
 <li><strong>Semantic Understanding</strong>: Related topics are automatically surfaced even when not explicitly mentioned</li>
 <li><strong>Multi-Session Learning</strong>: Knowledge accumulates over time, improving response quality</li>
-<li><strong>Cross-Model Memory</strong>: Context persists when switching between different AI providers</li>
+<li><strong>Cross-Model Memory</strong>: Context persists when switching between different LLM providers</li>
 <li><strong>Intelligent Prioritization</strong>: Most relevant historical context is prioritized while respecting token limits</li>
 <li><strong>Automatic Organization</strong>: The system builds its own knowledge graph without manual intervention</li>
 </ol>
