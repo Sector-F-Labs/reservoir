@@ -163,7 +163,7 @@ Check out the [API Reference](./api/overview.md) for detailed usage.
 Place images in a logical subdirectory and reference them:
 
 ```markdown
-![Architecture Diagram](../docs/architecture_diagram.png)
+![Conversation Graph View](./conversation_graph_view.png)
 ```
 
 ## Publishing

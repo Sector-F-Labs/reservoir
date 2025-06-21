@@ -51,7 +51,7 @@ Reservoir intercepts your API calls, enriches them with relevant history, manage
 
 A single thread of conversation can span multiple models without losing context, allowing you to seamlessly switch between different AI providers while maintaining the flow of your discussion.
 
-![Conversation Graph View](../docs/conversation_graph_view.png)
+![Conversation Graph View](./conversation_graph_view.png)
 
 ## Use Cases
 
