@@ -8,6 +8,7 @@
   - [Your First Chat](./first-chat.md)
 
 - [Usage & Integration](./usage-integration.md)
+  - [Integration with Ollama](./ollama-client.md)
   - [Chat Gipitty Integration](./chat-gipitty.md)
   - [Python with OpenAI Library](./python-integration.md)
   - [Curl Examples](./curl-examples.md)

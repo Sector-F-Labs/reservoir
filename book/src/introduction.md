@@ -1,13 +1,14 @@
 # Introduction
 
 
-Reservoir is a stateful proxy server for OpenAI-compatible Chat Completions APIs. It maintains conversation history in a Neo4j graph database and automatically injects relevant context into requests based on semantic similarity and recency.
+Reservoir is first and foremost a memory system for interactions with large language models, designed to build a Retrieval-Augmented Generation (RAG) database of useful context from language model interactions over time. It maintains conversation history in a Neo4j graph database and automatically injects relevant context into requests based on semantic similarity and recency. Reservoir can also act as an optional stateful proxy server for OpenAI-compatible Chat Completions APIs.
+
 
 ![Reservoir](logo_256.png)
 
 ## Problem Statement
 
-OpenAI-compatible Chat Completions APIs are stateless. Each request must include the complete conversation history for the model to maintain context. This creates several technical challenges:
+By default , Language Model interactions are stateless. Each request must include the complete conversation history for the model to maintain context. This creates several technical challenges:
 
 1. **Manual conversation state management**: Applications must implement their own conversation storage and retrieval systems
 2. **Token limit constraints**: As conversations grow, they exceed model token limits
@@ -25,8 +26,8 @@ Reservoir addresses these limitations by acting as an intermediary layer that:
 - **Manages token limits** through intelligent truncation while preserving system and user messages
 
 ## Architecture Overview
+Reservoir is a command line tool that intercepts API calls, enriches them with relevant context, and forwards requests to the target Language Model provider. It can also run as an HTTP proxy, acting as an intermediary between clients and API endpoints. All conversation data remains local to the deployment environment.
 
-The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target Language Model provider. All conversation data remains local to the deployment environment.
 
 ## Data Model
 
@@ -37,7 +38,7 @@ Conversations are stored as a graph structure:
 - **RESPONDED_WITH**: Sequential conversation flow relationships
 - **HAS_EMBEDDING**: Message-to-embedding associations
 
-## Supported Providers
+## Supported Providers (Proxy Mode)
 
 The system supports multiple Language Model providers through a unified interface:
 - OpenAI (gpt-4, gpt-4o, gpt-3.5-turbo)

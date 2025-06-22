@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Introduction - Sector F Labs - Reservoir</title>
+        <title>Integration with Ollama - Sector F Labs - Reservoir</title>
 
 
         <!-- Custom HTML head -->
@@ -133,7 +133,7 @@
                         <a href="https://github.com/divanvisagie/reservoir" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/divanvisagie/reservoir/edit/main/book/src/introduction.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/divanvisagie/reservoir/edit/main/book/src/ollama-client.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -162,65 +162,65 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>Reservoir is first and foremost a memory system for interactions with large language models, designed to build a Retrieval-Augmented Generation (RAG) database of useful context from language model interactions over time. It maintains conversation history in a Neo4j graph database and automatically injects relevant context into requests based on semantic similarity and recency. Reservoir can also act as an optional stateful proxy server for OpenAI-compatible Chat Completions APIs.</p>
-<p><img src="logo_256.png" alt="Reservoir" /></p>
-<h2 id="problem-statement"><a class="header" href="#problem-statement">Problem Statement</a></h2>
-<p>By default , Language Model interactions are stateless. Each request must include the complete conversation history for the model to maintain context. This creates several technical challenges:</p>
-<ol>
-<li><strong>Manual conversation state management</strong>: Applications must implement their own conversation storage and retrieval systems</li>
-<li><strong>Token limit constraints</strong>: As conversations grow, they exceed model token limits</li>
-<li><strong>Inability to reference semantically related conversations</strong>: Previous relevant discussions cannot be automatically incorporated</li>
-<li><strong>No persistent storage</strong>: Conversation data is lost when applications terminate</li>
-</ol>
-<h2 id="technical-solution"><a class="header" href="#technical-solution">Technical Solution</a></h2>
-<p>Reservoir addresses these limitations by acting as an intermediary layer that:</p>
+                        <h1 id="ollama-client-integration"><a class="header" href="#ollama-client-integration">Ollama Client Integration</a></h1>
+<p>You can use reservoir as a memory system for the <a href="https://ollama.com/">Ollama</a> command line client by integrating it with a simple bash script.</p>
+<p>You can place the following function in your <code>~/.bashrc</code> or <code>~/.zshrc</code> file and it will use reservoir to</p>
 <ul>
-<li><strong>Stores all messages</strong> in a Neo4j graph database with full conversation history</li>
-<li><strong>Computes embeddings</strong> using BGE-Large-EN-v1.5 for semantic similarity calculation</li>
-<li><strong>Creates semantic relationships</strong> (synapses) between messages when cosine similarity exceeds 0.85</li>
-<li><strong>Automatically injects relevant context</strong> into new requests based on similarity and recency</li>
-<li><strong>Manages token limits</strong> through intelligent truncation while preserving system and user messages</li>
+<li>Fetch context from the model</li>
+<li>Prepend the context to your query</li>
+<li>Send the request to the model</li>
+<li>Save the output</li>
 </ul>
-<h2 id="architecture-overview"><a class="header" href="#architecture-overview">Architecture Overview</a></h2>
-<p>Reservoir is a command line tool that intercepts API calls, enriches them with relevant context, and forwards requests to the target Language Model provider. It can also run as an HTTP proxy, acting as an intermediary between clients and API endpoints. All conversation data remains local to the deployment environment.</p>
-<h2 id="data-model"><a class="header" href="#data-model">Data Model</a></h2>
-<p>Conversations are stored as a graph structure:</p>
-<ul>
-<li><strong>MessageNode</strong>: Individual messages with metadata and embeddings</li>
-<li><strong>EmbeddingNode</strong>: Vector representations for semantic search operations</li>
-<li><strong>SYNAPSE</strong>: Relationships between semantically similar messages</li>
-<li><strong>RESPONDED_WITH</strong>: Sequential conversation flow relationships</li>
-<li><strong>HAS_EMBEDDING</strong>: Message-to-embedding associations</li>
-</ul>
-<h2 id="supported-providers-proxy-mode"><a class="header" href="#supported-providers-proxy-mode">Supported Providers (Proxy Mode)</a></h2>
-<p>The system supports multiple Language Model providers through a unified interface:</p>
-<ul>
-<li>OpenAI (gpt-4, gpt-4o, gpt-3.5-turbo)</li>
-<li>Ollama (local model execution)</li>
-<li>Mistral AI</li>
-<li>Google Gemini</li>
-<li>Any OpenAI-compatible endpoint</li>
-</ul>
-<h2 id="implementation-details"><a class="header" href="#implementation-details">Implementation Details</a></h2>
-<p>The server initializes a vector index in Neo4j for efficient semantic search and listens on a configurable port (default: 3017). Conversations are organized using a partition/instance hierarchy enabling multi-tenant isolation.</p>
-<p><img src="./conversation_graph_view.png" alt="Conversation Graph View" /></p>
-<h2 id="use-cases"><a class="header" href="#use-cases">Use Cases</a></h2>
-<ul>
-<li><strong>Stateful chat applications</strong>: Eliminate manual conversation state management</li>
-<li><strong>Cross-session context</strong>: Maintain context across application restarts</li>
-<li><strong>Semantic search</strong>: Retrieve relevant historical conversations</li>
-<li><strong>Multi-provider workflows</strong>: Maintain context when switching between Language Model providers</li>
-<li><strong>Research and development</strong>: Build persistent knowledge bases from Language Model interactions</li>
-</ul>
-<p>For implementation details, see the <a href="./quick-start.html">Quick Start</a> guide.</p>
+<pre><code class="language-sh">function contextual_ollama_with_ingest() {
+    local user_query="$1"
+
+    # Validate input
+    if [ -z "$user_query" ]; then
+        echo "Usage: contextual_ollama_with_ingest 'Your question goes here'" &gt;&amp;2
+        return 1
+    fi
+
+    # Ingest the user's query into Reservoir
+    echo "$user_query" | reservoir ingest
+
+    # Generate dynamic system prompt with context
+    local system_prompt_content=$(
+        echo "the following is info from semantic search based on your query:"
+        reservoir search "$user_query" --semantic --link
+        echo "the following is recent history:"
+        reservoir view 10
+    )
+
+    local full_prompt_content=$(
+        echo "You are a helpful assistant. Use the following context to answer the user's question."
+        echo "$system_prompt_content"
+        echo "User's question: ${user_query}"
+    )
+
+    # Call cgip with enriched context
+    local assistant_response=$(ollama run gemma3 "$full_prompt_content")
+    
+    # Store the assistant's response
+    echo "$assistant_response" | reservoir ingest --role assistant
+
+    # Display the response
+    echo "$assistant_response"
+}
+
+# Create a convenient alias
+alias olm='contextual_ollama_with_ingest'
+</code></pre>
+<p>By adhering to POSIX standards, reservoir become the semantic memory for any shell interaction with a language model.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="usage-integration.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
-                            <a rel="next prefetch" href="getting-started.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="chat-gipitty.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -230,8 +230,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="usage-integration.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
-                    <a rel="next prefetch" href="getting-started.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="chat-gipitty.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

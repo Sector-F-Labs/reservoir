@@ -161,10 +161,10 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>Reservoir is a stateful proxy server for OpenAI-compatible Chat Completions APIs. It maintains conversation history in a Neo4j graph database and automatically injects relevant context into requests based on semantic similarity and recency.</p>
+<p>Reservoir is first and foremost a memory system for interactions with large language models, designed to build a Retrieval-Augmented Generation (RAG) database of useful context from language model interactions over time. It maintains conversation history in a Neo4j graph database and automatically injects relevant context into requests based on semantic similarity and recency. Reservoir can also act as an optional stateful proxy server for OpenAI-compatible Chat Completions APIs.</p>
 <p><img src="logo_256.png" alt="Reservoir" /></p>
 <h2 id="problem-statement"><a class="header" href="#problem-statement">Problem Statement</a></h2>
-<p>OpenAI-compatible Chat Completions APIs are stateless. Each request must include the complete conversation history for the model to maintain context. This creates several technical challenges:</p>
+<p>By default , Language Model interactions are stateless. Each request must include the complete conversation history for the model to maintain context. This creates several technical challenges:</p>
 <ol>
 <li><strong>Manual conversation state management</strong>: Applications must implement their own conversation storage and retrieval systems</li>
 <li><strong>Token limit constraints</strong>: As conversations grow, they exceed model token limits</li>
@@ -181,7 +181,7 @@
 <li><strong>Manages token limits</strong> through intelligent truncation while preserving system and user messages</li>
 </ul>
 <h2 id="architecture-overview"><a class="header" href="#architecture-overview">Architecture Overview</a></h2>
-<p>The system operates by intercepting API calls, performing context enrichment, and forwarding requests to the target Language Model provider. All conversation data remains local to the deployment environment.</p>
+<p>Reservoir is a command line tool that intercepts API calls, enriches them with relevant context, and forwards requests to the target Language Model provider. It can also run as an HTTP proxy, acting as an intermediary between clients and API endpoints. All conversation data remains local to the deployment environment.</p>
 <h2 id="data-model"><a class="header" href="#data-model">Data Model</a></h2>
 <p>Conversations are stored as a graph structure:</p>
 <ul>
@@ -191,7 +191,7 @@
 <li><strong>RESPONDED_WITH</strong>: Sequential conversation flow relationships</li>
 <li><strong>HAS_EMBEDDING</strong>: Message-to-embedding associations</li>
 </ul>
-<h2 id="supported-providers"><a class="header" href="#supported-providers">Supported Providers</a></h2>
+<h2 id="supported-providers-proxy-mode"><a class="header" href="#supported-providers-proxy-mode">Supported Providers (Proxy Mode)</a></h2>
 <p>The system supports multiple Language Model providers through a unified interface:</p>
 <ul>
 <li>OpenAI (gpt-4, gpt-4o, gpt-3.5-turbo)</li>
@@ -768,6 +768,55 @@ cargo run -- start
 <li><strong>Privacy-focused?</strong> Use <a href="./ollama.html">Ollama Integration</a> for fully local conversations</li>
 </ul>
 <p>Each integration method maintains the same core benefits: persistent memory, context enrichment, and seamless AI conversations.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ollama-client-integration"><a class="header" href="#ollama-client-integration">Ollama Client Integration</a></h1>
+<p>You can use reservoir as a memory system for the <a href="https://ollama.com/">Ollama</a> command line client by integrating it with a simple bash script.</p>
+<p>You can place the following function in your <code>~/.bashrc</code> or <code>~/.zshrc</code> file and it will use reservoir to</p>
+<ul>
+<li>Fetch context from the model</li>
+<li>Prepend the context to your query</li>
+<li>Send the request to the model</li>
+<li>Save the output</li>
+</ul>
+<pre><code class="language-sh">function contextual_ollama_with_ingest() {
+    local user_query="$1"
+
+    # Validate input
+    if [ -z "$user_query" ]; then
+        echo "Usage: contextual_ollama_with_ingest 'Your question goes here'" &gt;&amp;2
+        return 1
+    fi
+
+    # Ingest the user's query into Reservoir
+    echo "$user_query" | reservoir ingest
+
+    # Generate dynamic system prompt with context
+    local system_prompt_content=$(
+        echo "the following is info from semantic search based on your query:"
+        reservoir search "$user_query" --semantic --link
+        echo "the following is recent history:"
+        reservoir view 10
+    )
+
+    local full_prompt_content=$(
+        echo "You are a helpful assistant. Use the following context to answer the user's question."
+        echo "$system_prompt_content"
+        echo "User's question: ${user_query}"
+    )
+
+    # Call cgip with enriched context
+    local assistant_response=$(ollama run gemma3 "$full_prompt_content")
+    
+    # Store the assistant's response
+    echo "$assistant_response" | reservoir ingest --role assistant
+
+    # Display the response
+    echo "$assistant_response"
+}
+
+# Create a convenient alias
+alias olm='contextual_ollama_with_ingest'
+</code></pre>
+<p>By adhering to POSIX standards, reservoir become the semantic memory for any shell interaction with a language model.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="chat-gipitty-integration"><a class="header" href="#chat-gipitty-integration">Chat Gipitty Integration</a></h1>
 <p>Reservoir was originally designed as a memory system for <a href="https://github.com/divanvisagie/chat-gipitty">Chat Gipitty</a>. This integration gives your cgip conversations persistent memory, context awareness, and the ability to search through your LLM interaction history.</p>
 <h2 id="what-you-get"><a class="header" href="#what-you-get">What You Get</a></h2>
@@ -3966,7 +4015,7 @@ reservoir replay
 <p>Synapses transform Reservoir from a simple conversation store into an intelligent knowledge network that grows more valuable with each interaction, creating a personalized LLM assistant with genuine conversational memory.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-provider-support"><a class="header" href="#multi-provider-support">Multi-Provider Support</a></h1>
 <p>Reservoir supports multiple AI providers through its flexible routing system. This allows you to use different AI models seamlessly while maintaining conversation context and history across all providers.</p>
-<h2 id="supported-providers-1"><a class="header" href="#supported-providers-1">Supported Providers</a></h2>
+<h2 id="supported-providers"><a class="header" href="#supported-providers">Supported Providers</a></h2>
 <h3 id="openai"><a class="header" href="#openai">OpenAI</a></h3>
 <ul>
 <li><strong>Models</strong>: GPT-4, GPT-4o, GPT-4o-mini, GPT-3.5-turbo, GPT-4o-search-preview</li>
