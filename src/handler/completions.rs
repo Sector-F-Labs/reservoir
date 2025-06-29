@@ -67,7 +67,9 @@ pub async fn is_last_message_too_big(last_message: &Message, model: &ModelInfo) 
         None
     }
 }
-pub async fn handle_with_partition(
+
+/// Handles a chat request with partition and instance information.
+pub async fn handle_chat_with_partition(
     partition: &str,
     instance: &str,
     whole_body: Bytes,
@@ -136,7 +138,10 @@ pub async fn handle_with_partition(
     let chat_response = match get_completion_message(&model_info, &enriched_chat_request).await {
         Ok(response) => response,
         Err(e) => {
-            error!("Failed to get completion message from {}: {}", model_info.base_url, e);
+            error!(
+                "Failed to get completion message from {}: {}",
+                model_info.base_url, e
+            );
             return Err(Error::msg(format!(
                 "LLM API request failed for model '{}' at '{}': {}. Please check if the service is running and accessible.",
                 model_info.name, model_info.base_url, e

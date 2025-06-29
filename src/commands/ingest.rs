@@ -6,7 +6,7 @@ use crate::repos::message::neo4j_message::save_message_node;
 use crate::utils::connector::connect;
 use anyhow::Error;
 use std::io::{self, Read};
-use tracing::{debug, info};
+use tracing::debug;
 use uuid::Uuid;
 
 pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
@@ -36,7 +36,6 @@ pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
     };
     let embedding_info = EmbeddingInfo::with_fastembed("");
     let embedding = get_embeddings_for_txt(&content, embedding_info.clone()).await?;
-    let embedding_test = get_embeddings_for_txt(&content, embedding_info.clone()).await?;
 
     let node = MessageNode::from_message(&message, &trace_id, &partition, &instance, embedding);
     save_message_node(connect, &node, &embedding_info).await?;

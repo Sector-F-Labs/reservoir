@@ -1,10 +1,11 @@
+use crate::args::IngestSubCommand;
 use anyhow::Error;
 use args::{Args, SubCommands};
 use clap::Parser;
 use commands::search::execute as search_execute;
 use commands::search::SearchOptions;
 use commands::view::execute;
-use handler::completions::handle_with_partition;
+use handler::completions::handle_chat_with_partition;
 use http_body_util::BodyExt;
 use http_body_util::Full;
 use hyper::body::Bytes;
@@ -51,6 +52,10 @@ fn is_view_request(path: &str) -> bool {
     path.contains("/command/view")
 }
 
+fn is_ingest_request(path: &str) -> bool {
+    path.contains("/command/ingest")
+}
+
 async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
     info!("Received request: {} {}", req.method(), req.uri().path());
 
@@ -73,7 +78,7 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
 
             let whole_body = req.into_body().collect().await.unwrap().to_bytes();
             let response_bytes =
-                handle_with_partition(partition.as_str(), instance.as_str(), whole_body).await;
+                handle_chat_with_partition(partition.as_str(), instance.as_str(), whole_body).await;
             let response_bytes = match response_bytes {
                 Ok(bytes) => bytes,
                 Err(e) => {
@@ -135,17 +140,48 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
             };
             let result = search_execute(partition, instance, term, search_options).await;
             match result {
-                Ok(output) => {
-                    let json = serde_json::to_string(&output).unwrap();
-                    let response = Response::new(Full::new(Bytes::from(json)));
-                    Ok(response)
-                }
+                Ok(output) => Ok(Response::new(Full::new(Bytes::from(
+                    "Ingestion successful",
+                )))),
                 Err(e) => {
                     error!("Error executing search: {}", e);
-                    let response = Response::new(Full::new(Bytes::from(format!("Error: {}", e))));
-                    Ok(response)
+                    error!("Error during ingestion: {}", e);
+                    return Ok(Response::new(Full::new(Bytes::from(
+                        "Error during ingestion: ".to_string() + &e.to_string(),
+                    ))));
                 }
             }
+        }
+        (&Method::POST, path) if is_ingest_request(path) => {
+            info!("Ingest request: {}", path);
+            let partition = get_partition_from_path(path);
+            info!("Partition: {}", partition);
+            let instance = get_instance_from_path(path).unwrap_or(partition.clone());
+            info!("Instance: {}", instance);
+
+            let whole_body = req.into_body().collect().await.unwrap().to_bytes();
+
+            // Create command struct with necessary parameters
+            let ingest_command = IngestSubCommand {
+                partition: Some(partition),
+                instance: Some(instance),
+                role: Some("user".to_string()), // or any other specific role you wish to retain
+                                                // Set other parameters if needed
+            };
+            // Call the ingestion run function
+            let result = commands::ingest::run(&ingest_command).await;
+            match result {
+                Ok(bytes) => bytes,
+                Err(e) => {
+                    error!("Error handling request: {}", e);
+                    return Ok(Response::new(Full::new(Bytes::from(
+                        "Internal Server Error",
+                    ))));
+                }
+            };
+            Ok(Response::new(Full::new(Bytes::from(
+                "Ingestion successful",
+            ))))
         }
 
         (&Method::GET, path) if is_view_request(path) => {
