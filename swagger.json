@@ -1,0 +1,208 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Reservoir API",
+    "version": "1.0.0",
+    "description": "API documentation for the Reservoir application."
+  },
+  "paths": {
+    "/api/tags": {
+      "get": {
+        "summary": "Get tags",
+        "responses": {
+          "200": {
+            "description": "A JSON array of tags",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/chat/completions": {
+      "post": {
+        "summary": "Process chat completions",
+        "parameters": [
+          {
+            "name": "partition",
+            "in": "path",
+            "required": true,
+            "description": "The partition for the chat",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "messages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "role": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chat response",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/command/search": {
+      "get": {
+        "summary": "Execute search command",
+        "parameters": [
+          {
+            "name": "partition",
+            "in": "path",
+            "required": true,
+            "description": "The partition for the search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "term",
+            "in": "query",
+            "required": true,
+            "description": "The search term",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "semantic",
+            "in": "query",
+            "required": false,
+            "description": "Whether to use semantic search",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Missing 'term' query parameter"
+          },
+          "500": {
+            "description": "Error during search"
+          }
+        }
+      }
+    },
+    "/command/view": {
+      "get": {
+        "summary": "View command results",
+        "parameters": [
+          {
+            "name": "partition",
+            "in": "path",
+            "required": true,
+            "description": "The partition for the view",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "required": false,
+            "description": "Number of results to return",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "View result",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "500": {
+            "description": "Error during view retrieval"
+          }
+        }
+      }
+    },
+    "/command/ingest": {
+      "post": {
+        "summary": "Ingest data",
+        "parameters": [
+          {
+            "name": "partition",
+            "in": "query",
+            "required": true,
+            "description": "The partition for the ingest",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ingestion successful",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Error during ingestion"
+          }
+        }
+      }
+    }
+  }
+}
