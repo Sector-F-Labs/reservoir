@@ -1,3 +1,4 @@
+use std::env;
 use std::path::PathBuf;
 
 use super::openai::embeddings::get_embeddings_for_text as openai_get_embeddings_for_text;
@@ -58,8 +59,11 @@ impl EmbeddingInfo {
 }
 
 pub fn get_cache_path() -> PathBuf {
-    let tmp_dir = dirs_next::data_dir().unwrap();
-    tmp_dir.join("reservoir").join("models")
+    let home_dir = env::var("HOME").expect("HOME directory not set");
+    let mut path = PathBuf::from(home_dir);
+    path.push(".reservoir");
+    path.push("models");
+    path
 }
 
 pub async fn get_embeddings_for_txt(

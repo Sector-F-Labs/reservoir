@@ -1,4 +1,4 @@
-use dirs_next::config_dir;
+
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -56,9 +56,10 @@ impl Default for ReservoirConfig {
 static CONFIG: OnceCell<ReservoirConfig> = OnceCell::new();
 
 fn get_reservoir_config_path() -> PathBuf {
-    let mut path = config_dir().unwrap_or_else(|| env::current_dir().unwrap());
-    path.push("reservoir");
-    path.push("reservoir.toml");
+    let home_dir = env::var("HOME").expect("HOME directory not set");
+    let mut path = PathBuf::from(home_dir);
+    path.push(".reservoir");
+    path.push("config.toml");
     path
 }
 
