@@ -43,7 +43,22 @@ In developing our file-based storage system, we will adhere to a consistent and 
 
 ## 3. Implementation Plan
 
-### Milestone 1: Implement Directory Handling
+### Milestone 1: Create Repository Abstraction Layer
+
+- **Task:** Create trait-based abstractions for repositories to enable different storage backends.
+- **Details:**
+    - Define traits for `MessageRepository` and `EmbeddingRepository` with all required methods.
+    - Refactor existing Neo4j repositories to implement these traits.
+    - Update services to accept repository implementations via dependency injection rather than hardcoded imports.
+    - This establishes the foundation for swappable storage backends.
+- **Files to create:**
+    - `src/repos/traits.rs` (repository trait definitions)
+- **Files to modify:**
+    - `src/repos/message/neo4j_message.rs` (implement MessageRepository trait)
+    - `src/repos/embedding/neo4j_embedding.rs` (implement EmbeddingRepository trait)
+    - `src/services/messages.rs` (accept repository implementations)
+
+### Milestone 2: Implement Directory Handling
 
 - **Task:** Create utility functions to resolve and manage XDG-compliant directories.
 - **Details:**
@@ -53,36 +68,39 @@ In developing our file-based storage system, we will adhere to a consistent and 
 - **Files to create:**
     - `src/utils/dirs.rs`
 
-### Milestone 2: Implement File-Based Repositories
+### Milestone 3: Implement File-Based Repositories
 
-- **Task:** Create new repository implementations for `Message` and `Embedding` nodes.
+- **Task:** Create new file-based repository implementations that implement the repository traits.
 - **Details:**
     - These repositories will write data to the filesystem as individual JSON files.
     - `Message` and `Embedding` nodes will be stored as `{{content_hash}}.json`.
-    - Relationships between nodes (e.g., conversation history) will be stored in the `MessageNode` itself or handled by the services that reconstruct conversations.
+    - Implement all methods from `MessageRepository` and `EmbeddingRepository` traits.
+    - Handle relationships between nodes (e.g., conversation history) through the `MessageNode` structure or additional index files.
 - **Files to create:**
-    - `src/repos/message/fs.rs`
-    - `src/repos/embedding/fs.rs`
+    - `src/repos/message/fs.rs` (implements MessageRepository trait)
+    - `src/repos/embedding/fs.rs` (implements EmbeddingRepository trait)
 
-### Milestone 3: Update Services to Use File-Based Repositories
+### Milestone 4: Update Services to Use File-Based Repositories
 
-- **Task:** Modify the existing services to use the new file-based repositories.
+- **Task:** Update dependency injection to allow switching between storage backends.
 - **Details:**
-    - This will likely involve creating a new set of services (e.g., `services/fs/messages.rs`) or adding a feature flag to the existing services to switch between repository implementations.
-    - For now, we will focus on creating parallel services to avoid disrupting the existing functionality.
-- **Files to create:**
-    - `src/services/fs/mod.rs`
-    - `src/services/fs/messages.rs`
-
-### Milestone 4: Create a Feature Flag for Storage Options
-
-- **Task:** Introduce a configuration flag to enable or disable the file-based storage system.
-- **Details:**
-    - This will allow us to easily switch between the Neo4j and file-based storage systems for testing and development.
-    - The flag will be checked in the main application logic to determine which services to use.
+    - Since services now accept repository trait implementations, create factory functions or dependency injection container to provide the appropriate repository implementations.
+    - Services can now work with either Neo4j or file-based repositories without code changes.
 - **Files to modify:**
-    - `src/args.rs`
-    - `src/main.rs`
+    - `src/main.rs` (setup dependency injection)
+    - Any service initialization code
+
+### Milestone 5: Create Command Line Storage Backend Selection
+
+- **Task:** Introduce a command line argument to select the storage backend.
+- **Details:**
+    - Add a `--storage` argument that accepts `neo4j` (default) or `filesystem` values.
+    - This allows users to easily switch between storage backends at runtime without code changes.
+    - The selection will be checked in the main application logic to determine which repository implementations to inject into services.
+    - Example usage: `reservoir --storage filesystem start` or `reservoir --storage neo4j view 10`
+- **Files to modify:**
+    - `src/args.rs` (add StorageBackend enum and --storage argument)
+    - `src/main.rs` (read storage argument and configure dependency injection accordingly)
 
 ## 4. Long-Term Vision
 
@@ -94,7 +112,11 @@ This implementation is the first step towards migrating Reservoir to a fully fil
 
 Future work will involve:
 
+- **User Experience:** The command line interface allows users to choose their preferred storage backend based on their needs:
+  - `--storage neo4j`: For users who want advanced graph relationships and vector search capabilities
+  - `--storage filesystem`: For users who prefer simple, portable, text-based storage that can be easily backed up and inspected
 - **Optimizing file I/O:** Using memory-mapped files (`memmap2`) for better performance.
 - **Implementing advanced querying:** Developing a system for querying data across multiple files.
 - **Configuration Management:** Adding support for user-configurable settings in `$XDG_CONFIG_HOME/reservoir/`.
-- **Phasing out Neo4j:** Once the file-based system is stable and feature-complete, we will begin the process of removing the Neo4j dependency.
+- **Migration Tools:** Adding commands to migrate data between storage backends (e.g., `reservoir migrate --from neo4j --to filesystem`).
+- **Phasing out Neo4j:** Once the file-based system is stable and feature-complete, we may consider making filesystem the default backend.
