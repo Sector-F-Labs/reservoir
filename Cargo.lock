@@ -2409,6 +2409,7 @@ name = "rsrvr"
 version = "0.2.5"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bytes",
  "chrono",
  "clap",
