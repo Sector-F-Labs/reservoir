@@ -8,4 +8,4 @@ The purpose of a CPD is to:
 - **Facilitate discussion:** Serve as a basis for technical discussions and reviews.
 - **Document decisions:** Record the rationale and decisions behind significant changes.
 
-Each CPD should be placed in its own subdirectory, named after the proposal (e.g., `0001-file-based-storage`).
+Each CPD should be a single markdown file, named after the proposal (e.g., `0001-file-based-storage.md`).
