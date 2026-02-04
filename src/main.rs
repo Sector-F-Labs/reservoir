@@ -166,6 +166,7 @@ async fn handle(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infalli
                 partition: Some(partition),
                 instance: Some(instance),
                 role: Some("user".to_string()), // or any other specific role you wish to retain
+                trace_id: None,
                                                 // Set other parameters if needed
             };
             // Call the ingestion run function

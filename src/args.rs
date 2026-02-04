@@ -1,4 +1,4 @@
-use clap::{command, Parser};
+use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -95,6 +95,9 @@ pub struct IngestSubCommand {
     /// Role to assign to the message (defaults to "user")
     #[arg(long)]
     pub role: Option<String>,
+    /// Trace ID to link user/assistant messages (defaults to a new UUID)
+    #[arg(long)]
+    pub trace_id: Option<String>,
 }
 
 //replay subcommand
@@ -103,4 +106,37 @@ pub struct IngestSubCommand {
 pub struct ReplaySubCommand {
     /// Partition to replay (defaults to "default")
     pub model: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Args, SubCommands};
+    use clap::Parser;
+
+    #[test]
+    fn parse_ingest_with_trace_id() {
+        let args = Args::try_parse_from([
+            "reservoir",
+            "ingest",
+            "--trace-id",
+            "trace-123",
+            "--partition",
+            "p1",
+            "--instance",
+            "i1",
+            "--role",
+            "user",
+        ])
+        .expect("expected ingest args to parse");
+
+        match args.subcmd {
+            Some(SubCommands::Ingest(cmd)) => {
+                assert_eq!(cmd.trace_id.as_deref(), Some("trace-123"));
+                assert_eq!(cmd.partition.as_deref(), Some("p1"));
+                assert_eq!(cmd.instance.as_deref(), Some("i1"));
+                assert_eq!(cmd.role.as_deref(), Some("user"));
+            }
+            _ => panic!("expected ingest subcommand"),
+        }
+    }
 }

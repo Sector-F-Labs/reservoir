@@ -23,7 +23,11 @@ pub async fn run(cmd: &IngestSubCommand) -> Result<(), Error> {
         .clone()
         .unwrap_or_else(|| "default".to_string());
     let instance = cmd.instance.clone().unwrap_or_else(|| partition.clone());
-    let trace_id = Uuid::new_v4().to_string();
+    let trace_id = cmd
+        .trace_id
+        .clone()
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or_else(|| Uuid::new_v4().to_string());
     let role = cmd.role.clone().unwrap_or_else(|| "user".to_string());
     let allowed_roles = ["user", "assistant", "system"];
     if !allowed_roles.contains(&role.as_str()) {
