@@ -3,12 +3,12 @@
 
 ## Abstract
 
-Reservoir is a stateful proxy server for OpenAI-compatible Chat Completions APIs. It maintains conversation history in a Neo4j graph database and automatically injects relevant context into requests based on semantic similarity and recency.
+Reservoir is a CLI-first memory store for conversational messages. It stores messages in a Neo4j graph database, computes embeddings, and links semantically related messages (synapses) to enable search and thread context.
 
 ![Reservoir](assets/logo_256.png)
 ## Problem Statement
 
-OpenAI-compatible Chat Completions APIs are stateless. Each request must include the complete conversation history for the model to maintain context. This creates several problems:
+Most chat systems are stateless. Each request must include complete conversation history to maintain context, which leads to problems like:
 
 1. Manual conversation state management
 2. Token limit constraints as conversations grow
@@ -17,49 +17,29 @@ OpenAI-compatible Chat Completions APIs are stateless. Each request must include
 
 ## Solution
 
-Reservoir acts as an intermediary that:
+Reservoir provides a CLI workflow that:
 
 - Stores all messages in a Neo4j graph database
 - Computes embeddings using BGE-Large-EN-v1.5 (current default)
 - Creates semantic relationships (synapses) between similar messages
-- Automatically injects relevant context into new requests
-- Manages token limits through intelligent truncation
+- Enables semantic search and thread context retrieval
+- Supports export/import for backups and bulk ingestion
 
 ## Architecture
 
 ```mermaid
 sequenceDiagram
-    participant App
-    participant Reservoir
+    participant Producer
+    participant Reservoir CLI
     participant Neo4j
-    participant LLM as OpenAI/Ollama
 
-    App->>Reservoir: Request (e.g. /v1/chat/completions/$USER/my-application)
-    Reservoir->>Reservoir: Check if last message exceeds token limit (Return error if true)
-    Reservoir->>Reservoir: Tag with Trace ID + Partition
-    Reservoir->>Neo4j: Store original request message(s)
-
-    %% --- Context Enrichment Steps ---
-    Reservoir->>Neo4j: Query for similar & recent messages
-    Neo4j-->>Reservoir: Return relevant context messages
-    Reservoir->>Reservoir: Inject context messages into request payload
-    %% --- End Enrichment Steps ---
-
-    Reservoir->>Reservoir: Check total token count & truncate if needed (preserving system/last messages)
-
-    Reservoir->>LLM: Forward enriched & potentially truncated request
-    LLM->>Reservoir: Return LLM response
-    Reservoir->>Neo4j: Store LLM response message
-    Reservoir->>App: Return LLM response
+    Producer->>Reservoir CLI: Ingest message (stdin/CLI)
+    Reservoir CLI->>Reservoir CLI: Compute embedding + synapse
+    Reservoir CLI->>Neo4j: Store message + embedding
+    Producer->>Reservoir CLI: Search / Thread query
+    Reservoir CLI->>Neo4j: Query messages + synapses
+    Reservoir CLI-->>Producer: Results
 ```
-
-## Supported Providers
-
-- OpenAI (gpt-4, gpt-4o, gpt-3.5-turbo)
-- Ollama (local models)
-- Mistral AI
-- Google Gemini
-- Any OpenAI-compatible endpoint
 
 ## Data Model
 
@@ -81,26 +61,42 @@ Reservoir creates synapses between messages when cosine similarity exceeds 0.85.
 
 ## Usage
 
-Replace OpenAI API endpoint:
-```
-https://api.openai.com/v1/chat/completions
+Ingest a message from stdin:
+```bash
+echo "Hello world" | cargo run -- ingest --partition myapp --instance chat1 --role user --trace-id trace-123
 ```
 
-With Reservoir endpoint:
+Search by keyword:
+```bash
+cargo run -- search "neo4j" --partition myapp --instance chat1
 ```
-http://127.0.0.1:3017/partition/$USER/instance/reservoir/v1/chat/completions
+
+Semantic search:
+```bash
+cargo run -- search "neo4j configuration" --semantic --partition myapp --instance chat1
+```
+
+Thread context (synapse-connected + recent):
+```bash
+cargo run -- thread --partition myapp --instance chat1 --count 20
+```
+
+Export/Import:
+```bash
+cargo run -- export > messages.json
+cargo run -- import messages.json
 ```
 
 The system organizes conversations using a partition/instance hierarchy for multi-tenant isolation.
 
 ## Implementation
 
-Start server:
+Run the CLI:
 ```bash
-cargo run -- start
+cargo run -- --help
 ```
 
-The server initializes a vector index in Neo4j and listens on port 3017.
+Reservoir reads Neo4j connection settings from `reservoir.toml` (under your config directory) or environment variables (`NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`).
 
 ## Documentation
 
