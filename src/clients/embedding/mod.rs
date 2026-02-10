@@ -1,59 +1,39 @@
 use std::path::PathBuf;
 
-use super::openai::embeddings::get_embeddings_for_text as openai_get_embeddings_for_text;
 use anyhow::Error;
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 use tracing::info;
 
 #[derive(Clone, Debug)]
-pub enum EmbeddingInfo {
-    OpenAI { model: String, length: i32 },
-    FastEmbed { model: String, length: i32 },
+pub struct EmbeddingInfo {
+    pub model: String,
+    pub length: i32,
 }
 
-#[allow(dead_code)]
 impl EmbeddingInfo {
-    pub fn new_openai(model: String) -> Self {
-        EmbeddingInfo::OpenAI {
-            model,
-            length: 1536,
-        }
-    }
-
     pub fn with_fastembed(model: &str) -> Self {
-        EmbeddingInfo::FastEmbed {
+        EmbeddingInfo {
             model: model.to_string(),
             length: 1024,
         }
     }
 
-    pub fn default() -> Self {
-        let model = "text-embedding-ada-002".to_string();
-        EmbeddingInfo::OpenAI {
-            model,
-            length: 1536,
-        }
-    }
-
     pub fn get_node_name(&self) -> String {
-        match self {
-            EmbeddingInfo::OpenAI { .. } => "Embedding1536".to_string(),
-            EmbeddingInfo::FastEmbed { .. } => "Embedding1024".to_string(),
-        }
+        "Embedding1024".to_string()
     }
 
     pub fn get_index_name(&self) -> String {
-        match self {
-            EmbeddingInfo::OpenAI { .. } => "embedding1536".to_string(),
-            EmbeddingInfo::FastEmbed { .. } => "embedding1024".to_string(),
-        }
+        "embedding1024".to_string()
     }
 
     pub fn get_model_name(&self) -> String {
-        match self {
-            EmbeddingInfo::OpenAI { model, .. } => model.clone(),
-            EmbeddingInfo::FastEmbed { model, .. } => model.clone(),
-        }
+        self.model.clone()
+    }
+}
+
+impl Default for EmbeddingInfo {
+    fn default() -> Self {
+        Self::with_fastembed("bge-large-en-v15")
     }
 }
 
@@ -66,40 +46,21 @@ pub async fn get_embeddings_for_txt(
     text: &str,
     embedding_info: EmbeddingInfo,
 ) -> Result<Vec<f32>, Error> {
-    match embedding_info {
-        EmbeddingInfo::OpenAI { model, length } => {
-            info!("Using OpenAI for embedding: {}", model);
-            info!("Embedding length: {}", length);
-            let result = openai_get_embeddings_for_text(text).await;
-            match result {
-                Ok(embeddings) => {
-                    if embeddings.is_empty() {
-                        Err(Error::msg("No embeddings found"))
-                    } else {
-                        Ok(embeddings[0].embedding.clone())
-                    }
-                }
-                Err(e) => Err(e),
-            }
-        }
-        EmbeddingInfo::FastEmbed { model, length } => {
-            info!("Using FastEmbed for embedding");
-            info!("Embedding model: {}", model);
-            info!("Embedding length: {}", length);
-            let init_options = InitOptions::new(EmbeddingModel::BGELargeENV15)
-                .with_show_download_progress(true)
-                .with_cache_dir(get_cache_path());
+    info!("Using FastEmbed for embedding");
+    info!("Embedding model: {}", embedding_info.model);
+    info!("Embedding length: {}", embedding_info.length);
 
-            let model = TextEmbedding::try_new(init_options);
-            let texts = vec![text];
-            let model = model?;
-            let embeddings = model.embed(texts, None)?;
+    let init_options = InitOptions::new(EmbeddingModel::BGELargeENV15)
+        .with_show_download_progress(true)
+        .with_cache_dir(get_cache_path());
 
-            if let Some(embedding) = embeddings.first() {
-                Ok(embedding.clone())
-            } else {
-                Err(Error::msg("No embeddings found"))
-            }
-        }
+    let model = TextEmbedding::try_new(init_options)?;
+    let texts = vec![text];
+    let embeddings = model.embed(texts, None)?;
+
+    if let Some(embedding) = embeddings.first() {
+        Ok(embedding.clone())
+    } else {
+        Err(Error::msg("No embeddings found"))
     }
 }

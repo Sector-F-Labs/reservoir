@@ -17,27 +17,13 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = "0.4.41"
 anyhow = "1.0"
-hyper = { version = "1", features = ["server", "http1", "client"] }
-hyper-util = { version = "0.1.13", features = [
-    "tokio",
-    "server",
-    "client-legacy",
-] }
-hyper-tls = "0.6"
 neo4rs = "0.8.0"
-http-body-util = "0.1"
-bytes = "1"
-http = "1"
 uuid = { version = "1.17.0", features = ["v4"] }
-tiktoken-rs = "0.7.0"
 clap = { version = "4.5.39", features = ["derive"] }
 once_cell = "1.21"
 toml = "0.8.22"
 dirs-next = "2.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-url = "2.5.4"
-openssl = { version = "0.10", features = ["vendored"] }
-openssl-sys = { version = "0.9", features = ["vendored"] }
 fastembed = "4.8.0"
-tokio-stream = "0.1.17"
+async-trait = "0.1"

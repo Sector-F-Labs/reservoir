@@ -6,13 +6,13 @@ use clap::Parser;
     version,
     about,
     long_about = r###"
-Reservoir is a transparent proxy for any OpenAI-compatible API. It captures all your AI conversations and stores them in a Neo4j graph, turning every interaction into a searchable, self-growing knowledge base.
+Reservoir stores AI conversations in a Neo4j graph, turning interactions into a searchable, self-growing knowledge base.
 
-Think of it as a personal neural lake that evolves into an intelligent assistant with memory:
-- Capture: Every prompt and response is logged, building a rich history.
-- Dynamic Context Enrichment: Automatically adds relevant past conversations to new prompts, giving the AI a memory-like experience via graph relationships and vector search.
-- Self-building: Your interactions continuously enrich the knowledge base.
-- Plug-and-Play: Drop it in front of your OpenAI-compatible app — no client code changes needed.
+Features:
+- Ingest: Store messages with embeddings for semantic search
+- Search: Find related messages by keyword or semantic similarity
+- Thread: View synapse-connected conversation threads
+- Export/Import: Backup and restore message data
 "###
 )]
 pub struct Args {
@@ -24,7 +24,6 @@ pub struct Args {
 pub enum SubCommands {
     /// Set or get default configuration values with your config.toml.
     Config(ConfigSubCommand),
-    Start(StartSubCommand),
     /// Export all message nodes as JSON
     Export,
     /// Import message nodes from a JSON file
@@ -37,16 +36,8 @@ pub enum SubCommands {
     Ingest(IngestSubCommand),
     /// Replay embeddings process
     Replay(ReplaySubCommand),
-}
-
-#[derive(Parser, Debug)]
-#[command(author, version, about = "Start the Reservoir proxy", long_about = None)]
-pub struct StartSubCommand {
-    /// Ollama mode which sets up on same default port as ollama
-    /// useful for using as a proxy for clients that don't support
-    /// setting a url
-    #[arg(short, long)]
-    pub ollama: bool,
+    /// View current thread context (synapse-connected messages)
+    Thread(crate::commands::thread::ThreadSubCommand),
 }
 
 #[derive(Parser, Debug)]
@@ -137,6 +128,69 @@ mod tests {
                 assert_eq!(cmd.role.as_deref(), Some("user"));
             }
             _ => panic!("expected ingest subcommand"),
+        }
+    }
+
+    #[test]
+    fn parse_thread_defaults() {
+        let args = Args::try_parse_from(["reservoir", "thread"])
+            .expect("expected thread args to parse");
+
+        match args.subcmd {
+            Some(SubCommands::Thread(cmd)) => {
+                assert!(cmd.partition.is_none());
+                assert!(cmd.instance.is_none());
+                assert_eq!(cmd.count, 50); // default
+            }
+            _ => panic!("expected thread subcommand"),
+        }
+    }
+
+    #[test]
+    fn parse_thread_with_options() {
+        let args = Args::try_parse_from([
+            "reservoir",
+            "thread",
+            "--partition",
+            "myapp",
+            "--instance",
+            "chat1",
+            "--count",
+            "20",
+        ])
+        .expect("expected thread args to parse");
+
+        match args.subcmd {
+            Some(SubCommands::Thread(cmd)) => {
+                assert_eq!(cmd.partition.as_deref(), Some("myapp"));
+                assert_eq!(cmd.instance.as_deref(), Some("chat1"));
+                assert_eq!(cmd.count, 20);
+            }
+            _ => panic!("expected thread subcommand"),
+        }
+    }
+
+    #[test]
+    fn parse_thread_short_flags() {
+        let args = Args::try_parse_from([
+            "reservoir",
+            "thread",
+            "-p",
+            "part",
+            "-i",
+            "inst",
+            "-c",
+            "10",
+        ])
+        .expect("expected thread args to parse with short flags");
+
+        match args.subcmd {
+            Some(SubCommands::Thread(cmd)) => {
+                assert_eq!(cmd.partition.as_deref(), Some("part"));
+                assert_eq!(cmd.instance.as_deref(), Some("inst"));
+                assert_eq!(cmd.count, 10);
+            }
+            _ => panic!("expected thread subcommand"),
         }
     }
 }
