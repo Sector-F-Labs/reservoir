@@ -27,3 +27,7 @@ data/
 
 # mdBook generated output
 book/book/
+
+# Python
+__pycache__/
+*.pyc
