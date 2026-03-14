@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "reservoir-mcp"
+version = "0.1.0"
+description = "Hybrid MCP server for reservoir that proxies tool calls to the Rust reservoir CLI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "mcp>=1.0.0",
+]
+
+[project.scripts]
+reservoir-mcp = "reservoir_mcp.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["reservoir_mcp"]
