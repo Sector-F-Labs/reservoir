@@ -87,6 +87,14 @@ cargo run -- export > messages.json
 cargo run -- import messages.json
 ```
 
+Graph view of the nodes and their synapses, in a browser:
+```bash
+cargo run -- admin            # http://127.0.0.1:3939
+cargo run -- admin --bind 0.0.0.0 --port 8080
+```
+
+The view is an egui app compiled to wasm and embedded in the binary. It is read-only and listens on localhost by default; there is no authentication, so only bind to other addresses on a network you trust. After changing `admin-ui/`, run `make admin-ui` and commit the rebuilt `admin-ui/dist/` (needs the `wasm32-unknown-unknown` target and a `wasm-bindgen-cli` matching `admin-ui/Cargo.lock`).
+
 The system organizes conversations using a partition/instance hierarchy for multi-tenant isolation.
 
 ## Implementation

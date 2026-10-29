@@ -459,6 +459,77 @@ where
     Ok(result)
 }
 
+/// A message as shown in the admin graph view. Leaves out the embedding.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct GraphNode {
+    pub id: i64,
+    pub trace_id: String,
+    pub partition: String,
+    pub instance: String,
+    pub role: String,
+    pub content: Option<String>,
+    pub timestamp: i64,
+}
+
+/// A SYNAPSE relationship between two messages, by database id.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct GraphSynapse {
+    pub from: i64,
+    pub to: i64,
+    pub score: Option<f64>,
+}
+
+/// Gets every message and every synapse, for the admin graph view.
+pub async fn get_graph<C, FutC>(
+    get_connector: C,
+) -> Result<(Vec<GraphNode>, Vec<GraphSynapse>), Error>
+where
+    C: Fn() -> FutC,
+    FutC: AsyncGraphFuture,
+{
+    let graph = get_connector().await?;
+
+    let mut result = graph
+        .execute(query(
+            r#"
+            MATCH (m:MessageNode)
+            RETURN id(m) AS id, m.trace_id AS trace_id, m.partition AS partition,
+                   m.instance AS instance, m.role AS role, m.content AS content,
+                   m.timestamp AS timestamp
+            "#,
+        ))
+        .await?;
+    let mut nodes = Vec::new();
+    while let Some(row) = result.next().await? {
+        nodes.push(GraphNode {
+            id: row.get("id")?,
+            trace_id: row.get("trace_id")?,
+            partition: row.get("partition")?,
+            instance: row.get("instance")?,
+            role: row.get("role")?,
+            content: row.get("content").ok(),
+            timestamp: row.get("timestamp")?,
+        });
+    }
+
+    let mut result = graph
+        .execute(query(
+            "MATCH (a:MessageNode)-[s:SYNAPSE]->(b:MessageNode) \
+             RETURN id(a) AS from_id, id(b) AS to_id, s.score AS score",
+        ))
+        .await?;
+    let mut synapses = Vec::new();
+    while let Some(row) = result.next().await? {
+        synapses.push(GraphSynapse {
+            from: row.get("from_id")?,
+            to: row.get("to_id")?,
+            score: row.get("score").ok(),
+        });
+    }
+
+    Ok((nodes, synapses))
+}
+
 pub async fn get_nodes_connected_by_synapses<C, FutC>(
     get_connector: C,
     node: &MessageNode,

@@ -27,3 +27,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 fastembed = "4.8.0"
 async-trait = "0.1"
+axum = "0.8"
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }

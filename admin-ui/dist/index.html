@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reservoir</title>
+  <style>
+    :root { color-scheme: light dark; }
+    html, body { margin: 0; height: 100%; font-family: sans-serif; }
+    canvas { display: block; width: 100%; height: 100%; }
+    #msg { position: fixed; inset: 0; display: grid; place-items: center; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="msg">Loading…</div>
+  <script type="module">
+    import init, { Admin } from "./pkg/reservoir_admin_ui.js";
+    try {
+      await init();
+      await new Admin().start(document.getElementById("canvas"));
+      document.getElementById("msg").remove();
+    } catch (e) {
+      document.getElementById("msg").textContent = "Failed to start: " + e;
+    }
+  </script>
+</body>
+</html>
