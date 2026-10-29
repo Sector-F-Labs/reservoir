@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::{Mutex, OnceLock};
 
 use anyhow::Error;
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
@@ -42,6 +43,27 @@ pub fn get_cache_path() -> PathBuf {
     tmp_dir.join("reservoir").join("models")
 }
 
+/// Loads the model once per process. Loading downloads it on first use, and
+/// concurrent loads (parallel tests, for instance) fight over the download
+/// lock in the cache directory.
+fn load_model() -> Result<&'static TextEmbedding, Error> {
+    static MODEL: OnceLock<TextEmbedding> = OnceLock::new();
+    static LOAD: Mutex<()> = Mutex::new(());
+
+    if let Some(model) = MODEL.get() {
+        return Ok(model);
+    }
+    let _guard = LOAD.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(model) = MODEL.get() {
+        return Ok(model);
+    }
+    let init_options = InitOptions::new(EmbeddingModel::BGELargeENV15)
+        .with_show_download_progress(true)
+        .with_cache_dir(get_cache_path());
+    let model = TextEmbedding::try_new(init_options)?;
+    Ok(MODEL.get_or_init(|| model))
+}
+
 pub async fn get_embeddings_for_txt(
     text: &str,
     embedding_info: EmbeddingInfo,
@@ -50,11 +72,7 @@ pub async fn get_embeddings_for_txt(
     info!("Embedding model: {}", embedding_info.model);
     info!("Embedding length: {}", embedding_info.length);
 
-    let init_options = InitOptions::new(EmbeddingModel::BGELargeENV15)
-        .with_show_download_progress(true)
-        .with_cache_dir(get_cache_path());
-
-    let model = TextEmbedding::try_new(init_options)?;
+    let model = load_model()?;
     let texts = vec![text];
     let embeddings = model.embed(texts, None)?;
 
