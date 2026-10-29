@@ -1,4 +1,4 @@
-.PHONY: install-service uninstall-service book clean-book serve-book help
+.PHONY: admin-ui install-service uninstall-service book clean-book serve-book help
 
 .DEFAULT_GOAL := help
 
@@ -8,6 +8,7 @@ help:
 	@echo "  migrate         - Run database migrations"
 	@echo "  run             - Run the application"
 	@echo "  dev             - Run with cargo watch for development"
+	@echo "  admin-ui        - Rebuild the wasm admin view in admin-ui/dist"
 	@echo "  install         - Install the binary to cargo's bin directory"
 	@echo "  install-service - Install as a macOS LaunchAgent service"
 	@echo "  uninstall-service - Remove the macOS LaunchAgent service"
@@ -27,6 +28,9 @@ run:
 
 dev:
 	cargo watch -x 'run -- start'
+
+admin-ui:
+	./admin-ui/build.sh
 
 install:
 	cargo install --path .

@@ -46,6 +46,9 @@ async fn main() -> Result<(), Error> {
         Some(SubCommands::Thread(ref thread_cmd)) => {
             commands::thread::run(thread_cmd).await?;
         }
+        Some(SubCommands::Admin(ref admin_cmd)) => {
+            commands::admin::run(admin_cmd).await?;
+        }
         None => {
             // No subcommand provided, show help
             Args::parse_from(["reservoir", "--help"]);

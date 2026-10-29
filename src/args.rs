@@ -38,6 +38,8 @@ pub enum SubCommands {
     Replay(ReplaySubCommand),
     /// View current thread context (synapse-connected messages)
     Thread(crate::commands::thread::ThreadSubCommand),
+    /// Serve the node graph view in a browser
+    Admin(crate::commands::admin::AdminSubCommand),
 }
 
 #[derive(Parser, Debug)]
